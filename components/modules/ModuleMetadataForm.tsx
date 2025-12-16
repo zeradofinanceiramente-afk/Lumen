@@ -79,6 +79,19 @@ export const ModuleMetadataForm: React.FC<ModuleMetadataFormProps> = ({
                     </InputField>
                     
                     <InputField label="Imagem de Capa">
+                        {coverImageUrl && (
+                            <div className="mb-3 relative w-32 h-20 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden flex items-center justify-center group shadow-sm">
+                                <img 
+                                    src={coverImageUrl} 
+                                    alt="Miniatura" 
+                                    className="h-full w-full object-cover"
+                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <span className="text-xs text-white font-medium">Capa Atual</span>
+                                </div>
+                            </div>
+                        )}
                         <div className="flex space-x-2">
                             <input 
                                 type="text" 
@@ -88,7 +101,7 @@ export const ModuleMetadataForm: React.FC<ModuleMetadataFormProps> = ({
                                 className="flex-grow p-2 border border-gray-300 rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-white" 
                                 disabled={disabled}
                             />
-                            <label className={`cursor-pointer px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center justify-center ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                            <label className={`cursor-pointer px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center justify-center flex-shrink-0 ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                 {isUploading ? <SpinnerIcon className="h-5 w-5" /> : 'Upload'}
                                 <input 
                                     type="file" 
@@ -99,7 +112,6 @@ export const ModuleMetadataForm: React.FC<ModuleMetadataFormProps> = ({
                                 />
                             </label>
                         </div>
-                        {coverImageUrl && <p className="text-xs text-green-600 mt-1">Imagem definida.</p>}
                     </InputField>
                     
                     {availableClasses && availableClasses.length > 0 && (

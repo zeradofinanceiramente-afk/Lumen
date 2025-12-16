@@ -1,6 +1,7 @@
 
 interface Env {
-  GEMINI_API_KEY: string;
+  GEMINI_API_KEY?: string;
+  API_KEY?: string;
 }
 
 interface RequestBody {
@@ -36,8 +37,8 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
 
     const body = await request.json() as RequestBody;
     
-    // Recupera a chave da variável de ambiente do Cloudflare
-    const apiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    // Recupera a chave da variável de ambiente do Cloudflare (Suporte a API_KEY ou GEMINI_API_KEY)
+    const apiKey = env.API_KEY || env.GEMINI_API_KEY || process.env.API_KEY || process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
       return new Response(JSON.stringify({ error: "API Key não configurada no servidor." }), {

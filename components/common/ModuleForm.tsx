@@ -4,7 +4,7 @@ import type { Module, ModulePage, ModulePageContent, ModulePageContentType } fro
 import { ICONS, SpinnerIcon } from '../../constants/index';
 import { useToast } from '../../contexts/ToastContext';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebaseClient';
+import { db, auth } from '../firebaseClient';
 import { storage } from '../firebaseStorage';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { compressImage } from '../../utils/imageCompression';
@@ -184,16 +184,26 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({
 
     const handleAIGenerate = async (prompt: string, type: ModulePageContentType) => {
         try {
+            const user = auth.currentUser;
+            if (!user) throw new Error("Usuário não autenticado. Faça login novamente.");
+            const token = await user.getIdToken();
+
             const response = await fetch('/api/ai', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     model: "gemini-2.5-flash",
                     contents: [{ parts: [{ text: `Gere um conteúdo do tipo "${type}" sobre: "${prompt}". A resposta deve ser direta. ${DIDACTIC_SYSTEM_PROMPT}` }] }],
                 })
             });
 
-            if (!response.ok) throw new Error("Erro na comunicação com a IA");
+            if (!response.ok) {
+                if (response.status === 401) throw new Error("Não autorizado. Verifique sua sessão.");
+                throw new Error(`Erro na comunicação com a IA: ${response.statusText}`);
+            }
 
             const data = await response.json();
             const text = data.candidates?.[0]?.content?.parts?.[0]?.text;

@@ -22,14 +22,12 @@ export async function onRequestPost(context) {
         headers: { "Content-Type": "application/json", ...corsHeaders }
       });
     }
-    // Nota: A validação completa da assinatura do JWT exigiria uma biblioteca como 'jose' ou 'firebase-admin'.
-    // Como estamos num ambiente edge simples sem build step complexo aqui, verificamos a presença.
-    // Em produção real, você deve validar a assinatura criptográfica.
 
     const body = await request.json();
     
     // Recupera a chave da variável de ambiente do Cloudflare
-    const apiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    // Atualizado para suportar API_KEY conforme solicitado
+    const apiKey = env.API_KEY || env.GEMINI_API_KEY || process.env.API_KEY || process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
       return new Response(JSON.stringify({ error: "API Key não configurada no servidor." }), {

@@ -124,17 +124,26 @@ export const ModuleContentEditor: React.FC<ModuleContentEditorProps> = ({
                                             
                                             {block.type === 'image' && (
                                                 <div className="space-y-3">
-                                                    {/* Image Preview */}
-                                                    {block.content && typeof block.content === 'string' && (
-                                                        <div className="w-full max-h-48 bg-slate-100 dark:bg-slate-900 rounded-md flex items-center justify-center overflow-hidden border dark:border-slate-600">
+                                                    {/* Image Preview with Upload State */}
+                                                    <div className="w-full max-h-48 bg-slate-100 dark:bg-slate-900 rounded-md flex items-center justify-center overflow-hidden border dark:border-slate-600 relative">
+                                                        {isThisBlockUploading ? (
+                                                            <div className="flex flex-col items-center justify-center p-4">
+                                                                <SpinnerIcon className="h-8 w-8 text-indigo-600 animate-spin" />
+                                                                <span className="text-xs text-slate-500 mt-2">Enviando...</span>
+                                                            </div>
+                                                        ) : block.content && typeof block.content === 'string' ? (
                                                             <img 
                                                                 src={block.content} 
                                                                 alt={block.alt || 'Preview'} 
                                                                 className="max-h-48 object-contain" 
                                                                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                                             />
-                                                        </div>
-                                                    )}
+                                                        ) : (
+                                                            <div className="p-8 text-slate-400">
+                                                                {ICONS.block_image}
+                                                            </div>
+                                                        )}
+                                                    </div>
 
                                                     {/* URL Input */}
                                                     <input 
