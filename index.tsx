@@ -2,6 +2,20 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
+// @ts-ignore - Virtual import from vite-plugin-pwa
+import { registerSW } from 'virtual:pwa-register';
+
+// Register Service Worker for PWA capabilities
+const updateSW = registerSW({
+  onNeedRefresh() {
+    if (confirm('Nova versão do aplicativo disponível. Deseja atualizar?')) {
+      updateSW(true);
+    }
+  },
+  onOfflineReady() {
+    console.log('Aplicativo pronto para uso offline.');
+  },
+});
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

@@ -1,4 +1,3 @@
-
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -8,9 +7,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      // Only include assets that definitely exist. 
+      injectRegister: 'auto',
       includeAssets: ['icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-icon-512.png'], 
-      manifest: false, // We are using a static manifest.json file
+      manifest: false, // We use the static manifest.json file in public/
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,json}'],
         cleanupOutdatedCaches: true,
@@ -18,8 +17,6 @@ export default defineConfig({
         skipWaiting: true,
         maximumFileSizeToCacheInBytes: 6000000, 
         navigateFallback: '/index.html',
-        // Exclude APIs and IMAGE files from being handled by index.html fallback.
-        // This ensures missing images return 404 instead of text/html (fixing the PWA validation error).
         navigateFallbackDenylist: [
             /^\/api/, 
             /^\/__,/,
@@ -70,21 +67,10 @@ export default defineConfig({
             }
           },
           {
-            urlPattern: ({ request }) => ['script', 'style', 'worker'].includes(request.destination),
+            urlPattern: /^https:\/\/(firebasestorage\.googleapis\.com|lh3\.googleusercontent\.com|cdn\.tailwindcss\.com)\/.*/i,
             handler: 'StaleWhileRevalidate',
             options: {
-              cacheName: 'static-resources',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 7 
-              }
-            }
-          },
-          {
-            urlPattern: /^https:\/\/(firebasestorage\.googleapis\.com|lh3\.googleusercontent\.com|cdn\.tailwindcss\.com)\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'cloud-images',
+              cacheName: 'cloud-resources',
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24 * 30 

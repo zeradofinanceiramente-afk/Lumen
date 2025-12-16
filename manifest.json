@@ -15,7 +15,7 @@
   ],
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
-  "orientation": "any",
+  "orientation": "portrait-primary",
   "categories": [
     "education",
     "productivity"
@@ -25,6 +25,29 @@
   "prefer_related_applications": false,
   "launch_handler": {
     "client_mode": "focus-existing"
+  },
+  "file_handlers": [
+    {
+      "action": "/dashboard",
+      "accept": {
+        "text/plain": [".txt"]
+      }
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+lumen",
+      "url": "/join_class?code=%s"
+    }
+  ],
+  "share_target": {
+    "action": "/activities",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
   },
   "icons": [
     {
