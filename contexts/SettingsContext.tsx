@@ -47,7 +47,7 @@ export function SettingsProvider({ children }: { children?: React.ReactNode }) {
         if (savedTheme && validThemes.includes(savedTheme)) { 
             setTheme(savedTheme);
         } else {
-            setTheme('dragon-year'); // Default fallback
+            setTheme('light'); // Default fallback for first-time users
         }
         const savedHighContrastText = localStorage.getItem('app-high-contrast-text') === 'true';
         setIsHighContrastText(savedHighContrastText);
