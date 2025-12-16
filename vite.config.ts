@@ -10,9 +10,6 @@ export default defineConfig({
       registerType: 'autoUpdate',
       // Only include assets that definitely exist. 
       includeAssets: ['icon.svg'], 
-      devOptions: {
-        enabled: true
-      },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         cleanupOutdatedCaches: true,
@@ -126,42 +123,48 @@ export default defineConfig({
         },
         icons: [
           {
-            src: 'icon.svg',
-            sizes: '192x192',
-            type: 'image/svg+xml',
-            purpose: 'any'
-          },
-          {
-            src: 'icon.svg',
-            sizes: '512x512',
-            type: 'image/svg+xml',
-            purpose: 'any'
-          },
-          {
-            src: 'icon.svg',
-            sizes: '512x512',
-            type: 'image/svg+xml',
-            purpose: 'maskable'
-          },
-          {
-            src: 'icon.svg',
+            src: '/icon.svg',
             sizes: 'any',
             type: 'image/svg+xml',
             purpose: 'any'
+          },
+          {
+            src: 'https://placehold.co/192x192/4f46e5/ffffff.png?text=Lumen',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'https://placehold.co/192x192/4f46e5/ffffff.png?text=Lumen',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable'
+          },
+          {
+            src: 'https://placehold.co/512x512/4f46e5/ffffff.png?text=Lumen',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'https://placehold.co/512x512/4f46e5/ffffff.png?text=Lumen',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           }
         ],
         screenshots: [
           {
-            src: 'icon.svg',
+            src: 'https://placehold.co/1280x720/0f172a/ffffff.png?text=Lumen+Desktop',
             sizes: '1280x720',
-            type: 'image/svg+xml',
+            type: 'image/png',
             form_factor: 'wide',
             label: 'Lumen no Desktop'
           },
           {
-            src: 'icon.svg',
+            src: 'https://placehold.co/360x800/0f172a/ffffff.png?text=Lumen+Mobile',
             sizes: '360x800',
-            type: 'image/svg+xml',
+            type: 'image/png',
             form_factor: 'narrow',
             label: 'Lumen no Celular'
           }
@@ -172,14 +175,14 @@ export default defineConfig({
             short_name: "Turmas",
             description: "Acessar suas turmas diretamente",
             url: "/join_class?utm_source=pwa",
-            icons: [{ src: "icon.svg", sizes: "192x192", type: "image/svg+xml" }]
+            icons: [{ src: "https://placehold.co/192x192/4f46e5/ffffff.png?text=Turmas", sizes: "192x192", type: "image/png" }]
           },
           {
             name: "Ver Atividades",
             short_name: "Atividades",
             description: "Ver atividades pendentes",
             url: "/activities?utm_source=pwa",
-            icons: [{ src: "icon.svg", sizes: "192x192", type: "image/svg+xml" }]
+            icons: [{ src: "https://placehold.co/192x192/4f46e5/ffffff.png?text=Atividades", sizes: "192x192", type: "image/png" }]
           }
         ]
       }
