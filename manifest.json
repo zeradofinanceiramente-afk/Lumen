@@ -15,11 +15,13 @@
   ],
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
-  "orientation": "any",
+  "orientation": "portrait-primary",
   "categories": [
     "education",
     "productivity"
   ],
+  "iarc_rating_id": "",
+  "related_applications": [],
   "prefer_related_applications": false,
   "launch_handler": {
     "client_mode": "focus-existing"
