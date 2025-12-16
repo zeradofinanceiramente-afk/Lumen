@@ -9,7 +9,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       // Only include assets that definitely exist. 
-      includeAssets: ['icon.svg'], 
+      includeAssets: ['icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-icon-512.png'], 
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         cleanupOutdatedCaches: true,
@@ -123,31 +123,19 @@ export default defineConfig({
         },
         icons: [
           {
-            src: '/icon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'any'
-          },
-          {
-            src: 'https://placehold.co/192x192/4f46e5/ffffff.png?text=Lumen',
+            src: '/icons/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'https://placehold.co/192x192/4f46e5/ffffff.png?text=Lumen',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'maskable'
-          },
-          {
-            src: 'https://placehold.co/512x512/4f46e5/ffffff.png?text=Lumen',
+            src: '/icons/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'https://placehold.co/512x512/4f46e5/ffffff.png?text=Lumen',
+            src: '/icons/maskable-icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
@@ -175,14 +163,14 @@ export default defineConfig({
             short_name: "Turmas",
             description: "Acessar suas turmas diretamente",
             url: "/join_class?utm_source=pwa",
-            icons: [{ src: "https://placehold.co/192x192/4f46e5/ffffff.png?text=Turmas", sizes: "192x192", type: "image/png" }]
+            icons: [{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }]
           },
           {
             name: "Ver Atividades",
             short_name: "Atividades",
             description: "Ver atividades pendentes",
             url: "/activities?utm_source=pwa",
-            icons: [{ src: "https://placehold.co/192x192/4f46e5/ffffff.png?text=Atividades", sizes: "192x192", type: "image/png" }]
+            icons: [{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }]
           }
         ]
       }
