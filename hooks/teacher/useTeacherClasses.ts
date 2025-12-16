@@ -198,7 +198,8 @@ export function useTeacherClasses(user: User | null, addToast: (msg: string, typ
                 });
                 await batch.commit();
             }
-            return { ...sessionData, id: docRef.id };
+            // Retorna a data ISO para o cache local imediato, em vez do objeto serverTimestamp
+            return { ...sessionData, id: docRef.id, createdAt: new Date().toISOString() };
         },
         onSuccess: (newSession, variables) => {
             addToast("Chamada criada!", "success");

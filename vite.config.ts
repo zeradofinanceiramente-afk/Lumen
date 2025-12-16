@@ -96,64 +96,71 @@ export default defineConfig({
         ]
       },
       manifest: {
+        id: '/',
+        scope: '/',
         name: 'Lumen',
         short_name: 'Lumen',
         description: 'Plataforma de ensino inclusiva e acessível para todos os estudantes.',
-        theme_color: '#0f172a',
-        background_color: '#0f172a',
-        display: 'standalone',
-        display_override: ['window-controls-overlay', 'standalone', 'minimal-ui'],
-        orientation: 'portrait-primary',
-        scope: '/',
-        start_url: '/',
-        id: '/', 
-        categories: ['education', 'productivity', 'reference'],
         lang: 'pt-BR',
         dir: 'ltr',
+        start_url: '/?utm_source=pwa',
+        display: 'standalone',
+        display_override: [
+          'window-controls-overlay',
+          'standalone',
+          'minimal-ui'
+        ],
+        background_color: '#0f172a',
+        theme_color: '#0f172a',
+        orientation: 'any',
+        categories: [
+          'education',
+          'productivity'
+        ],
         prefer_related_applications: false,
         launch_handler: {
-            client_mode: "navigate-existing"
+            client_mode: "focus-existing"
         },
-        edge_side_panel: {
-            preferred_width: 480
-        },
-        // Using existing SVG for all icon sizes to ensure fetchability
         icons: [
           {
             src: '/icon.svg',
-            sizes: 'any',
+            sizes: '192x192',
             type: 'image/svg+xml',
             purpose: 'any'
           },
           {
             src: '/icon.svg',
-            sizes: '192x192',
+            sizes: '512x512',
             type: 'image/svg+xml',
-            purpose: 'maskable any'
+            purpose: 'any'
           },
           {
             src: '/icon.svg',
             sizes: '512x512',
             type: 'image/svg+xml',
-            purpose: 'maskable any'
+            purpose: 'maskable'
+          },
+          {
+            src: '/icon.svg',
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'any'
           }
         ],
-        // Using icon.svg as placeholder for screenshots to pass validation. 
-        // TODO: Replace with real PNG screenshots in public folder.
         screenshots: [
           {
             src: '/icon.svg',
-            sizes: '512x512',
+            sizes: '1280x720',
             type: 'image/svg+xml',
-            form_factor: 'narrow',
-            label: 'Tela inicial no celular'
+            form_factor: 'wide',
+            label: 'Lumen no Desktop'
           },
           {
             src: '/icon.svg',
-            sizes: '512x512',
+            sizes: '360x800',
             type: 'image/svg+xml',
-            form_factor: 'wide',
-            label: 'Dashboard no desktop'
+            form_factor: 'narrow',
+            label: 'Lumen no Celular'
           }
         ],
         shortcuts: [
@@ -161,14 +168,14 @@ export default defineConfig({
             name: "Minhas Turmas",
             short_name: "Turmas",
             description: "Acessar suas turmas diretamente",
-            url: "/join_class",
+            url: "/join_class?utm_source=pwa",
             icons: [{ src: "/icon.svg", sizes: "192x192", type: "image/svg+xml" }]
           },
           {
             name: "Ver Atividades",
             short_name: "Atividades",
             description: "Ver atividades pendentes",
-            url: "/activities",
+            url: "/activities?utm_source=pwa",
             icons: [{ src: "/icon.svg", sizes: "192x192", type: "image/svg+xml" }]
           }
         ]

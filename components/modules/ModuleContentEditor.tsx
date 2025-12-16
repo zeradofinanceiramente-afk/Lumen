@@ -123,15 +123,37 @@ export const ModuleContentEditor: React.FC<ModuleContentEditorProps> = ({
                                             {block.type === 'quote' && <textarea placeholder="Citação" value={block.content as string} onChange={e => updateBlock(page.id, blockIndex, { content: e.target.value })} rows={2} className={`${inputClasses} italic`} />}
                                             
                                             {block.type === 'image' && (
-                                                <div className="space-y-2">
+                                                <div className="space-y-3">
+                                                    {/* Image Preview */}
+                                                    {block.content && typeof block.content === 'string' && (
+                                                        <div className="w-full max-h-48 bg-slate-100 dark:bg-slate-900 rounded-md flex items-center justify-center overflow-hidden border dark:border-slate-600">
+                                                            <img 
+                                                                src={block.content} 
+                                                                alt={block.alt || 'Preview'} 
+                                                                className="max-h-48 object-contain" 
+                                                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                            />
+                                                        </div>
+                                                    )}
+
+                                                    {/* URL Input */}
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="URL da Imagem (https://...)" 
+                                                        value={block.content as string} 
+                                                        onChange={e => updateBlock(page.id, blockIndex, { content: e.target.value })} 
+                                                        className={inputClasses} 
+                                                        disabled={isThisBlockUploading}
+                                                    />
+
+                                                    {/* Description + Upload Row */}
                                                     <div className="flex gap-2">
                                                         <input 
                                                             type="text" 
-                                                            placeholder="URL da Imagem (ou faça upload)" 
-                                                            value={block.content as string} 
-                                                            onChange={e => updateBlock(page.id, blockIndex, { content: e.target.value })} 
+                                                            placeholder="Descrição da Imagem (Alt Text)" 
+                                                            value={block.alt || ''} 
+                                                            onChange={e => updateBlock(page.id, blockIndex, { alt: e.target.value })} 
                                                             className={inputClasses} 
-                                                            disabled={isThisBlockUploading}
                                                         />
                                                         {onImageUpload && (
                                                             <label className={`flex-shrink-0 cursor-pointer px-3 py-2 bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200 border border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800 flex items-center justify-center gap-2 min-w-[80px] ${isThisBlockUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
@@ -147,7 +169,6 @@ export const ModuleContentEditor: React.FC<ModuleContentEditorProps> = ({
                                                             </label>
                                                         )}
                                                     </div>
-                                                    <input type="text" placeholder="Descrição da Imagem (Alt Text)" value={block.alt || ''} onChange={e => updateBlock(page.id, blockIndex, { alt: e.target.value })} className={inputClasses} />
                                                 </div>
                                             )}
                                             

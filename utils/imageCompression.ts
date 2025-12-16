@@ -11,8 +11,14 @@ export const compressImage = async (file: File): Promise<File> => {
         return file;
     }
 
+    // Requirement: Do not compress if smaller than 50KB (50 * 1024 bytes)
+    if (file.size <= 51200) {
+        console.log(`Skipping compression for ${file.name} (Size: ${(file.size / 1024).toFixed(2)} KB <= 50KB)`);
+        return file;
+    }
+
     const options = {
-        maxSizeMB: 0.5, // Max 500KB
+        maxSizeMB: 0.5, // Max 500KB target (soft limit)
         maxWidthOrHeight: 1920, // Full HD max
         useWebWorker: true,
         fileType: 'image/webp', // Modern format, smaller size
@@ -29,6 +35,11 @@ export const compressImage = async (file: File): Promise<File> => {
             return file;
         }
 
+        // Additional check: If compression somehow made it larger or smaller than the hard floor (unlikely but safe), 
+        // strictly speaking we just return the compressed one, but if we want to enforce "don't reduce TO less than 50kb" 
+        // implies quality control. Usually, smaller is better, but if the user meant "don't compress small files", 
+        // the first check covers it.
+        
         console.log(`Compressed to ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
         return compressedFile;
     } catch (error) {

@@ -5,6 +5,7 @@
 
 
 
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigation } from '../contexts/NavigationContext';
 import { useTeacherClassContext } from '../contexts/TeacherClassContext';
@@ -198,6 +199,10 @@ const AttendanceSessionView: React.FC<{ session: AttendanceSession, onBack: () =
     const canEdit = useMemo(() => {
         if (!session.createdAt) return true;
         const createdDate = new Date(session.createdAt);
+        
+        // Safety: Se a data for inválida (ex: serverTimestamp sentinel), permite edição (assume que é novo)
+        if (isNaN(createdDate.getTime())) return true;
+
         const now = new Date();
         const diffTime = Math.abs(now.getTime() - createdDate.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
