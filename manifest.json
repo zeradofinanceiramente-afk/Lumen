@@ -5,8 +5,8 @@
   "short_name": "Lumen",
   "description": "Plataforma de ensino inclusiva e acessível para todos os estudantes.",
   "lang": "pt-BR",
-  "dir": "auto",
-  "start_url": "/https://lumen-a9s.pages.dev/",
+  "dir": "ltr",
+  "start_url": "/?utm_source=pwa",
   "display": "standalone",
   "display_override": [
     "window-controls-overlay",
@@ -20,6 +20,8 @@
     "education",
     "productivity"
   ],
+  "iarc_rating_id": "",
+  "related_applications": [],
   "prefer_related_applications": false,
   "launch_handler": {
     "client_mode": "focus-existing"
@@ -28,9 +30,7 @@
     {
       "action": "/dashboard",
       "accept": {
-        "text/plain": [
-          ".txt"
-        ]
+        "text/plain": [".txt"]
       }
     }
   ],
