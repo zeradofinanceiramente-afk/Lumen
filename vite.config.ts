@@ -10,6 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       // Only include assets that definitely exist. 
       includeAssets: ['icon.svg'], 
+      devOptions: {
+        enabled: true
+      },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         cleanupOutdatedCaches: true,
@@ -123,25 +126,25 @@ export default defineConfig({
         },
         icons: [
           {
-            src: '/icon.svg',
+            src: 'icon.svg',
             sizes: '192x192',
             type: 'image/svg+xml',
             purpose: 'any'
           },
           {
-            src: '/icon.svg',
+            src: 'icon.svg',
             sizes: '512x512',
             type: 'image/svg+xml',
             purpose: 'any'
           },
           {
-            src: '/icon.svg',
+            src: 'icon.svg',
             sizes: '512x512',
             type: 'image/svg+xml',
             purpose: 'maskable'
           },
           {
-            src: '/icon.svg',
+            src: 'icon.svg',
             sizes: 'any',
             type: 'image/svg+xml',
             purpose: 'any'
@@ -149,14 +152,14 @@ export default defineConfig({
         ],
         screenshots: [
           {
-            src: '/icon.svg',
+            src: 'icon.svg',
             sizes: '1280x720',
             type: 'image/svg+xml',
             form_factor: 'wide',
             label: 'Lumen no Desktop'
           },
           {
-            src: '/icon.svg',
+            src: 'icon.svg',
             sizes: '360x800',
             type: 'image/svg+xml',
             form_factor: 'narrow',
@@ -169,14 +172,14 @@ export default defineConfig({
             short_name: "Turmas",
             description: "Acessar suas turmas diretamente",
             url: "/join_class?utm_source=pwa",
-            icons: [{ src: "/icon.svg", sizes: "192x192", type: "image/svg+xml" }]
+            icons: [{ src: "icon.svg", sizes: "192x192", type: "image/svg+xml" }]
           },
           {
             name: "Ver Atividades",
             short_name: "Atividades",
             description: "Ver atividades pendentes",
             url: "/activities?utm_source=pwa",
-            icons: [{ src: "/icon.svg", sizes: "192x192", type: "image/svg+xml" }]
+            icons: [{ src: "icon.svg", sizes: "192x192", type: "image/svg+xml" }]
           }
         ]
       }
