@@ -369,6 +369,7 @@ export const ModuleMetadataForm: React.FC<ModuleMetadataFormProps> = ({
                                         onChange={e => setHistoricalEra(e.target.value as HistoricalEra || undefined)}
                                     >
                                         <option value="">Selecione...</option>
+                                        <option value="Pré-História">Pré-História</option>
                                         <option value="Antiga">Idade Antiga</option>
                                         <option value="Média">Idade Média</option>
                                         <option value="Moderna">Idade Moderna</option>

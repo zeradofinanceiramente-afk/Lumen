@@ -192,7 +192,7 @@ export interface QuizQuestion {
 export type ModuleStatus = 'Concluído' | 'Em progresso' | 'Não iniciado';
 export type ModuleDownloadState = 'not_downloaded' | 'downloading' | 'downloaded';
 
-export type HistoricalEra = 'Antiga' | 'Média' | 'Moderna' | 'Contemporânea';
+export type HistoricalEra = 'Pré-História' | 'Antiga' | 'Média' | 'Moderna' | 'Contemporânea';
 
 // New Interface for Lesson Plan
 export interface LessonPlan {

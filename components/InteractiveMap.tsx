@@ -12,6 +12,7 @@ import { db } from './firebaseClient';
 // --- Configuration ---
 
 const DEFAULT_BACKGROUNDS: Record<HistoricalEra, string[]> = {
+    'Pré-História': ['https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1600&auto=format&fit=crop'],
     'Antiga': ['https://images.unsplash.com/photo-1599739291060-4578e77dac5d?q=80&w=1600&auto=format&fit=crop'],
     'Média': ['https://images.unsplash.com/photo-1605806616949-1e87b487bc2a?q=80&w=1600&auto=format&fit=crop'],
     'Moderna': ['https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=1600&auto=format&fit=crop'],
@@ -20,6 +21,7 @@ const DEFAULT_BACKGROUNDS: Record<HistoricalEra, string[]> = {
 
 // Color Palettes for Gradient Interpolation
 const ERA_PALETTES: Record<HistoricalEra, { start: string, end: string }> = {
+    'Pré-História': { start: '#8D6E63', end: '#D7CCC8' }, // Brown -> Light Brown
     'Antiga': { start: '#FFD700', end: '#FFF59D' }, // Gold -> Pastel Yellow
     'Média': { start: '#D1C4E9', end: '#D500F9' }, // Pastel Purple -> Neon Purple
     'Moderna': { start: '#C62828', end: '#F48FB1' }, // Imperial Red -> Pinkish
@@ -84,9 +86,15 @@ const TimelineNode: React.FC<{
     const zIndex = 100 - depthIndex * 10;
 
     // Transform Z logic for visual depth
-    // The deeper the item, the smaller it scales and moves up (simulating horizon)
+    // The deeper the item, the smaller it scales and moves up (simulating horizon) due to perspective
     const zTransform = depthIndex === 0 ? 0 : depthIndex === 1 ? -100 : -200;
-    const yOffset = depthIndex === 0 ? 0 : depthIndex === 1 ? -40 : -80; // More vertical spacing
+    
+    // Vertical Staggering via Height instead of Translation
+    // This ensures the anchor point (bottom: 0) always stays on the timeline axis
+    const baseHeight = 350;
+    const heightStagger = depthIndex === 0 ? 0 : depthIndex === 1 ? 60 : 120;
+    const totalHeight = baseHeight + heightStagger;
+
     const blur = depthIndex === 2 ? 'blur-[1px]' : 'blur-none';
     const opacity = depthIndex === 2 ? 'opacity-80' : 'opacity-100';
 
@@ -97,10 +105,10 @@ const TimelineNode: React.FC<{
         <div 
             className={`absolute bottom-0 w-20 flex flex-col items-center justify-end transition-all duration-500 ease-out group/node ${blur} ${opacity}`}
             style={{ 
-                left: `${index * 300 + 150}px`, // Increased horizontal spacing
+                left: `${index * 300 + 150}px`, // Horizontal spacing
                 zIndex,
-                transform: `translate3d(0, ${yOffset}px, ${zTransform}px)`,
-                height: '350px' // Fixed height container to allow line to reach bottom
+                transform: `translate3d(0, 0, ${zTransform}px)`, // No Y translation to keep anchor on line
+                height: `${totalHeight}px`
             }}
         >
             {/* 3D Connector Line (Tether) */}
@@ -115,7 +123,7 @@ const TimelineNode: React.FC<{
 
             {/* Anchor Point (On the Timeline Axis) */}
             <div 
-                className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-5 h-5 rounded-full border-4 bg-slate-900 shadow-[0_0_20px_rgba(255,255,255,0.8)] cursor-pointer transition-transform duration-300 group-hover/node:scale-125 group-hover/node:bg-white z-50 hover:shadow-[0_0_30px_#fff]"
+                className="absolute bottom-[-8px] left-1/2 -translate-x-1/2 w-5 h-5 rounded-full border-4 bg-slate-900 shadow-[0_0_20px_rgba(255,255,255,0.8)] cursor-pointer transition-transform duration-300 group-hover/node:scale-125 group-hover/node:bg-white z-50 hover:shadow-[0_0_30px_#fff]"
                 style={{ borderColor: anchorColor }}
                 onClick={(e) => { e.stopPropagation(); onClick(item); }}
             >
@@ -167,19 +175,19 @@ const BackgroundLayer: React.FC<{
     backgrounds: Record<HistoricalEra, string[]>;
     cameraX: number;
     totalWidth: number;
-}> = ({ eraSections, backgrounds, cameraX, totalWidth }) => {
-    // Parallax Factor: Controls how fast the background moves relative to the camera
-    // 0.2 means background moves at 20% speed of foreground
-    const parallaxFactor = 0.2;
-    const bgOffset = -(cameraX * parallaxFactor);
+    zoom: number;
+}> = ({ eraSections, backgrounds, cameraX, totalWidth, zoom }) => {
+    // Strictly synchronized background (1:1 mapping with content)
+    // Removed parallax factor to ensure strict Era correlation
+    const bgOffset = -cameraX;
 
     return (
         <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
             {/* We create a container that is wide enough to hold all backgrounds */}
             <div 
-                className="absolute top-0 bottom-0 flex will-change-transform"
+                className="absolute top-0 bottom-0 flex will-change-transform origin-top-left"
                 style={{ 
-                    transform: `translateX(${bgOffset}px)`,
+                    transform: `translateX(${bgOffset}px) scale(${zoom})`,
                     width: `${totalWidth}px` // Ensure it spans properly
                 }}
             >
@@ -200,8 +208,8 @@ const BackgroundLayer: React.FC<{
                             ))}
                         </div>
                         
-                        {/* Overlay Gradients for Depth */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-slate-900/50 to-black/80" />
+                        {/* Overlay Gradients for Depth - Lighter for visibility */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/40" />
                         
                         {/* Huge Era Title in Background */}
                         <div className="absolute top-20 left-10 opacity-10">
@@ -251,7 +259,7 @@ const InteractiveMap: React.FC = () => {
                     const data = snap.data();
                     const mergedBgs = { ...DEFAULT_BACKGROUNDS };
                     
-                    ['Antiga', 'Média', 'Moderna', 'Contemporânea'].forEach(era => {
+                    ['Pré-História', 'Antiga', 'Média', 'Moderna', 'Contemporânea'].forEach(era => {
                         // Check if exists and has valid content
                         if (data[era] && Array.isArray(data[era]) && data[era].length > 0 && data[era][0] !== '') {
                             mergedBgs[era as HistoricalEra] = data[era];
@@ -313,7 +321,7 @@ const InteractiveMap: React.FC = () => {
         // Calculate layout
         const sections: { era: HistoricalEra, left: number, width: number, items: TimelineItem[] }[] = [];
         let currentLeft = 0;
-        const ERAS: HistoricalEra[] = ['Antiga', 'Média', 'Moderna', 'Contemporânea'];
+        const ERAS: HistoricalEra[] = ['Pré-História', 'Antiga', 'Média', 'Moderna', 'Contemporânea'];
 
         ERAS.forEach(era => {
             const eraItems = items.filter(i => i.era === era);
@@ -430,12 +438,13 @@ const InteractiveMap: React.FC = () => {
                 </button>
             </div>
 
-            {/* LAYER 1: Background (Parallax Only, No Zoom) */}
+            {/* LAYER 1: Background (Strict Sync, No Parallax) */}
             <BackgroundLayer 
                 eraSections={eraSections} 
                 backgrounds={backgrounds} 
                 cameraX={cameraX} 
                 totalWidth={totalWidth} 
+                zoom={zoom}
             />
 
             {/* LAYER 2: World Content (Zoom + Pan) */}
@@ -461,9 +470,9 @@ const InteractiveMap: React.FC = () => {
                     }}
                 />
 
-                {/* 2.2 THE TIMELINE AXIS (The central line) */}
+                {/* 2.2 THE TIMELINE AXIS (The central line) - Elevated */}
                 <div 
-                    className="absolute bottom-[30px] left-0 right-0 h-[4px] z-20 pointer-events-none bg-indigo-500/50 shadow-[0_0_20px_#6366f1]"
+                    className="absolute bottom-[120px] left-0 right-0 h-[4px] z-20 pointer-events-none bg-indigo-500/50 shadow-[0_0_20px_#6366f1]"
                     style={{
                         background: 'linear-gradient(90deg, transparent 0%, #6366f1 10%, #a855f7 50%, #6366f1 90%, transparent 100%)',
                         width: `${totalWidth}px`
@@ -471,7 +480,7 @@ const InteractiveMap: React.FC = () => {
                 />
 
                 {/* 2.3 Items Layer (Mapped strictly to avoid duplicates) */}
-                <div className="absolute top-0 bottom-[34px] left-0 right-0 z-30 pointer-events-none" style={{ perspective: '1000px' }}>
+                <div className="absolute top-0 bottom-[120px] left-0 right-0 z-30 pointer-events-none" style={{ perspective: '1000px' }}>
                     {eraSections.map(section => (
                         <div key={section.era} className="absolute top-0 bottom-0 pointer-events-auto" style={{ left: section.left, width: section.width }}>
                             {section.items.map((item, idx) => (

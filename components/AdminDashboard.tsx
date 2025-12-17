@@ -54,6 +54,7 @@ const Skeleton: React.FC<{ className?: string }> = ({ className }) => (
 const MapConfigModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
     const { addToast } = useToast();
     const [backgrounds, setBackgrounds] = useState<Record<string, string>>({
+        'Pré-História': '',
         'Antiga': '',
         'Média': '',
         'Moderna': '',
@@ -73,7 +74,7 @@ const MapConfigModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
                         // Mapeia para formato simples (pega apenas a primeira URL se for array antigo)
                         const data = snap.data();
                         const newBgs: any = {};
-                        ['Antiga', 'Média', 'Moderna', 'Contemporânea'].forEach(era => {
+                        ['Pré-História', 'Antiga', 'Média', 'Moderna', 'Contemporânea'].forEach(era => {
                             const val = data[era];
                             newBgs[era] = Array.isArray(val) ? val[0] : (val || '');
                         });
@@ -125,7 +126,7 @@ const MapConfigModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
                     <div className="flex justify-center py-8"><SpinnerIcon className="h-8 w-8 text-indigo-500" /></div>
                 ) : (
                     <>
-                        {(['Antiga', 'Média', 'Moderna', 'Contemporânea'] as const).map(era => (
+                        {(['Pré-História', 'Antiga', 'Média', 'Moderna', 'Contemporânea'] as const).map(era => (
                             <InputField key={era} label={`Idade ${era} (URL da Imagem)`}>
                                 <div className="flex gap-2 items-center">
                                     <input 
