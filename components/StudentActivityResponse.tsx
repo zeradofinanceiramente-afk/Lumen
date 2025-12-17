@@ -5,10 +5,13 @@ import { useNavigation } from '../contexts/NavigationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useStudentAcademic } from '../contexts/StudentAcademicContext';
 import type { Activity, ActivityItem, ActivitySubmission } from '../types';
-import { SpinnerIcon } from '../constants/index';
+import { SpinnerIcon, ICONS } from '../constants/index';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from './firebaseClient';
 import { useToast } from '../contexts/ToastContext';
+import { storage } from './firebaseStorage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { compressImage } from '../utils/imageCompression';
 
 const StudentActivityResponse: React.FC = () => {
     const { activeActivity, setCurrentPage } = useNavigation();
@@ -22,6 +25,10 @@ const StudentActivityResponse: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [answers, setAnswers] = useState<Record<string, string>>({});
+    
+    // File Upload State
+    const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
 
     // Fetch Fresh Data on Mount
     useEffect(() => {
@@ -90,23 +97,71 @@ const StudentActivityResponse: React.FC = () => {
         setAnswers(prev => ({ ...prev, [itemId]: value }));
     };
 
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            setUploadedFiles(Array.from(e.target.files));
+        }
+    };
+
     const handleSubmit = async () => {
-        if (!activity) return;
+        if (!activity || !user) return;
         
         // Validation
         const unanswered = items.some(item => !answers[item.id] || answers[item.id].trim() === '');
-        if (unanswered) {
+        const hasFiles = uploadedFiles.length > 0;
+        
+        // Se a atividade permite upload, não é obrigatório ter texto se tiver arquivo
+        if (activity.allowFileUpload && hasFiles) {
+            // Valid
+        } else if (items.length > 0 && unanswered) {
             if (!window.confirm("Existem questões em branco. Deseja enviar mesmo assim?")) return;
+        } else if (items.length === 0 && !hasFiles && activity.allowFileUpload) {
+             addToast("Por favor, anexe um arquivo para enviar.", "error");
+             return;
         }
 
         setIsSubmitting(true);
         try {
-            await handleActivitySubmit(activity.id, JSON.stringify(answers));
+            // Handle File Uploads first
+            let submittedFilesPayload: { name: string, url: string }[] = [];
+            
+            if (hasFiles) {
+                setIsUploading(true);
+                addToast("Enviando arquivos...", "info");
+                for (const file of uploadedFiles) {
+                    // Compress if image
+                    const fileToUpload = await compressImage(file);
+                    const storageRef = ref(storage, `student_submissions/${activity.id}/${user.id}/${Date.now()}-${fileToUpload.name}`);
+                    await uploadBytes(storageRef, fileToUpload);
+                    const url = await getDownloadURL(storageRef);
+                    submittedFilesPayload.push({ name: file.name, url });
+                }
+                setIsUploading(false);
+            }
+
+            // Create JSON content including file metadata if needed, usually passed as separate field in mutation
+            // We'll augment the context/hook to handle `submittedFiles`
+            // For now, let's pass a JSON string that might include file references if the backend expects it in content,
+            // OR ideally update `handleActivitySubmit` to accept a files array.
+            // Since we can't easily change the context signature without breaking other things, 
+            // let's embed file info in the `answers` JSON if it's an "File Upload Activity" or store in dedicated field via hack.
+            
+            // Actually, we'll update the hook in `useStudentContent` implicitly by passing a structured object if possible?
+            // No, `handleActivitySubmit` takes `content: string`. 
+            // We will stringify a special object if files are present.
+            
+            const submissionPayload = {
+                answers,
+                submittedFiles: submittedFilesPayload
+            };
+
+            await handleActivitySubmit(activity.id, JSON.stringify(submissionPayload));
             setCurrentPage('activities');
-        } catch (error) {
-            // Error handled in context
+        } catch (error: any) {
+            addToast(`Erro ao enviar: ${error.message}`, "error");
         } finally {
             setIsSubmitting(false);
+            setIsUploading(false);
         }
     };
 
@@ -128,6 +183,26 @@ const StudentActivityResponse: React.FC = () => {
                 <p className="mt-4 text-slate-500">Carregando atividade...</p>
             </div>
         );
+    }
+
+    // Check if submission content is our new structured JSON or legacy
+    let parsedContent: any = {};
+    let submittedFilesList: {name: string, url: string}[] = [];
+    
+    if (submission) {
+        try {
+            const parsed = JSON.parse(submission.content);
+            if (parsed.submittedFiles) {
+                // New Format
+                parsedContent = parsed.answers || {};
+                submittedFilesList = parsed.submittedFiles;
+            } else {
+                // Standard Answer Map
+                parsedContent = parsed;
+            }
+        } catch {
+            // Legacy text
+        }
     }
 
     const isLegacySubmission = submission && submission.content && !submission.content.startsWith('{');
@@ -177,6 +252,22 @@ const StudentActivityResponse: React.FC = () => {
                         <img src={activity.imageUrl} alt="Referência da atividade" className="rounded-lg max-h-96 object-contain bg-slate-50 dark:bg-slate-900 border dark:border-slate-700" />
                     </div>
                 )}
+                
+                {activity?.attachmentFiles && activity.attachmentFiles.length > 0 && (
+                    <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Materiais de Apoio</h4>
+                        <ul className="space-y-2">
+                            {activity.attachmentFiles.map((file, idx) => (
+                                <li key={idx}>
+                                    <a href={file.url} target="_blank" rel="noopener noreferrer" className="flex items-center text-indigo-600 hover:underline text-sm">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                                        {file.name}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
             </Card>
 
             {/* Submission Status & Feedback (If submitted) */}
@@ -215,6 +306,24 @@ const StudentActivityResponse: React.FC = () => {
                 </div>
             )}
 
+            {/* Submitted Files (If any) */}
+            {submittedFilesList.length > 0 && (
+                <Card>
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        Arquivos Enviados
+                    </h3>
+                    <ul className="space-y-3">
+                        {submittedFilesList.map((file, idx) => (
+                            <li key={idx} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded border dark:border-slate-700">
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{file.name}</span>
+                                <a href={file.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 text-sm font-bold">Download</a>
+                            </li>
+                        ))}
+                    </ul>
+                </Card>
+            )}
+
             {/* Questions List */}
             <div className="space-y-6">
                 {items.map((item, idx) => {
@@ -222,13 +331,9 @@ const StudentActivityResponse: React.FC = () => {
                     let userAnswer = answers[item.id] || '';
                     if (submission) {
                         if (isLegacySubmission) {
-                            // Can't map legacy text blob to individual items easily without complex parsing
-                            // handled separately below
+                            // Can't map legacy text blob to individual items easily
                         } else {
-                            try {
-                                const parsed = JSON.parse(submission.content);
-                                userAnswer = parsed[item.id];
-                            } catch {}
+                            userAnswer = parsedContent[item.id];
                         }
                     }
 
@@ -338,6 +443,38 @@ const StudentActivityResponse: React.FC = () => {
                 )}
             </div>
 
+            {/* File Upload Section (If allowed and not submitted) */}
+            {!submission && activity?.allowFileUpload && (
+                <Card className="border-t-4 border-blue-500">
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                        Enviar Arquivo
+                    </h3>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600 dark:text-slate-300">
+                            Você pode anexar fotos do caderno, documentos ou trabalhos para esta atividade.
+                        </p>
+                        <input 
+                            type="file" 
+                            multiple 
+                            onChange={handleFileSelect} 
+                            className="block w-full text-sm text-slate-500
+                            file:mr-4 file:py-2 file:px-4
+                            file:rounded-full file:border-0
+                            file:text-sm file:font-semibold
+                            file:bg-blue-50 file:text-blue-700
+                            hover:file:bg-blue-100
+                            dark:file:bg-blue-900/30 dark:file:text-blue-300"
+                        />
+                        {uploadedFiles.length > 0 && (
+                            <ul className="list-disc list-inside text-sm text-slate-600 dark:text-slate-300">
+                                {uploadedFiles.map((f, i) => <li key={i}>{f.name}</li>)}
+                            </ul>
+                        )}
+                    </div>
+                </Card>
+            )}
+
             {/* Feedback Section */}
             {submission?.feedback && (
                 <div className="mt-8 p-6 bg-blue-50 dark:bg-blue-900/10 rounded-xl border-l-4 border-blue-500 shadow-sm animate-fade-in">
@@ -354,10 +491,10 @@ const StudentActivityResponse: React.FC = () => {
                 <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t dark:border-slate-700 flex justify-center z-10">
                     <button
                         onClick={handleSubmit}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isUploading}
                         className="w-full max-w-md py-4 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center"
                     >
-                        {isSubmitting ? <SpinnerIcon className="h-6 w-6" /> : <span className="text-lg">Enviar Atividade</span>}
+                        {isSubmitting || isUploading ? <SpinnerIcon className="h-6 w-6" /> : <span className="text-lg">Enviar Atividade</span>}
                     </button>
                 </div>
             )}

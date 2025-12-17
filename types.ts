@@ -1,5 +1,5 @@
 
-export type Role = 'aluno' | 'professor' | 'admin' | null;
+export type Role = 'aluno' | 'professor' | 'admin' | 'direcao' | 'responsavel' | 'secretaria' | null;
 
 export type BadgeTier = 'bronze' | 'silver' | 'gold';
 
@@ -20,6 +20,8 @@ export interface User {
   series?: string;
   avatarUrl?: string;
   myClassesSummary?: ClassSummary[]; // New field for optimized loading
+  wards?: string[]; // IDs of students managed by a 'responsavel'
+  linkedSchoolIds?: string[]; // IDs of schools (Directors) managed by 'secretaria'
 }
 
 export type UserStatus = 'Ativo' | 'Pendente' | 'Inativo';
@@ -52,7 +54,8 @@ export interface UserGamificationStats {
   modulesCompleted: number;
   activitiesCompleted: number;
   loginStreak: number;
-  [key: string]: number; // Extensible
+  lastLoginDate?: string; // Track day for streak calculation
+  [key: string]: any; // Extensible
 }
 
 export interface UserAchievementsDoc {
@@ -96,6 +99,7 @@ export interface UserStats {
   level: number;
   xpForNextLevel: number;
   levelName: string;
+  streak: number; // Current daily streak
 }
 
 // FIX: Added Page type export to resolve import errors across the application.
@@ -112,6 +116,7 @@ export type Page =
   | 'module_view'
   | 'boletim'
   | 'student_activity_view' // NEW PAGE
+  | 'interactive_map' // NEW PAGE: TIMELINE
   // Teacher
   | 'teacher_dashboard'
   | 'teacher_main_dashboard'
@@ -124,6 +129,15 @@ export type Page =
   | 'teacher_module_repository' // New Page for Module Drafts
   | 'teacher_grading_view' // NEW PAGE FOR GRADING
   | 'class_view'
+  // Direction (New)
+  | 'director_dashboard'
+  | 'director_teachers'
+  // Secretariat (New)
+  | 'secretariat_dashboard'
+  | 'secretariat_schools'
+  | 'secretariat_statistics'
+  // Guardian (New)
+  | 'guardian_dashboard'
   // Admin
   | 'admin_dashboard'
   | 'admin_users'
@@ -177,6 +191,18 @@ export interface QuizQuestion {
 export type ModuleStatus = 'Concluído' | 'Em progresso' | 'Não iniciado';
 export type ModuleDownloadState = 'not_downloaded' | 'downloading' | 'downloaded';
 
+export type HistoricalEra = 'Antiga' | 'Média' | 'Moderna' | 'Contemporânea';
+
+// New Interface for Lesson Plan
+export interface LessonPlan {
+  objectives: string;
+  methodology: string;
+  resources: string;
+  evaluation: string;
+  bncc?: string;
+  thematicUnit?: string;
+}
+
 export interface Module {
   id: string;
   title: string;
@@ -197,6 +223,14 @@ export interface Module {
   status?: 'Ativo' | 'Inativo' | 'Rascunho'; // Added Rascunho
   progress?: number; // 0-100
   downloadState?: ModuleDownloadState;
+  
+  // Timeline Fields
+  historicalYear?: number;
+  historicalEra?: HistoricalEra;
+
+  // Lesson Plan Field
+  lessonPlan?: LessonPlan;
+
   // Admin fields
   date?: string;
   createdAt?: any;
@@ -221,9 +255,9 @@ export interface Quiz {
 }
 
 // Activity Types
-export type ActivityType = 'Mista' | 'Tarefa (Texto)' | 'Múltipla Escolha'; // Legacy support included
+export type ActivityType = 'Mista' | 'Tarefa (Texto)' | 'Múltipla Escolha' | 'Envio de Arquivo'; 
 
-export type ActivityItemType = 'text' | 'multiple_choice';
+export type ActivityItemType = 'text' | 'multiple_choice' | 'file_upload';
 
 export interface ActivityItem {
   id: string;
@@ -243,6 +277,7 @@ export interface ActivitySubmission {
   submissionDate: string;
   content: string; // Legacy text content or JSON string of answers
   answers?: Record<string, string>; // Map<ItemId, Answer (Text or OptionID)>
+  submittedFiles?: { name: string; url: string }[]; // New: For Student Uploads
   status: 'Aguardando correção' | 'Corrigido' | 'Pendente Envio'; // Adicionado 'Pendente Envio' para offline
   grade?: number;
   feedback?: string;
@@ -274,7 +309,12 @@ export interface Activity {
   attachments?: File[];
   attachmentFiles?: { name: string; url: string }[];
   imageUrl?: string;
+  allowFileUpload?: boolean; // New: Allow students to upload files
   
+  // Timeline Fields
+  historicalYear?: number;
+  historicalEra?: HistoricalEra;
+
   // Legacy fields (to maintain backward compatibility if needed, though items[] is preferred)
   questions?: QuizQuestion[]; 
   
@@ -337,9 +377,12 @@ export interface TeacherClass {
   isArchived?: boolean; // New Flag: Class is concluded/archived
 }
 
-// Class Invitation Type (Fase 4 - Confirmação)
+// Invitation Types
+export type InvitationType = 'class_co_teacher' | 'guardian_access_request';
+
 export interface ClassInvitation {
   id: string;
+  type: 'class_co_teacher';
   classId: string;
   className: string;
   inviterId: string;
@@ -347,6 +390,16 @@ export interface ClassInvitation {
   inviteeId: string;
   inviteeEmail: string;
   subject: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  timestamp: string;
+}
+
+export interface GuardianInvitation {
+  id: string;
+  type: 'guardian_access_request';
+  inviterId: string; // Guardian
+  inviterName: string;
+  inviteeId: string; // Student
   status: 'pending' | 'accepted' | 'rejected';
   timestamp: string;
 }
@@ -430,4 +483,13 @@ export interface OfflineAction {
     timestamp: number;
     retryCount?: number; // Para lógica de retry
     lastError?: string; // Para debug
+}
+
+// Secretariat Types
+export interface SchoolData {
+    id: string;
+    name: string; // Name of the Director/School
+    email: string;
+    totalClasses: number;
+    totalStudents: number;
 }

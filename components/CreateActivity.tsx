@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import type { Activity, ActivityItem, ActivityItemType, Unidade } from '../types';
+import type { Activity, ActivityItem, ActivityItemType, Unidade, HistoricalEra } from '../types';
 import { Card } from './common/Card';
 import { ICONS, SpinnerIcon } from '../constants/index';
 import { useTeacherAcademicContext } from '../contexts/TeacherAcademicContext';
@@ -11,7 +11,7 @@ import { storage } from './firebaseStorage';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from '../contexts/AuthContext';
 import { compressImage } from '../utils/imageCompression';
-import { InputField } from './common/FormHelpers';
+import { InputField, SelectField } from './common/FormHelpers';
 
 const CreateActivity: React.FC = () => {
     // Hooks
@@ -31,6 +31,12 @@ const CreateActivity: React.FC = () => {
     const [dueDate, setDueDate] = useState('');
     const [isVisible, setIsVisible] = useState(true);
     const [allowLateSubmissions, setAllowLateSubmissions] = useState(true);
+    const [allowFileUpload, setAllowFileUpload] = useState(false);
+    
+    // Timeline State
+    const [historicalYear, setHistoricalYear] = useState<number | undefined>(undefined);
+    const [historicalEra, setHistoricalEra] = useState<HistoricalEra | undefined>(undefined);
+
     const [attachments, setAttachments] = useState<File[]>([]);
     const [items, setItems] = useState<ActivityItem[]>([]);
     const [gradingMode, setGradingMode] = useState<'automatic' | 'manual'>('automatic');
@@ -52,6 +58,9 @@ const CreateActivity: React.FC = () => {
             setDueDate(editingActivity.dueDate || '');
             setIsVisible(editingActivity.isVisible);
             setAllowLateSubmissions(editingActivity.allowLateSubmissions);
+            setAllowFileUpload(editingActivity.allowFileUpload || false);
+            setHistoricalYear(editingActivity.historicalYear);
+            setHistoricalEra(editingActivity.historicalEra);
             
             if (editingActivity.items && editingActivity.items.length > 0) {
                 setItems(editingActivity.items);
@@ -130,7 +139,12 @@ const CreateActivity: React.FC = () => {
     const handleSave = async (isDraft: boolean = false) => {
         if (!title || !description || isSubmitting || isSubmittingContent || !user) return;
         if (!isDraft && !selectedClassId) { addToast('Selecione uma turma para publicar.', 'error'); return; }
-        if (items.length === 0) { addToast('Adicione pelo menos uma questão.', 'error'); return; }
+        
+        // Validation: At least one item OR allow file upload
+        if (items.length === 0 && !allowFileUpload) { 
+            addToast('Adicione questões ou habilite o envio de arquivo.', 'error'); 
+            return; 
+        }
 
         setIsSubmitting(true);
 
@@ -160,7 +174,7 @@ const CreateActivity: React.FC = () => {
 
             const activityData: Partial<Activity> = {
                 title, description, imageUrl,
-                type: 'Mista',
+                type: allowFileUpload && items.length === 0 ? 'Envio de Arquivo' : 'Mista',
                 items,
                 gradingConfig: { objectiveQuestions: gradingMode },
                 points: totalPoints,
@@ -169,6 +183,9 @@ const CreateActivity: React.FC = () => {
                 creatorId: user.id, creatorName: user.name,
                 unidade, materia, isVisible, allowLateSubmissions,
                 attachmentFiles: attachmentPayload,
+                allowFileUpload,
+                historicalYear,
+                historicalEra
             };
 
             if (dueDate) activityData.dueDate = dueDate;
@@ -260,6 +277,35 @@ const CreateActivity: React.FC = () => {
                                     </select>
                                 </InputField>
                             </div>
+
+                            {/* Timeline Fields */}
+                            <div className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
+                                <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-3">Linha do Tempo (Mapa Interativo)</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <InputField label="Ano Histórico (Opcional)" helperText="Use números negativos para a.C (Ex: -476)">
+                                        <input 
+                                            type="number" 
+                                            value={historicalYear !== undefined ? historicalYear : ''} 
+                                            onChange={e => setHistoricalYear(e.target.value === '' ? undefined : Number(e.target.value))} 
+                                            className="w-full p-2 border border-gray-300 rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                                            placeholder="Ex: 1500"
+                                            disabled={isSubmitting}
+                                        />
+                                    </InputField>
+                                    <InputField label="Era Histórica (Opcional)">
+                                        <SelectField 
+                                            value={historicalEra || ''} 
+                                            onChange={e => setHistoricalEra(e.target.value as HistoricalEra || undefined)}
+                                        >
+                                            <option value="">Selecione...</option>
+                                            <option value="Antiga">Idade Antiga</option>
+                                            <option value="Média">Idade Média</option>
+                                            <option value="Moderna">Idade Moderna</option>
+                                            <option value="Contemporânea">Idade Contemporânea</option>
+                                        </SelectField>
+                                    </InputField>
+                                </div>
+                            </div>
                         </div>
                     </Card>
 
@@ -278,7 +324,7 @@ const CreateActivity: React.FC = () => {
 
                         {items.length === 0 && (
                             <div className="text-center py-10 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl">
-                                <p className="text-slate-500">Nenhuma questão adicionada. Adicione questões de texto ou múltipla escolha acima.</p>
+                                <p className="text-slate-500">Nenhuma questão adicionada. Use os botões acima ou habilite o envio de arquivos.</p>
                             </div>
                         )}
 
@@ -396,6 +442,12 @@ const CreateActivity: React.FC = () => {
 
                             <div className="pt-4 border-t dark:border-slate-700 space-y-2">
                                 <label className="flex items-center">
+                                    <input type="checkbox" checked={allowFileUpload} onChange={e => setAllowFileUpload(e.target.checked)} className="rounded text-indigo-600" />
+                                    <span className="ml-2 text-sm font-semibold dark:text-slate-300">Permitir Envio de Arquivo</span>
+                                </label>
+                                <p className="text-xs text-slate-500 ml-6">Habilita upload de imagens/PDFs para o aluno.</p>
+
+                                <label className="flex items-center mt-3">
                                     <input type="checkbox" checked={isVisible} onChange={e => setIsVisible(e.target.checked)} className="rounded text-indigo-600" />
                                     <span className="ml-2 text-sm dark:text-slate-300">Visível para alunos</span>
                                 </label>

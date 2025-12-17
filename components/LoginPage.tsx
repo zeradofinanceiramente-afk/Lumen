@@ -1,14 +1,16 @@
 
 
 
+
+
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { SpinnerIcon } from '../constants/index';
 
 const Logo: React.FC = () => (
     <div className="flex flex-col items-center justify-center">
-        <div className="w-24 h-24 bg-white rounded-full shadow-lg flex items-center justify-center border-4 border-slate-200 dark:border-slate-700">
-            <span className="text-5xl" role="img" aria-label="Logo da Lumen">🎓</span>
+        <div className="w-24 h-24 bg-white rounded-full shadow-lg flex items-center justify-center border-4 border-slate-200 dark:border-slate-700 p-4">
+             <img src="/icons/icon-192.png" alt="Lumen Logo" className="w-full h-full object-contain" />
         </div>
     </div>
 );

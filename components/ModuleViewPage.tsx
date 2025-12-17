@@ -1,10 +1,10 @@
 
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useContext } from 'react';
 import type { ModulePage } from '../types';
 import { Card } from './common/Card';
 import { useNavigation } from '../contexts/NavigationContext';
-import { useStudentAcademic } from '../contexts/StudentAcademicContext';
-import { useTeacherAcademicContext } from '../contexts/TeacherAcademicContext';
+import { StudentAcademicContext } from '../contexts/StudentAcademicContext';
+import { TeacherAcademicContext } from '../contexts/TeacherAcademicContext';
 import { useAuth } from '../contexts/AuthContext';
 import { SpinnerIcon } from '../constants/index';
 import { doc, getDoc } from 'firebase/firestore';
@@ -21,21 +21,12 @@ const ModuleViewPage: React.FC = () => {
     const { userRole } = useAuth();
     const { addToast } = useToast();
     
-    let studentData: any = {};
-    if (userRole === 'aluno') {
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        studentData = useStudentAcademic();
-    }
-    
-    let teacherData: any = {};
-    if (userRole === 'professor') {
-        try {
-            // eslint-disable-next-line react-hooks/rules-of-hooks
-            teacherData = useTeacherAcademicContext();
-        } catch { /* context might not be ready */ }
-    }
+    // Use contexts directly to avoid hook errors and allow safe fallback
+    const studentContext = useContext(StudentAcademicContext);
+    const teacherContext = useContext(TeacherAcademicContext);
 
-    const dataContext = userRole === 'aluno' ? studentData : teacherData;
+    // Determine which context to use based on role (and availability)
+    const dataContext: any = userRole === 'aluno' ? studentContext : teacherContext;
     
     const handleModuleComplete = dataContext?.handleModuleComplete || (async () => {});
     const handleModuleProgressUpdate = dataContext?.handleModuleProgressUpdate || (async () => {});

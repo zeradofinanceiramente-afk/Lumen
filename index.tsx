@@ -3,9 +3,6 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 
-// NOTE: PWA registration logic removed for preview compatibility.
-// In a full build environment, the service worker is handled by the build tool.
-
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error("Could not find root element to mount to");

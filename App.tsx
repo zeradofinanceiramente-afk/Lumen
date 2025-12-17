@@ -14,7 +14,7 @@ import './styles/themes.css';
 
 // Providers
 import { AppProviders } from './components/AppProviders';
-import { StudentContextWrapper, TeacherContextWrapper, AdminContextWrapper } from './components/RoleContextWrappers';
+import { StudentContextWrapper, TeacherContextWrapper, AdminContextWrapper, SecretariatContextWrapper } from './components/RoleContextWrappers';
 
 // Lazy-loaded page components
 const Modules = lazy(() => import('./components/Modules'));
@@ -27,6 +27,7 @@ const Profile = lazy(() => import('./components/Profile'));
 const NotificationsPage = lazy(() => import('./components/NotificationsPage'));
 const ModuleViewPage = lazy(() => import('./components/ModuleViewPage'));
 const Boletim = lazy(() => import('./components/Boletim'));
+const InteractiveMap = lazy(() => import('./components/InteractiveMap'));
 
 // Teacher Components
 const TeacherDashboard = lazy(() => import('./components/TeacherDashboard'));
@@ -39,6 +40,15 @@ const SchoolRecords = lazy(() => import('./components/SchoolRecords'));
 const ClassView = lazy(() => import('./components/ClassView'));
 const TeacherRepository = lazy(() => import('./components/TeacherRepository'));
 const TeacherModuleRepository = lazy(() => import('./components/TeacherModuleRepository'));
+
+// Director Components
+const DirectorDashboard = lazy(() => import('./components/DirectorDashboard'));
+
+// Secretariat Components
+const SecretariatDashboard = lazy(() => import('./components/SecretariatDashboard'));
+
+// Guardian Components
+const GuardianDashboard = lazy(() => import('./components/GuardianDashboard'));
 
 // Admin Components
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
@@ -61,11 +71,17 @@ const PAGE_TITLES: Record<string, string> = {
     profile: 'Meu Perfil',
     notifications: 'Notificações',
     boletim: 'Boletim',
+    interactive_map: 'Mapa Interativo',
     teacher_dashboard: 'Minhas Turmas',
-    teacher_statistics: 'Estatísticas do Professor',
+    teacher_statistics: 'Estatísticas',
     teacher_school_records: 'Histórico Escolar',
     teacher_repository: 'Banco de Questões',
     teacher_module_repository: 'Banco de Módulos',
+    director_dashboard: 'Painel da Direção',
+    secretariat_dashboard: 'Painel da Secretaria',
+    secretariat_schools: 'Monitoramento de Escolas',
+    secretariat_statistics: 'Estatísticas Estaduais',
+    guardian_dashboard: 'Painel do Responsável',
     admin_dashboard: 'Painel do Administrador',
     admin_users: 'Gerenciar Usuários',
     admin_modules: 'Gerenciar Módulos',
@@ -115,6 +131,11 @@ const useKeyboardShortcuts = () => {
                     else if (key === 'p') targetPage = 'profile';
                     else if (key === 'n') targetPage = 'notifications';
                     else if (key === 'r') targetPage = 'teacher_repository';
+                } else if (userRole === 'direcao') {
+                    if (key === 'd') targetPage = 'director_dashboard';
+                    if (key === 'e') targetPage = 'teacher_statistics';
+                } else if (userRole === 'secretaria') {
+                    if (key === 's') targetPage = 'secretariat_dashboard';
                 }
 
                 if (targetPage) {
@@ -168,6 +189,36 @@ const MainLayout: React.FC = () => {
             }
         }
 
+        if (userRole === 'direcao') {
+            switch (currentPage) {
+                case 'director_dashboard': return <DirectorDashboard />;
+                case 'class_view': return <ClassView />; // Allow entering classes
+                case 'teacher_statistics': return <TeacherStatistics />; // Shared View
+                case 'teacher_school_records': return <SchoolRecords />; // Shared View
+                case 'modules': return <Modules />;
+                case 'module_view': return activeModule ? <ModuleViewPage /> : <Modules />;
+                case 'profile': return <Profile />;
+                default: return <DirectorDashboard />;
+            }
+        }
+
+        if (userRole === 'secretaria') {
+            switch (currentPage) {
+                case 'secretariat_dashboard': return <SecretariatDashboard />;
+                case 'secretariat_schools': return <SecretariatDashboard />; // Use main dash for now, expand later
+                case 'profile': return <Profile />;
+                default: return <SecretariatDashboard />;
+            }
+        }
+
+        if (userRole === 'responsavel') {
+            switch (currentPage) {
+                case 'guardian_dashboard': return <GuardianDashboard />;
+                case 'profile': return <Profile />;
+                default: return <GuardianDashboard />;
+            }
+        }
+
         if (userRole === 'professor') {
             switch (currentPage) {
                 case 'teacher_dashboard': return <TeacherDashboard />;
@@ -182,8 +233,9 @@ const MainLayout: React.FC = () => {
                 case 'class_view': return <ClassView />;
                 case 'teacher_grading_view': return gradingActivity ? <TeacherGradingView /> : <PendingActivities />;
                 case 'profile': return <Profile />;
-                case 'notifications': return <TeacherDashboard />;
+                case 'notifications': return <TeacherDashboard />; // Fallback
                 case 'module_view': return activeModule ? <ModuleViewPage /> : <Modules />;
+                case 'interactive_map': return <InteractiveMap />;
                 default: return <TeacherDashboard />;
             }
         }
@@ -197,6 +249,7 @@ const MainLayout: React.FC = () => {
             case 'profile': return <Profile />;
             case 'notifications': return <NotificationsPage />;
             case 'boletim': return <Boletim />;
+            case 'interactive_map': return <InteractiveMap />;
             case 'module_view': return activeModule ? <ModuleViewPage /> : <Modules />;
             case 'student_activity_view': return activeActivity ? <StudentActivityResponse /> : <Activities />;
             case 'dashboard': return <Modules />;
@@ -243,15 +296,23 @@ const AuthenticatedAppContent = () => {
                     <MainLayout />
                 </StudentContextWrapper>
             )}
-            {userRole === 'professor' && (
+            {/* Reuse Teacher Context for Director for shared components like School Records */}
+            {(userRole === 'professor' || userRole === 'direcao') && (
                 <TeacherContextWrapper>
                     <MainLayout />
                 </TeacherContextWrapper>
             )}
-            {userRole === 'admin' && (
+            {/* Guardians and Admins don't strictly require complex contexts initially, but we can wrap them if needed. 
+                Guardians will manage data inside their dashboard for simplicity in this iteration. */}
+            {(userRole === 'admin' || userRole === 'responsavel') && (
                 <AdminContextWrapper>
                     <MainLayout />
                 </AdminContextWrapper>
+            )}
+            {userRole === 'secretaria' && (
+                <SecretariatContextWrapper>
+                    <MainLayout />
+                </SecretariatContextWrapper>
             )}
         </NavigationProvider>
     );

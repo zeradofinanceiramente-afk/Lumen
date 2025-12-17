@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children?: ReactNode }) {
     const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
     const [authError, setAuthError] = useState<string | null>(null);
 
-    // This function ensures the teacher_history document exists for a professor.
+    // This function ensures the teacher_history document exists for a professor OR direction.
     const ensureTeacherHistoryDoc = async (firebaseUser: FirebaseUser) => {
         const historyRef = doc(db, "teacher_history", firebaseUser.uid);
         const snap = await getDoc(historyRef);
@@ -81,8 +81,8 @@ export function AuthProvider({ children }: { children?: ReactNode }) {
                         setUser(appUser);
                         setAuthState('authenticated');
 
-                        // Ensure teacher history exists for existing professors
-                        if (appUser.role === 'professor') {
+                        // Ensure teacher history exists for existing professors or direction
+                        if (appUser.role === 'professor' || appUser.role === 'direcao') {
                             await ensureTeacherHistoryDoc(user);
                         }
 
@@ -225,8 +225,8 @@ export function AuthProvider({ children }: { children?: ReactNode }) {
         try {
             await setDoc(userDocRef, userProfile);
             
-            // Ensure teacher history is created for new professors
-            if (role === 'professor') {
+            // Ensure teacher history is created for new professors or direction
+            if (role === 'professor' || role === 'direcao') {
                 await ensureTeacherHistoryDoc(firebaseUser);
             }
 

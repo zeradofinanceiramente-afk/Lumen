@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import type { Module, ModulePage, ModulePageContent, ModulePageContentType } from '../../types';
+import type { Module, ModulePage, ModulePageContent, ModulePageContentType, HistoricalEra, LessonPlan } from '../../types';
 import { ICONS, SpinnerIcon } from '../../constants/index';
 import { useToast } from '../../contexts/ToastContext';
 import { doc, getDoc } from 'firebase/firestore';
@@ -72,6 +72,19 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
     const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
     
+    // Timeline Meta
+    const [historicalYear, setHistoricalYear] = useState<number | undefined>(undefined);
+    const [historicalEra, setHistoricalEra] = useState<HistoricalEra | undefined>(undefined);
+    
+    // Lesson Plan State
+    const [lessonPlan, setLessonPlan] = useState<LessonPlan>({
+        objectives: '',
+        methodology: '',
+        resources: '',
+        evaluation: '',
+        bncc: ''
+    });
+
     const [isLoadingContent, setIsLoadingContent] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
 
@@ -88,7 +101,14 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({
             setVideoUrl(initialData.videoUrl || '');
             setDifficulty(initialData.difficulty || 'Fácil');
             setDuration(initialData.duration || '');
+            setHistoricalYear(initialData.historicalYear);
+            setHistoricalEra(initialData.historicalEra);
             
+            // Initializing Lesson Plan
+            if (initialData.lessonPlan) {
+                setLessonPlan(initialData.lessonPlan);
+            }
+
             if (Array.isArray(initialData.series)) {
                 setSelectedSeries(initialData.series);
             } else if (initialData.series) {
@@ -134,6 +154,7 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({
              setSelectedSubjects(defaultSubjects);
              setPages([{ id: Date.now(), title: 'Página 1', content: [] }]);
              setSelectedClassIds([]);
+             setLessonPlan({ objectives: '', methodology: '', resources: '', evaluation: '', bncc: '' });
         }
     }, [initialData, defaultSeries, defaultSubjects, addToast, setPages]);
 
@@ -262,7 +283,10 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({
             series: selectedSeries,
             materia: selectedSubjects,
             subjects: selectedSubjects,
-            classIds: selectedClassIds // Include selected classes in payload
+            classIds: selectedClassIds,
+            historicalYear,
+            historicalEra,
+            lessonPlan // Include Lesson Plan data
         };
 
         await onSave(moduleData, isDraft);
@@ -303,6 +327,9 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({
                 availableClasses={availableClasses}
                 selectedClassIds={selectedClassIds}
                 setSelectedClassIds={setSelectedClassIds}
+                historicalYear={historicalYear} setHistoricalYear={setHistoricalYear}
+                historicalEra={historicalEra} setHistoricalEra={setHistoricalEra}
+                lessonPlan={lessonPlan} setLessonPlan={setLessonPlan}
             />
 
             <ModuleContentEditor 

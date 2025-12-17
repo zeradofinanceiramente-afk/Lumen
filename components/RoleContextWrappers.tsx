@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { StudentAcademicProvider } from '../contexts/StudentAcademicContext';
 import { StudentNotificationProvider } from '../contexts/StudentNotificationContext';
@@ -6,6 +7,7 @@ import { TeacherClassProvider } from '../contexts/TeacherClassContext';
 import { TeacherAcademicProvider } from '../contexts/TeacherAcademicContext';
 import { TeacherCommunicationProvider } from '../contexts/TeacherCommunicationContext';
 import { AdminDataProvider } from '../contexts/AdminDataContext';
+import { SecretariatProvider } from '../contexts/SecretariatContext';
 
 interface WrapperProps {
     children: React.ReactNode;
@@ -35,4 +37,10 @@ export const AdminContextWrapper: React.FC<WrapperProps> = ({ children }) => (
     <AdminDataProvider>
         {children}
     </AdminDataProvider>
+);
+
+export const SecretariatContextWrapper: React.FC<WrapperProps> = ({ children }) => (
+    <SecretariatProvider>
+        {children}
+    </SecretariatProvider>
 );

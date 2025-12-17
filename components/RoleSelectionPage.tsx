@@ -1,18 +1,13 @@
 
+
+
 import React from 'react';
 import type { Role } from '../types';
 
 const Logo: React.FC = () => (
-    <div className="flex items-center space-x-2">
-        <div className="bg-indigo-600 p-2 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-        </div>
-        <div>
-            <h1 className="font-bold text-2xl leading-tight text-slate-800 dark:text-slate-200 hc-text-override">Lumen</h1>
-            <p className="text-xs font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400 hc-text-override">Education</p>
-        </div>
+    <div className="flex items-center space-x-3 justify-center">
+        <img src="/icons/icon-192.png" alt="Lumen Logo" className="w-12 h-12 object-contain" />
+        <h1 className="font-bold text-3xl leading-tight text-slate-800 dark:text-slate-200 hc-text-override">Lumen</h1>
     </div>
 );
 
@@ -22,6 +17,18 @@ const StudentIcon = () => (
 
 const ProfessorIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+);
+
+const DirectorIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+);
+
+const FamilyIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.121-1.28-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.121-1.28.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+);
+
+const SecretariatIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" /></svg>
 );
 
 interface RoleSelectionPageProps {
@@ -64,6 +71,27 @@ export const RoleSelectionPage: React.FC<RoleSelectionPageProps> = ({ onRoleSele
                         >
                             <ProfessorIcon />
                              <span className="ml-3">Sou Professor</span>
+                        </button>
+                        <button 
+                            onClick={() => onRoleSelected('responsavel')}
+                             className="w-full flex items-center justify-center py-3 px-4 border border-orange-300 rounded-lg shadow-sm text-base font-medium text-orange-700 bg-orange-100 hover:bg-orange-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 transition-colors dark:bg-orange-900/50 dark:text-orange-200 dark:border-orange-700 dark:hover:bg-orange-900 hc-button-override"
+                        >
+                            <FamilyIcon />
+                             <span className="ml-3">Sou Responsável</span>
+                        </button>
+                        <button 
+                            onClick={() => onRoleSelected('direcao')}
+                             className="w-full flex items-center justify-center py-3 px-4 border border-emerald-300 rounded-lg shadow-sm text-base font-medium text-emerald-700 bg-emerald-100 hover:bg-emerald-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500 transition-colors dark:bg-emerald-900/50 dark:text-emerald-200 dark:border-emerald-700 dark:hover:bg-emerald-900 hc-button-override"
+                        >
+                            <DirectorIcon />
+                             <span className="ml-3">Sou Direção</span>
+                        </button>
+                        <button 
+                            onClick={() => onRoleSelected('secretaria')}
+                             className="w-full flex items-center justify-center py-3 px-4 border border-purple-300 rounded-lg shadow-sm text-base font-medium text-purple-700 bg-purple-100 hover:bg-purple-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-purple-500 transition-colors dark:bg-purple-900/50 dark:text-purple-200 dark:border-purple-700 dark:hover:bg-purple-900 hc-button-override"
+                        >
+                            <SecretariatIcon />
+                             <span className="ml-3">Sou Secretaria</span>
                         </button>
                     </div>
                 </div>

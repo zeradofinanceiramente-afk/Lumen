@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import type { Achievement, UserStats } from '../types';
+import type { Achievement, UserStats, UserAchievementsDoc } from '../types';
 import { fetchGlobalAchievements, fetchUserAchievementsDoc } from '../utils/achievements';
 import { doc, getDoc, serverTimestamp, increment, setDoc } from 'firebase/firestore';
 import { db } from '../components/firebaseClient';
@@ -9,7 +9,7 @@ import { processGamificationEvent } from '../utils/gamificationEngine';
 
 export function useStudentGamification(user: any) {
     const [achievements, setAchievements] = useState<Achievement[]>([]);
-    const [userStats, setUserStats] = useState<UserStats>({ xp: 0, level: 1, xpForNextLevel: 100, levelName: 'Iniciante' });
+    const [userStats, setUserStats] = useState<UserStats>({ xp: 0, level: 1, xpForNextLevel: 100, levelName: 'Iniciante', streak: 0 });
     const { addToast } = useToast();
 
     const loadGamificationData = useCallback(async () => {
@@ -19,6 +19,60 @@ export function useStudentGamification(user: any) {
             fetchGlobalAchievements(),
             fetchUserAchievementsDoc(user.id)
         ]);
+
+        // --- STREAK CALCULATION LOGIC ---
+        let currentStreak = userAchievementsDoc.stats.loginStreak || 0;
+        let lastLoginDate = userAchievementsDoc.stats.lastLoginDate;
+        
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Midnight today
+        let shouldUpdateStreak = false;
+
+        if (!lastLoginDate) {
+            // First time login logic
+            currentStreak = 1;
+            lastLoginDate = today.toISOString();
+            shouldUpdateStreak = true;
+        } else {
+            const lastLogin = new Date(lastLoginDate);
+            // Normalize last login to midnight
+            const lastLoginMidnight = new Date(lastLogin.getFullYear(), lastLogin.getMonth(), lastLogin.getDate());
+            
+            const diffTime = today.getTime() - lastLoginMidnight.getTime();
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 1) {
+                // Logged in consecutive day
+                currentStreak += 1;
+                lastLoginDate = today.toISOString();
+                shouldUpdateStreak = true;
+            } else if (diffDays > 1) {
+                // Missed a day or more, reset streak
+                currentStreak = 1;
+                lastLoginDate = today.toISOString();
+                shouldUpdateStreak = true;
+            } else if (diffDays === 0) {
+                // Same day login, keep existing streak
+                // No update needed unless stats.loginStreak was desynced
+                if (currentStreak === 0) { 
+                    currentStreak = 1; 
+                    shouldUpdateStreak = true; 
+                }
+            }
+        }
+
+        // Update Firestore if streak changed
+        if (shouldUpdateStreak) {
+            const userAchvRef = doc(db, "userAchievements", user.id);
+            setDoc(userAchvRef, {
+                stats: {
+                    loginStreak: currentStreak,
+                    lastLoginDate: lastLoginDate
+                },
+                updatedAt: serverTimestamp()
+            }, { merge: true }).catch(err => console.error("Failed to update streak:", err));
+        }
+        // --------------------------------
 
         const mergedAchievements = globalAchievements.map(ach => {
             const userUnlockData = userAchievementsDoc.unlocked[ach.id];
@@ -34,7 +88,8 @@ export function useStudentGamification(user: any) {
             xp: userAchievementsDoc.xp,
             level: userAchievementsDoc.level,
             xpForNextLevel: 100,
-            levelName: userAchievementsDoc.level < 5 ? 'Iniciante' : 'Estudante'
+            levelName: userAchievementsDoc.level < 5 ? 'Iniciante' : 'Estudante',
+            streak: currentStreak
         };
         setUserStats(fetchedStats);
     }, [user]);

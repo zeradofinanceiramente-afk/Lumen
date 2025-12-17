@@ -1,3 +1,4 @@
+
 // FILE: components/Sidebar.tsx
 import React from 'react';
 import type { Page } from '../types';
@@ -11,6 +12,7 @@ const studentNavItems: { id: Page, label: string }[] = [
     { id: 'modules', label: 'Módulos' },
     { id: 'quizzes', label: 'Quizzes' },
     { id: 'activities', label: 'Atividades' },
+    { id: 'interactive_map', label: 'Mapa Interativo' },
     { id: 'achievements', label: 'Conquistas' },
     { id: 'boletim', label: 'Boletim' },
     { id: 'join_class', label: 'Turmas' },
@@ -20,10 +22,25 @@ const teacherNavItems: { id: Page, label: string }[] = [
     { id: 'teacher_dashboard', label: 'Minhas Turmas' },
     { id: 'teacher_pending_activities', label: 'Pendências' },
     { id: 'modules', label: 'Módulos' },
+    { id: 'interactive_map', label: 'Mapa Interativo' },
     { id: 'teacher_module_repository', label: 'Banco de Módulos' }, 
     { id: 'teacher_repository', label: 'Banco de Questões' },
     { id: 'teacher_statistics', label: 'Estatísticas' },
     { id: 'teacher_school_records', label: 'Histórico Escolar' },
+];
+
+const directorNavItems: { id: Page, label: string }[] = [
+    { id: 'director_dashboard', label: 'Painel Geral' },
+    // A direção também pode querer criar conteúdo ou ver estatísticas globais
+    { id: 'teacher_statistics', label: 'Estatísticas Globais' },
+    { id: 'teacher_school_records', label: 'Histórico Escolar' },
+    { id: 'modules', label: 'Biblioteca de Módulos' },
+];
+
+const secretariatNavItems: { id: Page, label: string }[] = [
+    { id: 'secretariat_dashboard', label: 'Visão Geral' },
+    { id: 'secretariat_schools', label: 'Monitorar Escolas' },
+    { id: 'secretariat_statistics', label: 'Dados Estaduais' },
 ];
 
 const adminNavItems: { id: Page, label: string }[] = [
@@ -35,6 +52,10 @@ const adminNavItems: { id: Page, label: string }[] = [
     { id: 'admin_tests', label: 'Testes' },
 ];
 
+const guardianNavItems: { id: Page, label: string }[] = [
+    { id: 'guardian_dashboard', label: 'Meus Dependentes' },
+];
+
 const iconMap: { [key in Page]?: React.ReactNode } = {
     // Student
     modules: ICONS['modules'],
@@ -43,6 +64,7 @@ const iconMap: { [key in Page]?: React.ReactNode } = {
     achievements: ICONS['achievements'],
     boletim: ICONS['boletim'],
     join_class: ICONS['join_class'],
+    interactive_map: ICONS['map'],
     // Teacher
     teacher_dashboard: ICONS['teacher_dashboard'],
     teacher_pending_activities: ICONS['teacher_pending_activities'],
@@ -52,6 +74,14 @@ const iconMap: { [key in Page]?: React.ReactNode } = {
     teacher_school_records: ICONS['teacher_school_records'],
     teacher_repository: ICONS['repository'],
     teacher_module_repository: ICONS['modules'], // Using modules icon for now
+    // Director
+    director_dashboard: ICONS['director_dashboard'],
+    // Secretariat
+    secretariat_dashboard: ICONS['dashboard'],
+    secretariat_schools: ICONS['director_dashboard'], // Reusing icon
+    secretariat_statistics: ICONS['teacher_statistics'], // Reusing icon
+    // Guardian
+    guardian_dashboard: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21v-1a6 6 0 00-1.78-4.125a4 4 0 00-6.44 0A6 6 0 003 20v1h12z" /></svg>, // Reusing teacher-like icon or generic user group
     // Admin
     admin_dashboard: ICONS['dashboard'],
     admin_users: ICONS['admin_users'],
@@ -89,9 +119,12 @@ export const Sidebar: React.FC = () => {
     const { currentPage, setCurrentPage, isMobileMenuOpen, toggleMobileMenu } = useNavigation();
     const { handleLogout: onLogout, userRole } = useAuth();
     
-    const navItems = userRole === 'admin' ? adminNavItems 
-                   : userRole === 'professor' ? teacherNavItems 
-                   : studentNavItems;
+    let navItems = studentNavItems;
+    if (userRole === 'admin') navItems = adminNavItems;
+    else if (userRole === 'direcao') navItems = directorNavItems;
+    else if (userRole === 'secretaria') navItems = secretariatNavItems;
+    else if (userRole === 'professor') navItems = teacherNavItems;
+    else if (userRole === 'responsavel') navItems = guardianNavItems;
 
     const showProfileLink = true;
     const showNotificationsLink = userRole === 'aluno';
@@ -123,7 +156,7 @@ export const Sidebar: React.FC = () => {
                                 <span aria-hidden="true">{iconMap[item.id]}</span>
                                 <span>{item.label}</span>
                             </div>
-                            {item.id === 'teacher_pending_activities' && userRole === 'professor' && (
+                            {item.id === 'teacher_pending_activities' && (userRole === 'professor') && (
                                 <TeacherPendingBadge />
                             )}
                         </button>

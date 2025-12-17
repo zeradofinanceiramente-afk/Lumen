@@ -3,6 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Card } from './common/Card';
 import { useSettings, Theme } from '../contexts/SettingsContext';
 import { useAuth } from '../contexts/AuthContext';
+import { ICONS, SpinnerIcon } from '../constants/index';
+import { collection, query, where, getDocs, updateDoc, doc, arrayUnion, deleteDoc } from 'firebase/firestore';
+import { db } from './firebaseClient';
+import type { GuardianInvitation } from '../types';
+import { useToast } from '../contexts/ToastContext';
 
 const schoolYears = [
     "6º Ano", "7º Ano", "8º Ano", "9º Ano",
@@ -39,18 +44,124 @@ const THEMES: ThemeConfig[] = [
     { id: 'mn', label: 'Crimson', bg: '#1a1a1a', text: '#f0f0f0', accent: '#48bb78', border: '#333333' },
 ];
 
+const PendingInvitationCard: React.FC<{ 
+    invitation: GuardianInvitation; 
+    onAccept: (id: string, guardianId: string) => void;
+    onReject: (id: string) => void;
+    isProcessing: boolean;
+}> = ({ invitation, onAccept, onReject, isProcessing }) => (
+    <div className="p-4 rounded-lg border border-indigo-200 bg-indigo-50 dark:bg-indigo-900/20 dark:border-indigo-800 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+            <p className="font-semibold text-slate-800 dark:text-slate-200">
+                {invitation.inviterName}
+            </p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+                Solicitou acesso ao seu perfil como responsável.
+            </p>
+        </div>
+        <div className="flex gap-2 w-full sm:w-auto">
+            <button 
+                onClick={() => onReject(invitation.id)}
+                disabled={isProcessing}
+                className="flex-1 sm:flex-none px-4 py-2 bg-white text-slate-700 font-semibold rounded-lg border border-slate-300 hover:bg-slate-50 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 disabled:opacity-50"
+            >
+                Recusar
+            </button>
+            <button 
+                onClick={() => onAccept(invitation.id, invitation.inviterId)}
+                disabled={isProcessing}
+                className="flex-1 sm:flex-none px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center"
+            >
+                {isProcessing ? <SpinnerIcon className="h-4 w-4" /> : 'Aceitar'}
+            </button>
+        </div>
+    </div>
+);
+
 const Profile: React.FC = () => {
     const { user, userRole, updateUser } = useAuth();
-    
     const { theme, setTheme, isHighContrastText, setIsHighContrastText } = useSettings();
+    const { addToast } = useToast();
+    
     const [isEditing, setIsEditing] = useState(false);
     const [name, setName] = useState(user?.name || '');
     const [series, setSeries] = useState(user?.series || '');
+    const [idCopied, setIdCopied] = useState(false);
     
+    // Guardian Invitation State
+    const [pendingInvites, setPendingInvites] = useState<GuardianInvitation[]>([]);
+    const [isLoadingInvites, setIsLoadingInvites] = useState(false);
+    const [isProcessingInvite, setIsProcessingInvite] = useState(false);
+
     useEffect(() => {
         setName(user?.name || '');
         setSeries(user?.series || '');
     }, [user]);
+
+    // Fetch Invitations for Students
+    useEffect(() => {
+        if (userRole === 'aluno' && user) {
+            const fetchInvites = async () => {
+                setIsLoadingInvites(true);
+                try {
+                    const q = query(
+                        collection(db, "invitations"),
+                        where("inviteeId", "==", user.id),
+                        where("type", "==", "guardian_access_request"),
+                        where("status", "==", "pending")
+                    );
+                    const snap = await getDocs(q);
+                    const invites = snap.docs.map(d => ({ id: d.id, ...d.data() } as GuardianInvitation));
+                    setPendingInvites(invites);
+                } catch (error) {
+                    console.error("Error fetching invites:", error);
+                } finally {
+                    setIsLoadingInvites(false);
+                }
+            };
+            fetchInvites();
+        }
+    }, [user, userRole]);
+
+    const handleAcceptInvite = async (inviteId: string, guardianId: string) => {
+        if (!user) return;
+        setIsProcessingInvite(true);
+        try {
+            // 1. Update Guardian's Wards
+            const guardianRef = doc(db, "users", guardianId);
+            await updateDoc(guardianRef, {
+                wards: arrayUnion(user.id)
+            });
+
+            // 2. Update Invitation Status
+            const inviteRef = doc(db, "invitations", inviteId);
+            await updateDoc(inviteRef, { status: 'accepted' });
+
+            // 3. Remove from UI
+            setPendingInvites(prev => prev.filter(i => i.id !== inviteId));
+            addToast("Vínculo com responsável aprovado!", "success");
+
+        } catch (error) {
+            console.error("Error accepting invite:", error);
+            addToast("Erro ao aceitar solicitação.", "error");
+        } finally {
+            setIsProcessingInvite(false);
+        }
+    };
+
+    const handleRejectInvite = async (inviteId: string) => {
+        setIsProcessingInvite(true);
+        try {
+            await deleteDoc(doc(db, "invitations", inviteId));
+            setPendingInvites(prev => prev.filter(i => i.id !== inviteId));
+            addToast("Solicitação recusada.", "info");
+        } catch (error) {
+            console.error("Error rejecting invite:", error);
+            addToast("Erro ao recusar solicitação.", "error");
+        } finally {
+            setIsProcessingInvite(false);
+        }
+    };
 
     const handleSave = () => {
         if (!user) return;
@@ -63,6 +174,14 @@ const Profile: React.FC = () => {
         setSeries(user?.series || '');
         setIsEditing(false);
     }
+
+    const copyToClipboard = () => {
+        if (!user) return;
+        navigator.clipboard.writeText(user.id).then(() => {
+            setIdCopied(true);
+            setTimeout(() => setIdCopied(false), 2000);
+        });
+    };
 
     return (
         <div className="space-y-8">
@@ -117,6 +236,61 @@ const Profile: React.FC = () => {
                     </div>
                 </div>
             </Card>
+
+            {/* Student ID & Invitations Section */}
+            {userRole === 'aluno' && (
+                <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
+                    <div className="space-y-6">
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 17h4a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H4a2 2 0 00-2 2v12a2 2 0 002 2h6l2 2h2a2 2 0 002-2z" />
+                                    </svg>
+                                    Acesso para Responsável
+                                </h3>
+                                <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
+                                    Compartilhe este código com seus pais ou responsáveis. Quando eles solicitarem acesso, a notificação aparecerá aqui.
+                                </p>
+                            </div>
+                            <div className="flex items-center space-x-2 bg-white dark:bg-slate-800 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
+                                <span className="font-mono text-slate-800 dark:text-slate-200 px-2 font-bold">{user?.id}</span>
+                                <button 
+                                    onClick={copyToClipboard}
+                                    className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors dark:text-indigo-400 dark:hover:bg-indigo-900/30"
+                                    title="Copiar ID"
+                                >
+                                    {idCopied ? (
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                    ) : (
+                                        <span aria-hidden="true">{ICONS.copy}</span>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Pending Requests */}
+                        {pendingInvites.length > 0 && (
+                            <div className="pt-4 border-t border-indigo-200 dark:border-indigo-800">
+                                <h4 className="font-bold text-slate-700 dark:text-slate-300 mb-3 text-sm uppercase tracking-wide">Solicitações Pendentes</h4>
+                                <div className="space-y-3">
+                                    {pendingInvites.map(invite => (
+                                        <PendingInvitationCard 
+                                            key={invite.id} 
+                                            invitation={invite} 
+                                            onAccept={handleAcceptInvite}
+                                            onReject={handleRejectInvite}
+                                            isProcessing={isProcessingInvite}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </Card>
+            )}
 
             <Card>
                 <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6 hc-text-primary">Personalização & Acessibilidade</h2>

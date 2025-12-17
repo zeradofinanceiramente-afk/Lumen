@@ -62,6 +62,10 @@ export function NavigationProvider({ children }: { children?: ReactNode }) {
         if (authState === 'authenticated') {
             if (userRole === 'admin') {
                 setCurrentPage('admin_dashboard');
+            } else if (userRole === 'direcao') {
+                setCurrentPage('director_dashboard');
+            } else if (userRole === 'responsavel') {
+                setCurrentPage('guardian_dashboard');
             } else if (userRole === 'professor') {
                 setCurrentPage('teacher_dashboard'); // Direct to My Classes (Minhas Turmas)
             } else {
@@ -110,8 +114,13 @@ export function NavigationProvider({ children }: { children?: ReactNode }) {
 
     const exitClass = useCallback(() => {
         setActiveClass(null);
-        setCurrentPage('teacher_dashboard');
-    }, []);
+        // Retorna para o dashboard correto baseado no papel
+        if (userRole === 'direcao') {
+            setCurrentPage('director_dashboard');
+        } else {
+            setCurrentPage('teacher_dashboard');
+        }
+    }, [userRole]);
 
     const openActivity = useCallback((activity: Activity) => {
         setActiveActivity(activity);

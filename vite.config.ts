@@ -11,14 +11,14 @@ export default defineConfig({
       includeAssets: ['icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-icon-512.png'], 
       manifestFilename: 'manifest.json',
       manifest: {
-        id: "/",
+        id: "lumen-education-pwa",
         scope: "/",
-        name: "Lumen",
+        name: "Lumen Education",
         short_name: "Lumen",
-        description: "Plataforma de ensino inclusiva e acessível para todos os estudantes.",
+        description: "Plataforma de ensino inclusiva e acessível para todos os estudantes. Estude offline, acompanhe seu progresso e realize atividades.",
         lang: "pt-BR",
         dir: "ltr",
-        start_url: "/?utm_source=pwa",
+        start_url: "/",
         display: "standalone",
         display_override: [
           "window-controls-overlay",
@@ -30,12 +30,17 @@ export default defineConfig({
         orientation: "portrait-primary",
         categories: [
           "education",
-          "productivity"
+          "productivity",
+          "teaching"
         ],
+        iarc_rating_id: "", 
         related_applications: [],
         prefer_related_applications: false,
         launch_handler: {
-          client_mode: "focus-existing"
+          client_mode: "auto"
+        },
+        edge_side_panel: {
+            preferred_width: 480
         },
         file_handlers: [
           {
@@ -82,18 +87,18 @@ export default defineConfig({
         ],
         screenshots: [
           {
-            src: "https://placehold.co/1280x720/0f172a/ffffff.png?text=Lumen+Desktop",
+            src: "https://placehold.co/1280x720/0f172a/ffffff.png?text=Lumen+Desktop+View",
             sizes: "1280x720",
             type: "image/png",
             form_factor: "wide",
-            label: "Lumen no Desktop"
+            label: "Painel do Aluno no Desktop"
           },
           {
-            src: "https://placehold.co/360x800/0f172a/ffffff.png?text=Lumen+Mobile",
+            src: "https://placehold.co/360x800/0f172a/ffffff.png?text=Lumen+Mobile+View",
             sizes: "360x800",
             type: "image/png",
             form_factor: "narrow",
-            label: "Lumen no Celular"
+            label: "Atividades no Celular"
           }
         ],
         shortcuts: [
@@ -101,7 +106,7 @@ export default defineConfig({
             name: "Minhas Turmas",
             short_name: "Turmas",
             description: "Acessar suas turmas diretamente",
-            url: "/join_class?utm_source=pwa",
+            url: "/join_class?utm_source=pwa_shortcut",
             icons: [
               {
                 src: "/icons/icon-192.png",
@@ -114,7 +119,7 @@ export default defineConfig({
             name: "Ver Atividades",
             short_name: "Atividades",
             description: "Ver atividades pendentes",
-            url: "/activities?utm_source=pwa",
+            url: "/activities?utm_source=pwa_shortcut",
             icons: [
               {
                 src: "/icons/icon-192.png",
