@@ -1,16 +1,13 @@
 
-
-
-
-
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { SpinnerIcon } from '../constants/index';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const Logo: React.FC = () => (
     <div className="flex flex-col items-center justify-center">
         <div className="w-24 h-24 bg-white rounded-full shadow-lg flex items-center justify-center border-4 border-slate-200 dark:border-slate-700 p-4">
-             <img src="/icons/icon-192.png" alt="Lumen Logo" className="w-full h-full object-contain" />
+             <img src="https://i.imgur.com/XISQWUh.png" alt="Lumen Logo" className="w-full h-full object-contain" />
         </div>
     </div>
 );
@@ -23,6 +20,7 @@ type ViewMode = 'login' | 'signup' | 'reset';
 
 export const LoginPage: React.FC<{ initialError?: string | null }> = ({ initialError }) => {
     const { signInWithEmail, signUpWithEmail, resetPassword } = useAuth();
+    const { t, language, setLanguage } = useLanguage();
     const [email, setEmail] = useState('');
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
@@ -45,15 +43,15 @@ export const LoginPage: React.FC<{ initialError?: string | null }> = ({ initialE
 
         try {
             if (viewMode === 'reset') {
-                if (!email.trim()) throw new Error('Por favor, insira seu email.');
+                if (!email.trim()) throw new Error(t('login.email'));
                 await resetPassword(email);
-                setMessage("Email de redefinição enviado! Verifique sua caixa de entrada.");
+                setMessage(t('login.successReset'));
             } else if (viewMode === 'signup') {
                 if (password !== confirmPassword) throw new Error('As senhas não coincidem.');
-                if (!name.trim()) throw new Error('Por favor, insira seu nome completo.');
+                if (!name.trim()) throw new Error(t('login.name'));
                 
                 await signUpWithEmail(name.trim(), email, password);
-                setMessage("Cadastro realizado! Por favor, verifique seu email para confirmar sua conta antes de fazer login.");
+                setMessage(t('login.successRegister'));
                 setViewMode('login');
                 setName('');
                 setPassword('');
@@ -69,19 +67,31 @@ export const LoginPage: React.FC<{ initialError?: string | null }> = ({ initialE
     };
 
     const getTitle = () => {
-        if (viewMode === 'signup') return 'Crie sua Conta';
-        if (viewMode === 'reset') return 'Redefinir Senha';
-        return 'Bem-vindo ao Lumen';
+        if (viewMode === 'signup') return t('login.createTitle');
+        if (viewMode === 'reset') return t('login.resetTitle');
+        return t('login.title');
     };
 
     const getSubtitle = () => {
-        if (viewMode === 'signup') return 'Comece sua jornada de aprendizado';
-        if (viewMode === 'reset') return 'Insira seu email para receber o link';
-        return 'Faça login para continuar';
+        if (viewMode === 'signup') return t('login.createSubtitle');
+        if (viewMode === 'reset') return t('login.resetSubtitle');
+        return t('login.subtitle');
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col justify-center items-center p-4">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col justify-center items-center p-4 relative">
+            <div className="absolute top-4 right-4">
+                <select 
+                    value={language} 
+                    onChange={(e) => setLanguage(e.target.value as any)}
+                    className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                    <option value="pt">🇧🇷 PT</option>
+                    <option value="en">🇺🇸 EN</option>
+                    <option value="es">🇪🇸 ES</option>
+                </select>
+            </div>
+
             <div className="max-w-md w-full mx-auto">
                 <div className="text-center mb-8">
                     <Logo />
@@ -102,7 +112,7 @@ export const LoginPage: React.FC<{ initialError?: string | null }> = ({ initialE
                             {viewMode === 'signup' && (
                                  <div>
                                     <label htmlFor="name" className="text-sm font-medium text-slate-700 dark:text-slate-300 hc-text-secondary">
-                                        Nome Completo
+                                        {t('login.name')}
                                     </label>
                                     <div className="mt-1 relative rounded-md shadow-sm">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -117,7 +127,7 @@ export const LoginPage: React.FC<{ initialError?: string | null }> = ({ initialE
                                             value={name}
                                             onChange={(e) => setName(e.target.value)}
                                             className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2.5 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
-                                            placeholder="Seu nome"
+                                            placeholder={t('login.name')}
                                             required
                                             disabled={loading}
                                         />
@@ -127,7 +137,7 @@ export const LoginPage: React.FC<{ initialError?: string | null }> = ({ initialE
 
                             <div>
                                 <label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-slate-300 hc-text-secondary">
-                                    Email
+                                    {t('login.email')}
                                 </label>
                                 <div className="mt-1 relative rounded-md shadow-sm">
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -154,7 +164,7 @@ export const LoginPage: React.FC<{ initialError?: string | null }> = ({ initialE
                                 <div>
                                     <div className="flex justify-between items-center">
                                         <label htmlFor="password" className="text-sm font-medium text-slate-700 dark:text-slate-300 hc-text-secondary">
-                                            Senha
+                                            {t('login.password')}
                                         </label>
                                         {viewMode === 'login' && (
                                             <button
@@ -162,7 +172,7 @@ export const LoginPage: React.FC<{ initialError?: string | null }> = ({ initialE
                                                 onClick={() => { setViewMode('reset'); clearState(); }}
                                                 className="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 hc-link-override"
                                             >
-                                                Esqueci minha senha
+                                                {t('login.forgotPassword')}
                                             </button>
                                         )}
                                     </div>
@@ -195,7 +205,7 @@ export const LoginPage: React.FC<{ initialError?: string | null }> = ({ initialE
                              {viewMode === 'signup' && (
                                 <div>
                                     <label htmlFor="confirmPassword"  className="text-sm font-medium text-slate-700 dark:text-slate-300 hc-text-secondary">
-                                        Confirmar Senha
+                                        {t('login.confirmPassword')}
                                     </label>
                                     <div className="mt-1 relative rounded-md shadow-sm">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -228,7 +238,7 @@ export const LoginPage: React.FC<{ initialError?: string | null }> = ({ initialE
                                 disabled={loading}
                                 className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-slate-800 hover:bg-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-500 dark:bg-indigo-600 dark:hover:bg-indigo-700 hc-button-primary-override disabled:opacity-50"
                             >
-                                {loading ? <SpinnerIcon /> : (viewMode === 'signup' ? 'Cadastrar' : viewMode === 'reset' ? 'Enviar Link' : 'Entrar')}
+                                {loading ? <SpinnerIcon /> : (viewMode === 'signup' ? t('login.submitRegister') : viewMode === 'reset' ? t('login.submitReset') : t('login.submitLogin'))}
                             </button>
                         </form>
                     </div>
@@ -239,7 +249,7 @@ export const LoginPage: React.FC<{ initialError?: string | null }> = ({ initialE
                             onClick={() => { setViewMode('login'); clearState(); }}
                             className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 hc-link-override"
                         >
-                            Voltar para o Login
+                            {t('login.backToLogin')}
                         </button>
                     ) : (
                         <button
@@ -257,8 +267,8 @@ export const LoginPage: React.FC<{ initialError?: string | null }> = ({ initialE
                             className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 hc-link-override"
                         >
                             {viewMode === 'signup'
-                                ? 'Já tem uma conta? Entrar'
-                                : 'Não tem uma conta? Cadastre-se'
+                                ? t('login.hasAccount')
+                                : t('login.noAccount')
                             }
                         </button>
                     )}

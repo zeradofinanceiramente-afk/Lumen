@@ -84,7 +84,7 @@ const ModuleRow: React.FC<{
 };
 
 const AdminManageModules: React.FC = () => {
-    const { modules, totalModulesCount, handleDeleteModule, handleUpdateModule, handleBulkDeleteModules, fetchNextModulesPage, hasMoreModules, isLoadingModules } = useAdminData();
+    const { modules, totalModulesCount, handleDeleteModule, handleUpdateModule, handleBulkDeleteModules, fetchNextModulesPage, hasMoreModules, isLoadingModules, isSubmitting } = useAdminData();
     const { setCurrentPage, startEditingModule } = useNavigation();
     const [selectedModules, setSelectedModules] = useState<Set<string>>(new Set());
     
@@ -122,6 +122,12 @@ const AdminManageModules: React.FC = () => {
     const onDelete = (moduleId: string) => {
         if (window.confirm("Tem certeza que deseja apagar este módulo? Esta ação não pode ser desfeita.")) {
             handleDeleteModule(moduleId);
+            // Se o módulo deletado estava na seleção, remove
+            setSelectedModules(prev => {
+                const next = new Set(prev);
+                next.delete(moduleId);
+                return next;
+            });
         }
     };
 
@@ -129,6 +135,7 @@ const AdminManageModules: React.FC = () => {
         if (selectedModules.size === 0) return;
         if (window.confirm(`Tem certeza que deseja apagar ${selectedModules.size} ${selectedModules.size > 1 ? 'módulos' : 'módulo'}? Esta ação não pode ser desfeita.`)) {
             await handleBulkDeleteModules(selectedModules);
+            // Limpa a seleção após o sucesso (o context já atualiza a lista de módulos)
             setSelectedModules(new Set());
         }
     };
@@ -151,7 +158,6 @@ const AdminManageModules: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Stats cards now use totalModulesCount for the main number, others are estimates based on loaded data */}
                 <StatCard title="Total (Servidor)" value={totalModulesCount} icon={ICONS.modules} iconBgColor="bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300" />
                 <StatCard title="Ativos (Carregados)" value={publishedCount} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>} iconBgColor="bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-300" />
                 <StatCard title="Públicos (Carregados)" value={publicCount} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h10a2 2 0 002-2v-1a2 2 0 012-2h1.945M7.737 11l-.262-2.813a2 2 0 012.228-2.053h6.6c1.268 0 2.397.933 2.5 2.188l.244 2.687M12 11c-1.657 0-3 .895-3 2h6c0-1.105-1.343-2-3-2z" /></svg>} iconBgColor="bg-sky-100 text-sky-600 dark:bg-sky-900/50 dark:text-sky-300" />
@@ -171,9 +177,12 @@ const AdminManageModules: React.FC = () => {
                             </span>
                             <button
                                 onClick={onDeleteSelected}
-                                className="flex items-center space-x-2 px-4 py-2 bg-red-100 text-red-800 font-semibold rounded-lg hover:bg-red-200 dark:bg-red-500/20 dark:text-red-300 dark:hover:bg-red-500/30"
+                                disabled={isSubmitting}
+                                className="flex items-center space-x-2 px-4 py-2 bg-red-100 text-red-800 font-semibold rounded-lg hover:bg-red-200 dark:bg-red-500/20 dark:text-red-300 dark:hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                {isSubmitting ? <SpinnerIcon className="h-4 w-4 mr-2" /> : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                )}
                                 <span>Excluir Selecionados</span>
                             </button>
                         </div>
@@ -187,7 +196,7 @@ const AdminManageModules: React.FC = () => {
                                     type="checkbox"
                                     checked={isAllSelected}
                                     onChange={handleSelectAll}
-                                    aria-label="Selecionar todos os módulos"
+                                    aria-label="Selecionar todos os módulos carregados"
                                     className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                 />
                             </th>

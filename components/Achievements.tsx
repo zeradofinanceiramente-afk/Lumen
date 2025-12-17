@@ -7,7 +7,16 @@ import { useStudentGamificationContext } from '../contexts/StudentGamificationCo
 const AchievementCard: React.FC<{ achievement: Achievement }> = React.memo(({ achievement }) => {
     return (
         <div className="flex flex-col items-center text-center transition-all duration-300 transform p-5 rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 shadow-sm hover:-translate-y-1 hover:shadow-lg">
-            <span className="text-5xl" aria-hidden="true">🏆</span>
+            {achievement.imageUrl ? (
+                <img 
+                    src={achievement.imageUrl} 
+                    alt={achievement.title} 
+                    className="w-20 h-20 object-contain drop-shadow-md"
+                    loading="lazy"
+                />
+            ) : (
+                <span className="text-5xl" aria-hidden="true">🏆</span>
+            )}
             <h3 className="mt-4 font-bold text-slate-800 dark:text-slate-100 hc-text-primary">{achievement.title}</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 h-10 hc-text-secondary">{achievement.description}</p>
             <div className="mt-4 w-full flex-grow flex flex-col justify-end">
@@ -23,7 +32,16 @@ const AchievementCard: React.FC<{ achievement: Achievement }> = React.memo(({ ac
 
 const LockedAchievementCard: React.FC<{ achievement: Achievement }> = React.memo(({ achievement }) => (
     <div className="flex flex-col items-center text-center p-5 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm opacity-80">
-        <span className="text-5xl filter grayscale" aria-hidden="true">🔒</span>
+        {achievement.imageUrl ? (
+            <img 
+                src={achievement.imageUrl} 
+                alt={achievement.title} 
+                className="w-20 h-20 object-contain filter grayscale opacity-60"
+                loading="lazy"
+            />
+        ) : (
+            <span className="text-5xl filter grayscale" aria-hidden="true">🔒</span>
+        )}
         <h3 className="mt-4 font-bold text-slate-700 dark:text-slate-300 hc-text-primary">{achievement.title}</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 h-10 hc-text-secondary">{achievement.description}</p>
         <div className="mt-4 w-full flex-grow flex flex-col justify-end">

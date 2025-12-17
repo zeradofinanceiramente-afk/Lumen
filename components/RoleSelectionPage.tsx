@@ -1,12 +1,10 @@
 
-
-
 import React from 'react';
 import type { Role } from '../types';
 
 const Logo: React.FC = () => (
     <div className="flex items-center space-x-3 justify-center">
-        <img src="/icons/icon-192.png" alt="Lumen Logo" className="w-12 h-12 object-contain" />
+        <img src="https://i.imgur.com/XISQWUh.png" alt="Lumen Logo" className="w-12 h-12 object-contain" />
         <h1 className="font-bold text-3xl leading-tight text-slate-800 dark:text-slate-200 hc-text-override">Lumen</h1>
     </div>
 );

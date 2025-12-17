@@ -8,6 +8,8 @@ import { collection, query, where, getDocs, updateDoc, doc, arrayUnion, deleteDo
 import { db } from './firebaseClient';
 import type { GuardianInvitation } from '../types';
 import { useToast } from '../contexts/ToastContext';
+import { useLanguage } from '../contexts/LanguageContext';
+import type { Language } from '../constants/translations';
 
 const schoolYears = [
     "6º Ano", "7º Ano", "8º Ano", "9º Ano",
@@ -81,6 +83,7 @@ const PendingInvitationCard: React.FC<{
 const Profile: React.FC = () => {
     const { user, userRole, updateUser } = useAuth();
     const { theme, setTheme, isHighContrastText, setIsHighContrastText } = useSettings();
+    const { language, setLanguage, t } = useLanguage();
     const { addToast } = useToast();
     
     const [isEditing, setIsEditing] = useState(false);
@@ -189,25 +192,25 @@ const Profile: React.FC = () => {
                 <p className="text-slate-500 dark:text-slate-400 -mt-6 hc-text-secondary">Gerencie suas informações e acompanhe seu progresso</p>
                 {!isEditing && (
                     <button onClick={() => setIsEditing(true)} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-lg font-semibold hover:bg-slate-300 transition dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 hc-button-override">
-                        Editar Perfil
+                        {t('profile.edit')}
                     </button>
                 )}
             </div>
 
             <Card>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 hc-text-primary">Informações Pessoais</h2>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 hc-text-primary">{t('profile.personal_info')}</h2>
                 <div className="flex justify-between items-center mb-4">
                     
                     {isEditing && (
                         <div className="flex space-x-2">
-                            <button onClick={handleCancel} className="px-4 py-1.5 text-sm bg-white border border-gray-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 dark:bg-slate-600 dark:text-slate-200 dark:border-slate-500 dark:hover:bg-slate-500 hc-button-override">Cancelar</button>
-                            <button onClick={handleSave} className="px-4 py-1.5 text-sm bg-indigo-200 text-indigo-900 font-semibold rounded-lg hover:bg-indigo-300 dark:bg-indigo-500 dark:text-white dark:hover:bg-indigo-600 hc-button-primary-override">Salvar</button>
+                            <button onClick={handleCancel} className="px-4 py-1.5 text-sm bg-white border border-gray-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 dark:bg-slate-600 dark:text-slate-200 dark:border-slate-500 dark:hover:bg-slate-500 hc-button-override">{t('profile.cancel')}</button>
+                            <button onClick={handleSave} className="px-4 py-1.5 text-sm bg-indigo-200 text-indigo-900 font-semibold rounded-lg hover:bg-indigo-300 dark:bg-indigo-500 dark:text-white dark:hover:bg-indigo-600 hc-button-primary-override">{t('profile.save')}</button>
                         </div>
                     )}
                 </div>
                 <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 hc-text-secondary">Nome Completo</label>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 hc-text-secondary">{t('profile.name')}</label>
                         {isEditing ? (
                              <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full font-semibold text-slate-900 dark:text-slate-100 mt-1 p-2 bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md"/>
                         ) : (
@@ -220,7 +223,7 @@ const Profile: React.FC = () => {
                     </div>
                      {userRole === 'aluno' && (
                         <div>
-                            <label className="text-sm font-medium text-slate-500 dark:text-slate-400 hc-text-secondary">Ano Escolar</label>
+                            <label className="text-sm font-medium text-slate-500 dark:text-slate-400 hc-text-secondary">{t('profile.year')}</label>
                             {isEditing ? (
                                 <select value={series} onChange={e => setSeries(e.target.value)} className="w-full font-semibold text-slate-900 dark:text-slate-100 mt-1 p-2 bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md">
                                     {schoolYears.map(year => <option key={year} value={year}>{year}</option>)}
@@ -231,7 +234,7 @@ const Profile: React.FC = () => {
                         </div>
                     )}
                     <div>
-                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 hc-text-secondary">Papel no Sistema</label>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 hc-text-secondary">{t('profile.role')}</label>
                         <p className="font-semibold text-blue-600 dark:text-blue-400 mt-1 p-2 border-b border-b-slate-200 dark:border-b-slate-600 hc-link-override hc-border-override capitalize">{userRole ?? 'N/A'}</p>
                     </div>
                 </div>
@@ -293,10 +296,40 @@ const Profile: React.FC = () => {
             )}
 
             <Card>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6 hc-text-primary">Personalização & Acessibilidade</h2>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6 hc-text-primary">{t('profile.theme_title')}</h2>
                 <div className="space-y-6">
+                    {/* Language Selector */}
                     <div>
-                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 hc-text-secondary mb-3 block">Tema da Interface</label>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 hc-text-secondary mb-3 block">
+                            {t('profile.language')}
+                        </label>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 -mt-2">{t('profile.language_desc')}</p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <button
+                                onClick={() => setLanguage('pt')}
+                                className={`px-4 py-2 rounded-lg border text-sm font-semibold transition-colors ${language === 'pt' ? 'bg-indigo-100 border-indigo-500 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-200' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200'}`}
+                            >
+                                Português
+                            </button>
+                            <button
+                                onClick={() => setLanguage('en')}
+                                className={`px-4 py-2 rounded-lg border text-sm font-semibold transition-colors ${language === 'en' ? 'bg-indigo-100 border-indigo-500 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-200' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200'}`}
+                            >
+                                English
+                            </button>
+                            <button
+                                onClick={() => setLanguage('es')}
+                                className={`px-4 py-2 rounded-lg border text-sm font-semibold transition-colors ${language === 'es' ? 'bg-indigo-100 border-indigo-500 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-200' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200'}`}
+                            >
+                                Español
+                            </button>
+                        </div>
+                    </div>
+
+                    <hr className="border-slate-200 dark:border-slate-700" />
+
+                    <div>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 hc-text-secondary mb-3 block">{t('profile.theme_desc')}</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {THEMES.map(t => {
                                 const isSelected = theme === t.id;
@@ -341,9 +374,9 @@ const Profile: React.FC = () => {
                     <div className="flex justify-between items-center pt-6 border-t border-slate-200 dark:border-slate-700 hc-border-override">
                         <div>
                             <label htmlFor="high-contrast-text-toggle" className="text-sm font-bold text-slate-700 dark:text-slate-200 hc-text-primary">
-                                Texto em Alto Contraste
+                                {t('profile.contrast')}
                             </label>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Aumenta o peso e contraste das fontes para melhor legibilidade.</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t('profile.contrast_desc')}</p>
                         </div>
                         <button
                             id="high-contrast-text-toggle"

@@ -41,7 +41,18 @@ const AchievementRow: React.FC<{ achievement: Achievement; onEdit: () => void; o
         <tr className="border-b border-slate-200 dark:border-slate-700 last:border-0 hc-border-override">
             <td className="p-4 align-top">
                 <div className="flex items-center space-x-3">
-                    <span className="text-2xl" aria-hidden="true">🏆</span>
+                    {achievement.imageUrl ? (
+                        <div className="w-10 h-10 flex-shrink-0">
+                            <img 
+                                src={achievement.imageUrl} 
+                                alt={achievement.title} 
+                                className="w-full h-full object-contain"
+                                loading="lazy"
+                            />
+                        </div>
+                    ) : (
+                        <span className="text-2xl" aria-hidden="true">🏆</span>
+                    )}
                     <div>
                         <p className="font-semibold text-slate-800 dark:text-slate-100 hc-text-primary">{achievement.title}</p>
                         <p className="text-xs text-slate-500 dark:text-slate-400 hc-text-secondary">{achievement.description}</p>

@@ -3,10 +3,10 @@ import React from 'react';
 
 export const Logo = () => (
     <div className="flex items-center pl-12 lg:pl-0 select-none transition-all duration-300">
-        <h1 className="font-bold text-2xl leading-none text-slate-100 tracking-tight">
+        <h1 className="font-bold text-3xl leading-none text-slate-100 tracking-tight mr-4">
             Lumen
         </h1>
-        <img src="/icons/icon-192.png" alt="Lumen Logo" className="w-8 h-8 ml-3 object-contain" />
+        <img src="https://i.imgur.com/XISQWUh.png" alt="Lumen Logo" className="w-12 h-12 object-contain" />
     </div>
 );
 

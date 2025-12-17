@@ -1648,44 +1648,169 @@ main p.text-sm, main p.text-xs {
 
 /* --- Forest Theme (OLED & Nature) --- */
 .forest body, .forest #root, .forest .bg-slate-100, .forest .dark\:bg-slate-900 {
-    background-color: #000000 !important;
-    color: #e2e8f0 !important;
+    background-color: #000000 !important; /* Pure Black */
+    color: #e4e4e7 !important; /* Zinc 200 - slightly softer than pure white for text */
 }
-.forest .bg-white, .forest .dark\:bg-slate-800 {
-    background-color: #121212 !important; /* Charcoal */
-    border: 1px solid #27272a !important;
+
+/* Headers */
+.forest h1, .forest h2, .forest h3, .forest header h1, .forest aside {
+    font-family: 'Space Grotesk', sans-serif !important;
+    letter-spacing: -0.02em;
+    color: #ffffff !important;
 }
+
+/* Sidebar */
 .forest aside, .forest .bg-blue-950 {
-    background-color: #0a0a0a !important;
-    border-right: 1px solid #27272a !important;
+    background-color: #000000 !important;
+    border-right: 1px solid #27272a !important; /* Zinc 800 - Minimal border */
 }
+
+.forest aside .text-slate-200, 
+.forest aside .text-slate-300,
+.forest aside button {
+    color: #a1a1aa !important; /* Zinc 400 */
+}
+
+.forest aside button:hover {
+    color: #4ade80 !important; /* Bright Green Text on Hover */
+    background-color: #18181b !important; /* Zinc 900 */
+}
+
+/* Active Sidebar Item - Minimal Green Accent */
 .forest .bg-blue-800 {
-    background-color: #4ade80 !important; /* Emerald Green */
-    color: #000000 !important;
-    font-weight: bold;
+    background-color: #18181b !important; /* Zinc 900 */
+    color: #4ade80 !important; /* Bright Green Text */
+    border: 1px solid #4ade80 !important; /* Green Border */
+    font-weight: 700;
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.1);
 }
-.forest .bg-indigo-600, .forest .bg-blue-600, .forest .hc-button-primary-override {
-    background-color: #4ade80 !important;
-    color: #000000 !important;
-    font-weight: 700 !important;
-}
-.forest .text-indigo-600, .forest .dark\:text-indigo-400 { color: #4ade80 !important; }
+
 .forest header {
     background-color: #000000 !important;
     border-bottom: 1px solid #27272a !important;
 }
-.forest input, .forest select, .forest textarea {
-    background-color: #121212 !important;
-    border: 1px solid #27272a !important;
-    color: #e2e8f0 !important;
+
+/* Cards */
+.forest .bg-white, .forest .dark\:bg-slate-800 {
+    background-color: #050505 !important; /* Almost Black */
+    border: 1px solid #27272a !important; /* Zinc 800 */
+    color: #e4e4e7 !important;
+    box-shadow: none !important;
+    transition: border-color 0.2s ease;
 }
-/* Forest Hamburger */
-.forest button[aria-label="Abrir menu"] {
+
+.forest .bg-white:hover, .forest .dark\:bg-slate-800:hover {
+    border-color: #15803d !important; /* Subtle Green on hover */
+}
+
+/* Inputs */
+.forest input, .forest select, .forest textarea {
+    background-color: #09090b !important; /* Zinc 950 */
+    border: 1px solid #27272a !important;
+    color: #ffffff !important;
+    border-radius: 6px !important;
+    transition: border-color 0.2s;
+}
+
+.forest input:focus, .forest select:focus, .forest textarea:focus {
+    border-color: #22c55e !important; /* Green Focus */
+    ring: 0 !important;
+    outline: none !important;
+    box-shadow: 0 0 0 1px #22c55e !important;
+}
+
+/* Primary Buttons */
+.forest .bg-indigo-600, 
+.forest .bg-blue-600,
+.forest .bg-green-600, 
+.forest .hc-button-primary-override {
+    background-color: #22c55e !important; /* Green 500 */
+    background-image: none !important;
+    color: #000000 !important;
+    border: 1px solid #22c55e !important;
+    font-weight: 700 !important;
+    font-family: 'Space Grotesk', sans-serif !important;
+    transition: all 0.2s ease;
+}
+
+.forest .bg-indigo-600:hover,
+.forest .bg-green-600:hover {
+    background-color: #16a34a !important; /* Green 600 */
+    border-color: #16a34a !important;
+    transform: translateY(-1px);
+}
+
+/* Secondary Buttons */
+.forest .bg-slate-100, .forest .bg-white {
+    background-color: transparent !important;
+    color: #e4e4e7 !important;
+    border: 1px solid #3f3f46 !important; /* Zinc 700 */
+}
+.forest .bg-slate-100:hover {
+    border-color: #22c55e !important;
+    color: #22c55e !important;
+}
+
+/* Text Colors */
+.forest .text-slate-900, .forest .text-slate-800, .forest .text-gray-900 {
+    color: #ffffff !important;
+}
+.forest .text-slate-500, .forest .text-slate-600, .forest .text-gray-500 {
+    color: #a1a1aa !important; /* Zinc 400 */
+}
+
+/* Link/Accent Text */
+.forest .text-indigo-600, .forest .dark\:text-indigo-400 {
+    color: #4ade80 !important; /* Green 400 */
+    text-decoration: underline;
+    text-decoration-color: #15803d;
+    text-underline-offset: 4px;
+}
+
+/* Fix Badge/Tag Colors (Materia, Series, Status) */
+.forest .bg-indigo-50, 
+.forest .bg-blue-50,
+.forest .bg-purple-100, 
+.forest .bg-yellow-100, 
+.forest .bg-green-100,
+.forest .bg-slate-100,
+.forest .bg-slate-200 {
+    background-color: #111 !important; /* Dark background for tags */
+    border: 1px solid #22c55e !important; /* Green border */
+    color: #4ade80 !important; /* Light green text */
+}
+
+/* Specific overrides for status colors to keep semantic meaning but in theme */
+.forest .text-green-800 { color: #4ade80 !important; }
+.forest .text-yellow-800 { color: #facc15 !important; border-color: #facc15 !important; }
+.forest .text-red-800 { color: #f87171 !important; border-color: #f87171 !important; }
+.forest .text-indigo-700, .forest .text-blue-700, .forest .text-purple-700 { color: #86efac !important; }
+
+/* Achievement Cards */
+.forest .bg-gradient-to-br.from-yellow-50 {
+    background: linear-gradient(145deg, #052e16 0%, #000000 100%) !important; /* Dark Green to Black */
+    border: 1px solid #15803d !important;
+}
+.forest .bg-white\/60 {
+    background-color: rgba(0, 0, 0, 0.5) !important;
+}
+.forest .text-yellow-600 { color: #fbbf24 !important; } /* Restore Gold color for text */
+
+/* Progress Bars */
+.forest .bg-blue-600 { background-color: #22c55e !important; }
+
+/* Scrollbars */
+.forest ::-webkit-scrollbar-thumb {
+    background-color: #15803d;
+}
+.forest ::-webkit-scrollbar-track {
+    background-color: #000;
+}
+
+/* Accordions (Boletim/Classes) */
+.forest .bg-slate-50, .forest .hover\:bg-slate-50:hover {
     background-color: #0a0a0a !important;
-    border: 2px solid #4ade80 !important;
-    color: #4ade80 !important;
-    box-shadow: 0 0 10px rgba(74, 222, 128, 0.3) !important;
-    border-radius: 50% !important;
+    border-color: #27272a !important;
 }
 
 /* --- Synthwave Theme (Cyberpunk/Neon) --- */

@@ -1,11 +1,13 @@
 
-import React, { useState, useMemo, useEffect, useContext } from 'react';
+import React, { useState, useMemo, useEffect, useContext, useRef, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigation } from '../contexts/NavigationContext';
 import { TeacherAcademicContext } from '../contexts/TeacherAcademicContext';
 import { StudentAcademicContext } from '../contexts/StudentAcademicContext';
-import { SpinnerIcon, ICONS } from '../constants/index';
+import { SpinnerIcon } from '../constants/index';
 import type { HistoricalEra, Module, Activity } from '../types';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { db } from './firebaseClient';
 
 // --- Configuration ---
 
@@ -35,7 +37,6 @@ interface TimelineItem {
 
 // --- Helpers ---
 
-// Linear Interpolation for Colors
 const interpolateColor = (color1: string, color2: string, factor: number) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color1);
     const result2 = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color2);
@@ -68,180 +69,148 @@ const getItemColor = (era: HistoricalEra, index: number, total: number) => {
 
 // --- Components ---
 
-const EraSection: React.FC<{
+const TimelineNode: React.FC<{
+    item: TimelineItem;
+    index: number;
+    total: number;
+    onClick: (item: TimelineItem) => void;
     era: HistoricalEra;
-    items: TimelineItem[];
-    backgroundImages: string[];
-    onItemClick: (item: TimelineItem) => void;
-    onAddBackground: (era: HistoricalEra, url: string) => void;
-    onRemoveBackground: (era: HistoricalEra, index: number) => void;
-    canEdit: boolean;
-}> = ({ era, items, backgroundImages, onItemClick, onAddBackground, onRemoveBackground, canEdit }) => {
-    const [isHovered, setIsHovered] = useState(false);
-    const [bgInput, setBgInput] = useState('');
-    const [isEditingBg, setIsEditingBg] = useState(false);
+}> = React.memo(({ item, index, total, onClick, era }) => {
+    // 3D Depth Logic - Staggered layout
+    // 0 = Close, 1 = Mid, 2 = Far
+    const depthIndex = index % 3;
+    
+    // Z-Index: Closer items must be on top
+    const zIndex = 100 - depthIndex * 10;
 
-    // Dynamic width calculation: 
-    // Minimum 800px or items * 280px (enough space for cards not to overlap)
-    const sectionWidth = Math.max(800, items.length * 280);
+    // Transform Z logic for visual depth
+    // The deeper the item, the smaller it scales and moves up (simulating horizon)
+    const zTransform = depthIndex === 0 ? 0 : depthIndex === 1 ? -100 : -200;
+    const yOffset = depthIndex === 0 ? 0 : depthIndex === 1 ? -40 : -80; // More vertical spacing
+    const blur = depthIndex === 2 ? 'blur-[1px]' : 'blur-none';
+    const opacity = depthIndex === 2 ? 'opacity-80' : 'opacity-100';
 
-    const handleAddBg = () => {
-        if (bgInput) {
-            onAddBackground(era, bgInput);
-            setBgInput('');
-        }
-    };
+    const anchorColor = getItemColor(era, index, total);
+    const coverImage = (item.data as any).coverImageUrl || (item.data as any).imageUrl;
 
     return (
         <div 
-            className="relative flex-shrink-0 h-full border-r-2 border-white/20 overflow-hidden group transition-all duration-500"
-            style={{ width: `${sectionWidth}px` }}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+            className={`absolute bottom-0 w-20 flex flex-col items-center justify-end transition-all duration-500 ease-out group/node ${blur} ${opacity}`}
+            style={{ 
+                left: `${index * 300 + 150}px`, // Increased horizontal spacing
+                zIndex,
+                transform: `translate3d(0, ${yOffset}px, ${zTransform}px)`,
+                height: '350px' // Fixed height container to allow line to reach bottom
+            }}
         >
-            {/* Background Layer (Multi-Image Tiling) */}
-            <div className="absolute inset-0 flex pointer-events-none">
-                {backgroundImages.map((img, idx) => (
-                    <div 
-                        key={idx} 
-                        className="h-full flex-1 relative overflow-hidden"
-                    >
-                        <div 
-                            className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 ease-out group-hover:scale-105"
-                            style={{ backgroundImage: `url(${img})` }}
+            {/* 3D Connector Line (Tether) */}
+            <div 
+                className="absolute bottom-0 left-1/2 w-[2px] origin-bottom bg-gradient-to-t from-white via-white/40 to-transparent transition-all duration-500 group-hover/node:w-[3px] group-hover/node:from-indigo-400 group-hover/node:via-indigo-300/50"
+                style={{ 
+                    height: '100%', 
+                    transform: 'translateX(-50%)',
+                    boxShadow: '0 0 10px rgba(255,255,255,0.2)'
+                }}
+            />
+
+            {/* Anchor Point (On the Timeline Axis) */}
+            <div 
+                className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-5 h-5 rounded-full border-4 bg-slate-900 shadow-[0_0_20px_rgba(255,255,255,0.8)] cursor-pointer transition-transform duration-300 group-hover/node:scale-125 group-hover/node:bg-white z-50 hover:shadow-[0_0_30px_#fff]"
+                style={{ borderColor: anchorColor }}
+                onClick={(e) => { e.stopPropagation(); onClick(item); }}
+            >
+                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] font-mono font-bold text-white/90 bg-black/70 px-2 py-0.5 rounded whitespace-nowrap group-hover/node:text-white group-hover/node:bg-indigo-600 transition-colors border border-white/10">
+                    {item.year > 0 ? item.year : `${Math.abs(item.year)} a.C.`}
+                </div>
+            </div>
+
+            {/* Floating Card */}
+            <div 
+                onClick={(e) => { e.stopPropagation(); onClick(item); }}
+                className="absolute top-0 left-1/2 -translate-x-1/2 w-64 bg-slate-900/90 backdrop-blur-xl rounded-xl shadow-2xl cursor-pointer border border-white/10 overflow-hidden ring-1 ring-white/5 group-hover/node:ring-indigo-400/50 group-hover/node:shadow-[0_0_50px_rgba(79,70,229,0.3)] group-hover/node:scale-105 group-hover/node:-translate-y-2 transition-all duration-300 origin-bottom"
+            >
+                {/* Image Area */}
+                {coverImage && (
+                    <div className="h-32 w-full overflow-hidden relative">
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent z-10" />
+                        <img 
+                            src={coverImage} 
+                            alt="" 
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover/node:scale-110" 
                         />
-                        {/* Admin remove overlay */}
-                        {canEdit && isEditingBg && backgroundImages.length > 1 && (
-                            <button 
-                                onClick={(e) => { e.stopPropagation(); onRemoveBackground(era, idx); }}
-                                className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 shadow-md pointer-events-auto hover:bg-red-700 z-50"
-                                title="Remover esta imagem de fundo"
+                        <div className="absolute top-2 right-2 z-20">
+                            <span 
+                                className="text-[9px] uppercase font-bold px-2 py-0.5 rounded text-slate-900 shadow-sm border border-white/20"
+                                style={{ backgroundColor: anchorColor }}
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                </svg>
-                            </button>
-                        )}
+                                {item.type === 'module' ? 'Módulo' : 'Atividade'}
+                            </span>
+                        </div>
+                    </div>
+                )}
+
+                <div className={`p-4 relative z-20 ${coverImage ? '-mt-8' : ''}`}>
+                    <h4 className="text-sm font-bold text-white leading-tight mb-1 drop-shadow-md group-hover/node:text-indigo-200 transition-colors">
+                        {item.title}
+                    </h4>
+                    <p className="text-[10px] text-slate-400 line-clamp-2 leading-relaxed">
+                        {(item.data as any).description}
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+});
+
+const BackgroundLayer: React.FC<{
+    eraSections: { era: HistoricalEra, left: number, width: number }[];
+    backgrounds: Record<HistoricalEra, string[]>;
+    cameraX: number;
+    totalWidth: number;
+}> = ({ eraSections, backgrounds, cameraX, totalWidth }) => {
+    // Parallax Factor: Controls how fast the background moves relative to the camera
+    // 0.2 means background moves at 20% speed of foreground
+    const parallaxFactor = 0.2;
+    const bgOffset = -(cameraX * parallaxFactor);
+
+    return (
+        <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
+            {/* We create a container that is wide enough to hold all backgrounds */}
+            <div 
+                className="absolute top-0 bottom-0 flex will-change-transform"
+                style={{ 
+                    transform: `translateX(${bgOffset}px)`,
+                    width: `${totalWidth}px` // Ensure it spans properly
+                }}
+            >
+                {eraSections.map(section => (
+                    <div 
+                        key={section.era}
+                        className="relative h-full border-r border-white/5"
+                        style={{ width: `${section.width}px` }}
+                    >
+                        {/* Background Image(s) */}
+                        <div className="absolute inset-0 flex">
+                            {backgrounds[section.era]?.map((img, idx) => (
+                                <div 
+                                    key={idx} 
+                                    className="h-full flex-1 bg-cover bg-center opacity-30"
+                                    style={{ backgroundImage: `url(${img})` }}
+                                />
+                            ))}
+                        </div>
+                        
+                        {/* Overlay Gradients for Depth */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-slate-900/50 to-black/80" />
+                        
+                        {/* Huge Era Title in Background */}
+                        <div className="absolute top-20 left-10 opacity-10">
+                            <h2 className="text-[12rem] font-bold text-white font-epic tracking-widest uppercase leading-none select-none whitespace-nowrap">
+                                {section.era}
+                            </h2>
+                        </div>
                     </div>
                 ))}
-            </div>
-
-            {/* Dark Overlay */}
-            <div className="absolute inset-0 bg-black/60 group-hover:bg-black/50 transition-colors duration-500 pointer-events-none" />
-
-            {/* Era Title & Controls */}
-            <div className="absolute top-6 left-6 z-30">
-                <h2 className="text-5xl font-bold text-white font-epic tracking-widest uppercase opacity-90 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]">
-                    {era}
-                </h2>
-                {canEdit && (
-                    <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-start gap-2">
-                        <button 
-                            onClick={() => setIsEditingBg(!isEditingBg)}
-                            className="text-xs bg-black/50 hover:bg-black/70 text-white px-3 py-1.5 rounded backdrop-blur-md transition-colors border border-white/20"
-                        >
-                            {isEditingBg ? 'Fechar Editor' : 'Gerenciar Fundos'}
-                        </button>
-                        
-                        {isEditingBg && (
-                            <div className="bg-black/80 p-3 rounded-lg border border-white/20 shadow-xl w-64 backdrop-blur-md">
-                                <p className="text-xs text-gray-300 mb-2">Adicionar imagem reserva (estende o fundo):</p>
-                                <div className="flex gap-2 mb-2">
-                                    <input 
-                                        type="text" 
-                                        placeholder="URL da Imagem..." 
-                                        className="flex-1 text-xs p-1.5 rounded bg-white/10 text-white border border-white/30 focus:outline-none focus:border-indigo-500"
-                                        value={bgInput}
-                                        onChange={(e) => setBgInput(e.target.value)}
-                                    />
-                                    <button 
-                                        onClick={handleAddBg} 
-                                        className="text-xs bg-indigo-600 hover:bg-indigo-700 px-2 py-1 rounded text-white font-bold"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                                <p className="text-[10px] text-gray-400 italic">Dica: Adicione mais imagens para evitar distorção quando a linha do tempo crescer.</p>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-
-            {/* Timeline Horizontal Line */}
-            <div className="absolute top-1/2 left-0 right-0 h-1 bg-white/20 pointer-events-none" />
-
-            {/* Items Container */}
-            <div className="absolute top-0 bottom-0 left-0 right-0 flex items-center px-12 gap-20 overflow-visible">
-                {items.length === 0 ? (
-                    <div className="text-white/30 text-sm italic mt-24 ml-4 pointer-events-none">
-                        Adicione conteúdo com ano histórico para aparecer aqui.
-                    </div>
-                ) : (
-                    items.map((item, index) => {
-                        const isTop = index % 2 === 0;
-                        const anchorColor = getItemColor(era, index, items.length);
-                        const coverImage = (item.data as any).coverImageUrl || (item.data as any).imageUrl;
-
-                        return (
-                            <div key={item.id} className="relative group/node flex-shrink-0 flex flex-col items-center justify-center w-12">
-                                
-                                {/* Vertical Connector Line */}
-                                <div 
-                                    className={`absolute left-1/2 w-0.5 bg-white/40 h-20 -translate-x-1/2 transition-all duration-300 group-hover/node:bg-white/80 ${isTop ? 'bottom-1/2 origin-bottom' : 'top-1/2 origin-top'}`} 
-                                />
-
-                                {/* Anchor Point (Now with Image) */}
-                                <div 
-                                    className="w-14 h-14 rounded-full border-[3px] z-20 relative cursor-pointer transition-all duration-300 transform group-hover/node:scale-125 group-hover/node:shadow-[0_0_20px_rgba(255,255,255,0.6)] bg-slate-900 overflow-hidden"
-                                    style={{ borderColor: anchorColor }}
-                                    onClick={() => onItemClick(item)}
-                                >
-                                    {coverImage ? (
-                                        <img src={coverImage} alt="" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-slate-800">
-                                            <div className="w-2 h-2 rounded-full bg-white opacity-50" />
-                                        </div>
-                                    )}
-                                </div>
-                                
-                                {/* Year Label (On the line) */}
-                                <div className={`absolute left-1/2 -translate-x-1/2 text-white/80 font-bold text-xs bg-black/50 px-2 py-0.5 rounded-full backdrop-blur-sm z-20 ${isTop ? 'top-[calc(50%+24px)]' : 'bottom-[calc(50%+24px)]'}`}>
-                                    {item.year > 0 ? item.year : `${Math.abs(item.year)} a.C.`}
-                                </div>
-
-                                {/* Content Card */}
-                                <div 
-                                    onClick={() => onItemClick(item)}
-                                    className={`absolute left-1/2 -translate-x-1/2 w-56 p-4 bg-slate-900/90 backdrop-blur-xl rounded-xl shadow-2xl cursor-pointer hover:bg-slate-800 transition-all duration-300 transform hover:scale-105 border border-slate-700 z-30 ${isTop ? '-top-48' : 'top-28'}`}
-                                >
-                                    {/* Triangle pointer */}
-                                    <div className={`absolute left-1/2 -translate-x-1/2 w-4 h-4 bg-slate-900/90 rotate-45 border-slate-700 ${isTop ? '-bottom-2 border-b border-r' : '-top-2 border-t border-l'}`} />
-
-                                    <div className="relative z-10">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <span 
-                                                className="text-[10px] uppercase font-bold px-2 py-0.5 rounded text-slate-900"
-                                                style={{ backgroundColor: anchorColor }}
-                                            >
-                                                {item.type === 'module' ? 'Módulo' : 'Atividade'}
-                                            </span>
-                                            {/* Preview Dot for color */}
-                                            <div className="w-2 h-2 rounded-full shadow-[0_0_8px]" style={{ backgroundColor: anchorColor, boxShadow: `0 0 8px ${anchorColor}` }} />
-                                        </div>
-                                        <h4 className="text-base font-bold text-white line-clamp-2 leading-snug mb-1">
-                                            {item.title}
-                                        </h4>
-                                        <p className="text-xs text-slate-400 line-clamp-2">
-                                            {(item.data as any).description}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })
-                )}
             </div>
         </div>
     );
@@ -254,52 +223,67 @@ const InteractiveMap: React.FC = () => {
     const teacherContext = useContext(TeacherAcademicContext);
     const studentContext = useContext(StudentAcademicContext);
 
-    const [backgrounds, setBackgrounds] = useState<Record<HistoricalEra, string[]>>({
-        'Antiga': DEFAULT_BACKGROUNDS['Antiga'],
-        'Média': DEFAULT_BACKGROUNDS['Média'],
-        'Moderna': DEFAULT_BACKGROUNDS['Moderna'],
-        'Contemporânea': DEFAULT_BACKGROUNDS['Contemporânea'],
-    });
+    const [backgrounds, setBackgrounds] = useState<Record<HistoricalEra, string[]>>(DEFAULT_BACKGROUNDS);
+    const [publicModules, setPublicModules] = useState<Module[]>([]);
+    const [isLoadingPublic, setIsLoadingPublic] = useState(false);
 
-    // Migrate old local storage format (string) to new format (string[]) if necessary
+    // --- Virtual Camera State ---
+    const viewportRef = useRef<HTMLDivElement>(null);
+    const [cameraX, setCameraX] = useState(0);
+    const [zoom, setZoom] = useState(1);
+    
+    // Gestures State
+    const [isDragging, setIsDragging] = useState(false);
+    const lastX = useRef(0);
+    const lastTouchDistance = useRef<number | null>(null);
+
+    // Constraints
+    const MIN_ZOOM = 0.5;
+    const MAX_ZOOM = 1.8;
+    
+    // Data Loading (Backgrounds from Firestore)
     useEffect(() => {
-        const savedBgs = localStorage.getItem('timeline_backgrounds_v2');
-        if (savedBgs) {
+        const fetchBackgrounds = async () => {
             try {
-                setBackgrounds(JSON.parse(savedBgs));
-            } catch (e) { console.error("Error loading backgrounds", e); }
-        } else {
-            // Check for legacy V1 format
-            const legacyBgs = localStorage.getItem('timeline_backgrounds');
-            if (legacyBgs) {
-                try {
-                    const parsed = JSON.parse(legacyBgs);
-                    const migrated: any = {};
-                    Object.keys(parsed).forEach(key => {
-                        migrated[key] = [parsed[key]];
+                const docRef = doc(db, 'system_settings', 'timeline_backgrounds');
+                const snap = await getDoc(docRef);
+                if (snap.exists()) {
+                    const data = snap.data();
+                    const mergedBgs = { ...DEFAULT_BACKGROUNDS };
+                    
+                    ['Antiga', 'Média', 'Moderna', 'Contemporânea'].forEach(era => {
+                        // Check if exists and has valid content
+                        if (data[era] && Array.isArray(data[era]) && data[era].length > 0 && data[era][0] !== '') {
+                            mergedBgs[era as HistoricalEra] = data[era];
+                        }
                     });
-                    setBackgrounds({ ...DEFAULT_BACKGROUNDS, ...migrated });
-                } catch (e) {}
+                    setBackgrounds(mergedBgs);
+                }
+            } catch (err) {
+                console.error("Failed to load map backgrounds", err);
             }
-        }
+        };
+        fetchBackgrounds();
     }, []);
 
-    const saveBackgrounds = (newBgs: Record<HistoricalEra, string[]>) => {
-        setBackgrounds(newBgs);
-        localStorage.setItem('timeline_backgrounds_v2', JSON.stringify(newBgs));
-    };
-
-    // Initial Data Fetching for Teachers
     useEffect(() => {
-        if (userRole === 'professor' && teacherContext) {
-            if (teacherContext.modules.length === 0) {
-                teacherContext.fetchModulesLibrary();
-            }
+        if (userRole === 'professor' && teacherContext?.modules.length === 0) {
+            teacherContext.fetchModulesLibrary();
         }
-    }, [userRole, teacherContext]); 
+    }, [userRole, teacherContext]);
 
-    // Calculate Items Memoized
-    const timelineItems = useMemo(() => {
+    useEffect(() => {
+        if (userRole === 'aluno') {
+            setIsLoadingPublic(true);
+            const q = query(collection(db, "modules"), where("status", "==", "Ativo"), where("visibility", "==", "public"));
+            getDocs(q).then(snap => {
+                setPublicModules(snap.docs.map(d => ({ id: d.id, ...d.data() } as Module)));
+            }).finally(() => setIsLoadingPublic(false));
+        }
+    }, [userRole]);
+
+    // Calculate Items & Sections
+    const { eraSections } = useMemo(() => {
         let modules: Module[] = [];
         let activities: Activity[] = [];
 
@@ -307,104 +291,207 @@ const InteractiveMap: React.FC = () => {
             modules = teacherContext.modules;
         } else if (userRole === 'aluno' && studentContext) {
             studentContext.studentClasses.forEach(cls => {
-                modules.push(...cls.modules);
-                activities.push(...cls.activities);
+                if (Array.isArray(cls.modules)) modules.push(...cls.modules);
+                if (Array.isArray(cls.activities)) activities.push(...cls.activities);
             });
-            // Dedup items
+            modules.push(...publicModules);
+            // Remove duplicates
             modules = Array.from(new Map(modules.map(m => [m.id, m])).values());
             activities = Array.from(new Map(activities.map(a => [a.id, a])).values());
         }
 
         const items: TimelineItem[] = [];
-
-        modules.forEach(m => {
-            if (m.historicalYear !== undefined && m.historicalEra) {
-                items.push({
-                    id: m.id,
-                    type: 'module',
-                    title: m.title,
-                    year: m.historicalYear,
-                    era: m.historicalEra,
-                    data: m
-                });
+        const pushItem = (obj: any, type: 'module' | 'activity') => {
+            if (obj.historicalYear !== undefined && obj.historicalEra) {
+                items.push({ id: obj.id, type, title: obj.title, year: obj.historicalYear, era: obj.historicalEra, data: obj });
             }
+        };
+        modules.forEach(m => pushItem(m, 'module'));
+        activities.forEach(a => pushItem(a, 'activity'));
+        items.sort((a, b) => a.year - b.year);
+
+        // Calculate layout
+        const sections: { era: HistoricalEra, left: number, width: number, items: TimelineItem[] }[] = [];
+        let currentLeft = 0;
+        const ERAS: HistoricalEra[] = ['Antiga', 'Média', 'Moderna', 'Contemporânea'];
+
+        ERAS.forEach(era => {
+            const eraItems = items.filter(i => i.era === era);
+            const width = Math.max(1200, eraItems.length * 300 + 400); // Minimum width + item spacing
+            sections.push({ era, left: currentLeft, width, items: eraItems });
+            currentLeft += width;
         });
 
-        activities.forEach(a => {
-            if (a.historicalYear !== undefined && a.historicalEra) {
-                items.push({
-                    id: a.id,
-                    type: 'activity',
-                    title: a.title,
-                    year: a.historicalYear,
-                    era: a.historicalEra,
-                    data: a
-                });
-            }
-        });
+        return { timelineItems: items, eraSections: sections };
+    }, [userRole, teacherContext?.modules, studentContext?.studentClasses, publicModules]);
 
-        return items.sort((a, b) => a.year - b.year);
-    }, [userRole, teacherContext?.modules, studentContext?.studentClasses]);
+    const totalWidth = eraSections.reduce((acc, s) => acc + s.width, 0);
 
-    const handleAddBackground = (era: HistoricalEra, url: string) => {
-        const currentUrls = backgrounds[era] || [];
-        const newBgs = { ...backgrounds, [era]: [...currentUrls, url] };
-        saveBackgrounds(newBgs);
-    };
+    // --- Gesture Handlers ---
 
-    const handleRemoveBackground = (era: HistoricalEra, index: number) => {
-        const currentUrls = backgrounds[era];
-        if (currentUrls.length <= 1) {
-            alert("Você precisa ter pelo menos uma imagem de fundo.");
-            return;
+    const handleWheel = useCallback((e: WheelEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (e.ctrlKey) {
+            // Pinch to zoom (trackpad)
+            const zoomDelta = -e.deltaY * 0.005;
+            setZoom(z => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z + zoomDelta)));
+        } else {
+            // Pan
+            setCameraX(x => Math.min(Math.max(0, x + e.deltaY + e.deltaX), totalWidth - window.innerWidth / zoom));
         }
-        const newUrls = currentUrls.filter((_, i) => i !== index);
-        const newBgs = { ...backgrounds, [era]: newUrls };
-        saveBackgrounds(newBgs);
+    }, [totalWidth, zoom]);
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (e.touches.length === 1) {
+            setIsDragging(true);
+            lastX.current = e.touches[0].clientX;
+        } else if (e.touches.length === 2) {
+            // Pinch start
+            const dist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            lastTouchDistance.current = dist;
+        }
     };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        e.preventDefault(); // Critical for isolation
+        e.stopPropagation();
+
+        if (e.touches.length === 1 && isDragging) {
+            const deltaX = lastX.current - e.touches[0].clientX;
+            lastX.current = e.touches[0].clientX;
+            setCameraX(x => Math.min(Math.max(0, x + deltaX), totalWidth - window.innerWidth / zoom));
+        } else if (e.touches.length === 2 && lastTouchDistance.current !== null) {
+            const dist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            const delta = dist - lastTouchDistance.current;
+            lastTouchDistance.current = dist;
+            
+            const zoomSpeed = 0.005;
+            setZoom(z => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z + delta * zoomSpeed)));
+        }
+    };
+
+    const handleTouchEnd = () => {
+        setIsDragging(false);
+        lastTouchDistance.current = null;
+    };
+
+    // Attach non-passive wheel listener for full control
+    useEffect(() => {
+        const el = viewportRef.current;
+        if (el) {
+            el.addEventListener('wheel', handleWheel, { passive: false });
+        }
+        return () => {
+            if (el) el.removeEventListener('wheel', handleWheel);
+        };
+    }, [handleWheel]);
 
     const handleItemClick = (item: TimelineItem) => {
-        if (item.type === 'module') {
-            startModule(item.data as Module);
-        } else {
-            openActivity(item.data as Activity);
-        }
+        if (item.type === 'module') startModule(item.data as Module);
+        else openActivity(item.data as Activity);
     };
 
-    const eras: HistoricalEra[] = ['Antiga', 'Média', 'Moderna', 'Contemporânea'];
-    const isLoading = userRole === 'aluno' ? studentContext?.isLoading : teacherContext?.isLoadingContent;
-    const canEdit = userRole === 'admin'; // Only Admin can change backgrounds
+    const isLoading = (userRole === 'aluno' ? studentContext?.isLoading : teacherContext?.isLoadingContent) || isLoadingPublic;
 
-    if (isLoading && timelineItems.length === 0) {
-         return (
-            <div className="h-[calc(100vh-6rem)] w-full flex items-center justify-center bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl">
-                <SpinnerIcon className="h-12 w-12 text-indigo-500" />
-            </div>
-        );
+    if (isLoading && totalWidth === 0) {
+        return <div className="h-[80vh] w-full flex items-center justify-center"><SpinnerIcon className="h-12 w-12 text-indigo-500" /></div>;
     }
 
     return (
-        <div className="h-[calc(100vh-6rem)] w-full overflow-x-auto overflow-y-hidden bg-slate-950 border border-slate-800 rounded-xl shadow-2xl relative scroll-smooth">
-            <div className="flex h-full w-max">
-                {eras.map(era => (
-                    <EraSection 
-                        key={era}
-                        era={era}
-                        items={timelineItems.filter(i => i.era === era)}
-                        backgroundImages={backgrounds[era]}
-                        onItemClick={handleItemClick}
-                        onAddBackground={handleAddBackground}
-                        onRemoveBackground={handleRemoveBackground}
-                        canEdit={canEdit}
-                    />
-                ))}
+        <div 
+            ref={viewportRef}
+            className="h-[calc(100vh-6rem)] w-full relative overflow-hidden bg-black select-none touch-none rounded-xl shadow-2xl border border-slate-800"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+        >
+            {/* UI Overlay (Static) */}
+            <div className="absolute top-4 left-4 z-50 flex items-center gap-4 bg-black/60 backdrop-blur-md p-2 rounded-lg border border-white/10 text-white pointer-events-auto">
+                <div className="flex flex-col">
+                    <span className="text-[10px] uppercase text-gray-400 font-bold">Zoom</span>
+                    <span className="font-mono text-sm">{Math.round(zoom * 100)}%</span>
+                </div>
+                <div className="h-8 w-[1px] bg-white/20" />
+                <button 
+                    onClick={() => { setZoom(1); setCameraX(0); }}
+                    className="ml-2 p-1 hover:bg-white/20 rounded text-xs"
+                    title="Resetar Câmera"
+                >
+                    Reset
+                </button>
+            </div>
+
+            {/* LAYER 1: Background (Parallax Only, No Zoom) */}
+            <BackgroundLayer 
+                eraSections={eraSections} 
+                backgrounds={backgrounds} 
+                cameraX={cameraX} 
+                totalWidth={totalWidth} 
+            />
+
+            {/* LAYER 2: World Content (Zoom + Pan) */}
+            <div 
+                className="absolute inset-0 w-full h-full will-change-transform origin-top-left z-10"
+                style={{
+                    transform: `translateX(${-cameraX}px) scale(${zoom})`,
+                    width: `${totalWidth}px`
+                }}
+            >
+                {/* 2.1 Floor Grid */}
+                <div 
+                    className="absolute bottom-0 left-0 right-0 h-[300px] z-10 pointer-events-none"
+                    style={{
+                        background: `
+                            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.8) 20%, #000 100%),
+                            repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 150px),
+                            repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 50px)
+                        `,
+                        transform: 'perspective(800px) rotateX(40deg) scale(1.5)',
+                        transformOrigin: 'bottom center',
+                        width: '100%'
+                    }}
+                />
+
+                {/* 2.2 THE TIMELINE AXIS (The central line) */}
+                <div 
+                    className="absolute bottom-[30px] left-0 right-0 h-[4px] z-20 pointer-events-none bg-indigo-500/50 shadow-[0_0_20px_#6366f1]"
+                    style={{
+                        background: 'linear-gradient(90deg, transparent 0%, #6366f1 10%, #a855f7 50%, #6366f1 90%, transparent 100%)',
+                        width: `${totalWidth}px`
+                    }}
+                />
+
+                {/* 2.3 Items Layer (Mapped strictly to avoid duplicates) */}
+                <div className="absolute top-0 bottom-[34px] left-0 right-0 z-30 pointer-events-none" style={{ perspective: '1000px' }}>
+                    {eraSections.map(section => (
+                        <div key={section.era} className="absolute top-0 bottom-0 pointer-events-auto" style={{ left: section.left, width: section.width }}>
+                            {section.items.map((item, idx) => (
+                                <TimelineNode 
+                                    key={item.id}
+                                    item={item}
+                                    index={idx}
+                                    total={section.items.length}
+                                    onClick={handleItemClick}
+                                    era={section.era}
+                                />
+                            ))}
+                        </div>
+                    ))}
+                </div>
             </div>
             
-            <div className="fixed bottom-8 left-8 bg-black/80 backdrop-blur-md p-4 rounded-lg border border-white/20 text-white text-xs z-40 max-w-xs shadow-xl">
-                <h3 className="font-bold mb-2 uppercase tracking-wider text-indigo-400 flex items-center">
-                    <span className="text-lg mr-2">🧭</span> Navegação Temporal
-                </h3>
-                <p>Role horizontalmente para viajar pela história. Os pontos mudam de cor conforme o tempo avança.</p>
+            {/* Gesture Hint */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none opacity-50 text-white text-xs font-mono animate-pulse z-50">
+                PINCH TO ZOOM • DRAG TO PAN
             </div>
         </div>
     );

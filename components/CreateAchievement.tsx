@@ -21,6 +21,7 @@ const CreateAchievement: React.FC = () => {
     const [category, setCategory] = useState<'social' | 'learning' | 'engagement'>('learning');
     const [rarity, setRarity] = useState<'common' | 'rare' | 'epic'>('common');
     const [status, setStatus] = useState<'Ativa' | 'Inativa'>('Ativa');
+    const [imageUrl, setImageUrl] = useState(''); // New State for Image URL
     const [action, setAction] = useState<'save' | 'delete' | null>(null);
     
     useEffect(() => {
@@ -33,6 +34,7 @@ const CreateAchievement: React.FC = () => {
             setCategory(editingAchievement.category || 'learning');
             setRarity(editingAchievement.rarity || 'common');
             setStatus(editingAchievement.status || 'Ativa');
+            setImageUrl(editingAchievement.imageUrl || ''); // Load image URL
         }
     }, [isEditMode, editingAchievement]);
 
@@ -56,6 +58,7 @@ const CreateAchievement: React.FC = () => {
             category,
             rarity,
             status,
+            imageUrl: imageUrl.trim() || undefined, // Save image URL
         };
         
         const tier = rarity === 'epic' ? 'gold' : rarity === 'rare' ? 'silver' : 'bronze';
@@ -129,6 +132,23 @@ const CreateAchievement: React.FC = () => {
                     </InputField>
                     <InputField label="Descrição" required>
                         <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className="w-full p-2 border border-gray-300 rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-white" />
+                    </InputField>
+
+                    <InputField label="URL da Imagem/Ícone (Opcional)" helperText="Substitui o emoji de troféu padrão. Use uma imagem quadrada (ex: 512x512) com fundo transparente.">
+                        <div className="flex items-center space-x-4">
+                            <input 
+                                type="text" 
+                                value={imageUrl} 
+                                onChange={e => setImageUrl(e.target.value)} 
+                                placeholder="https://..." 
+                                className="w-full p-2 border border-gray-300 rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-white" 
+                            />
+                            {imageUrl && (
+                                <div className="flex-shrink-0 w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden">
+                                    <img src={imageUrl} alt="Preview" className="w-full h-full object-contain" onError={(e) => (e.target as HTMLImageElement).style.display = 'none'} />
+                                </div>
+                            )}
+                        </div>
                     </InputField>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

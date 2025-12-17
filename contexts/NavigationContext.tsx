@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useCallback, useContext, ReactNode, useEffect } from 'react';
 import type { Module, Quiz, Page, Achievement, TeacherClass, Activity } from '../types';
 import { useAuth } from './AuthContext';
@@ -43,7 +42,7 @@ const NavigationStateContext = createContext<NavigationState | undefined>(undefi
 const NavigationActionsContext = createContext<NavigationActions | undefined>(undefined);
 
 // FIX: Refactored the provider component to a standard function declaration to resolve errors where the 'children' prop was not being correctly recognized by the type system.
-export function NavigationProvider({ children }: { children?: ReactNode }) {
+export function NavigationProvider({ children }: { children?: React.ReactNode }) {
     const { authState, userRole } = useAuth();
     const location = useLocation();
 

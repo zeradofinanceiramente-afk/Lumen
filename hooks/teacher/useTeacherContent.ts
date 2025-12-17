@@ -466,10 +466,11 @@ export function useTeacherContent(
             setModules(prev => prev.filter(m => m.id !== moduleId));
             setDraftModules(prev => prev.filter(m => m.id !== moduleId));
             
+            // FIX: Ensure safe array iteration for modules
             setTeacherClasses(prev => prev.map(cls => ({
                 ...cls,
-                modules: cls.modules.filter(m => m.id !== moduleId),
-                moduleCount: cls.modules.some(m => m.id === moduleId) ? Math.max((cls.moduleCount || 1) - 1, 0) : cls.moduleCount
+                modules: (cls.modules || []).filter(m => m.id !== moduleId),
+                moduleCount: (cls.modules || []).some(m => m.id === moduleId) ? Math.max((cls.moduleCount || 1) - 1, 0) : cls.moduleCount
             })));
             addToast("Módulo excluído!", "success");
         } catch (error: any) { console.error(error); addToast("Erro ao excluir.", "error"); }

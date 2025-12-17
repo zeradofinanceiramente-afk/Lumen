@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -15,8 +16,8 @@
     <meta name="format-detection" content="telephone=no">
     
     <!-- Icons -->
-    <link rel="icon" type="image/png" href="/icons/icon-192.png" />
-    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <link rel="icon" type="image/png" href="https://i.imgur.com/XISQWUh.png" />
+    <link rel="apple-touch-icon" href="https://i.imgur.com/XISQWUh.png">
     <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-192.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192.png">
     <link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-192.png">
@@ -34,50 +35,93 @@
     <!-- Tailwind CDN restored for immediate preview stability -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Outfit', 'sans-serif'],
-                        scifi: ['Orbitron', 'sans-serif'],
-                        epic: ['Cinzel', 'serif'],
-                        japanese: ['Sawarabi Mincho', 'serif'],
-                        modern: ['Space Grotesk', 'sans-serif'],
-                    },
-                },
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Outfit', 'sans-serif'],
+              scifi: ['Orbitron', 'sans-serif'],
+              epic: ['Cinzel', 'serif'],
+              japanese: ['Sawarabi Mincho', 'serif'],
+              modern: ['Space Grotesk', 'sans-serif'],
             },
+            colors: {
+              slate: {
+                850: '#151e32',
+              }
+            },
+            animation: {
+              'fade-in': 'fadeIn 0.5s ease-out forwards',
+              'slide-in': 'slideIn 0.3s ease-out forwards',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              slideIn: {
+                '0%': { transform: 'translateY(10px)', opacity: '0' },
+                '100%': { transform: 'translateY(0)', opacity: '1' },
+              }
+            }
+          }
         }
+      }
     </script>
-
+    <style>
+        /* Custom Scrollbar for Webkit */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        
+        /* Utility for hiding scrollbar but keeping functionality */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
 <script type="importmap">
 {
   "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0",
-    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^6.25.1",
-    "react-router": "https://aistudiocdn.com/react-router@^6.25.1",
-    "firebase/app": "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js",
-    "firebase/auth": "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js",
-    "firebase/firestore": "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js",
-    "firebase/storage": "https://www.gstatic.com/firebasejs/9.17.1/firebase-storage.js",
-    "firebase/": "https://aistudiocdn.com/firebase@^12.6.0/",
-    "vite": "https://aistudiocdn.com/vite@^7.2.4",
-    "@vitejs/plugin-react-swc": "https://aistudiocdn.com/@vitejs/plugin-react-swc@^4.2.2",
-    "idb-keyval": "https://aistudiocdn.com/idb-keyval@^6.2.1",
-    "@tanstack/react-query": "https://esm.sh/@tanstack/react-query@5.17.19?external=react,react-dom",
-    "@tanstack/react-query-persist-client": "https://esm.sh/@tanstack/react-query-persist-client@5.17.19?external=react,react-dom,@tanstack/react-query",
-    "browser-image-compression": "https://aistudiocdn.com/browser-image-compression@^2.0.2",
-    "@headlessui/react": "https://esm.sh/@headlessui/react@2.0.0?external=react,react-dom",
-    "vite-plugin-pwa": "https://esm.sh/vite-plugin-pwa@^1.2.0"
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.10.1",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "@tanstack/react-query": "https://esm.sh/@tanstack/react-query@^5.90.12",
+    "firebase/": "https://esm.sh/firebase@^12.7.0/",
+    "@headlessui/react": "https://esm.sh/@headlessui/react@^2.2.9",
+    "vite": "https://esm.sh/vite@^7.3.0",
+    "@vitejs/plugin-react-swc": "https://esm.sh/@vitejs/plugin-react-swc@^4.2.2",
+    "vite-plugin-pwa": "https://esm.sh/vite-plugin-pwa@^1.2.0",
+    "idb-keyval": "https://esm.sh/idb-keyval@^6.2.2",
+    "browser-image-compression": "https://esm.sh/browser-image-compression@^2.0.2",
+    "@tanstack/react-query-persist-client": "https://esm.sh/@tanstack/react-query-persist-client@^5.90.14"
   }
 }
 </script>
 </head>
-<body class="bg-gray-100 dark:bg-slate-900">
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 transition-colors duration-200">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>

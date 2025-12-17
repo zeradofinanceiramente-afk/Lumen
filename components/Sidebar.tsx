@@ -1,98 +1,46 @@
 
 // FILE: components/Sidebar.tsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { Page } from '../types';
 import { Logo, ICONS } from '../constants/index';
 import { useNavigation } from '../contexts/NavigationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useStudentNotificationsContext } from '../contexts/StudentNotificationContext';
 import { useTeacherAcademicContext } from '../contexts/TeacherAcademicContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
-const studentNavItems: { id: Page, label: string }[] = [
-    { id: 'modules', label: 'Módulos' },
-    { id: 'quizzes', label: 'Quizzes' },
-    { id: 'activities', label: 'Atividades' },
-    { id: 'interactive_map', label: 'Mapa Interativo' },
-    { id: 'achievements', label: 'Conquistas' },
-    { id: 'boletim', label: 'Boletim' },
-    { id: 'join_class', label: 'Turmas' },
-];
-
-const teacherNavItems: { id: Page, label: string }[] = [
-    { id: 'teacher_dashboard', label: 'Minhas Turmas' },
-    { id: 'teacher_pending_activities', label: 'Pendências' },
-    { id: 'modules', label: 'Módulos' },
-    { id: 'interactive_map', label: 'Mapa Interativo' },
-    { id: 'teacher_module_repository', label: 'Banco de Módulos' }, 
-    { id: 'teacher_repository', label: 'Banco de Questões' },
-    { id: 'teacher_statistics', label: 'Estatísticas' },
-    { id: 'teacher_school_records', label: 'Histórico Escolar' },
-];
-
-const directorNavItems: { id: Page, label: string }[] = [
-    { id: 'director_dashboard', label: 'Painel Geral' },
-    // A direção também pode querer criar conteúdo ou ver estatísticas globais
-    { id: 'teacher_statistics', label: 'Estatísticas Globais' },
-    { id: 'teacher_school_records', label: 'Histórico Escolar' },
-    { id: 'modules', label: 'Biblioteca de Módulos' },
-];
-
-const secretariatNavItems: { id: Page, label: string }[] = [
-    { id: 'secretariat_dashboard', label: 'Visão Geral' },
-    { id: 'secretariat_schools', label: 'Monitorar Escolas' },
-    { id: 'secretariat_statistics', label: 'Dados Estaduais' },
-];
-
-const adminNavItems: { id: Page, label: string }[] = [
-    { id: 'admin_dashboard', label: 'Dashboard' },
-    { id: 'admin_modules', label: 'Gerenciar Módulos' },
-    { id: 'admin_quizzes', label: 'Gerenciar Quizzes' },
-    { id: 'admin_achievements', label: 'Gerenciar Conquistas' },
-    { id: 'admin_stats', label: 'Estatísticas' },
-    { id: 'admin_tests', label: 'Testes' },
-];
-
-const guardianNavItems: { id: Page, label: string }[] = [
-    { id: 'guardian_dashboard', label: 'Meus Dependentes' },
-];
-
-const iconMap: { [key in Page]?: React.ReactNode } = {
-    // Student
-    modules: ICONS['modules'],
-    quizzes: ICONS['quizzes'],
-    activities: ICONS['activities'],
-    achievements: ICONS['achievements'],
-    boletim: ICONS['boletim'],
-    join_class: ICONS['join_class'],
-    interactive_map: ICONS['map'],
-    // Teacher
-    teacher_dashboard: ICONS['teacher_dashboard'],
-    teacher_pending_activities: ICONS['teacher_pending_activities'],
-    teacher_create_module: ICONS['teacher_create_module'],
-    teacher_create_activity: ICONS['teacher_create_activity'],
-    teacher_statistics: ICONS['teacher_statistics'],
-    teacher_school_records: ICONS['teacher_school_records'],
-    teacher_repository: ICONS['repository'],
-    teacher_module_repository: ICONS['modules'], // Using modules icon for now
-    // Director
-    director_dashboard: ICONS['director_dashboard'],
-    // Secretariat
-    secretariat_dashboard: ICONS['dashboard'],
-    secretariat_schools: ICONS['director_dashboard'], // Reusing icon
-    secretariat_statistics: ICONS['teacher_statistics'], // Reusing icon
-    // Guardian
-    guardian_dashboard: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21v-1a6 6 0 00-1.78-4.125a4 4 0 00-6.44 0A6 6 0 003 20v1h12z" /></svg>, // Reusing teacher-like icon or generic user group
-    // Admin
-    admin_dashboard: ICONS['dashboard'],
-    admin_users: ICONS['admin_users'],
-    admin_modules: ICONS['modules'],
-    admin_quizzes: ICONS['quizzes'],
-    admin_achievements: ICONS['achievements'],
-    admin_stats: ICONS['teacher_statistics'], // Re-using icon
-    admin_tests: ICONS['admin_tests'],
-}
-
-// --- Helper Components to safely use hooks ---
+const getIcon = (id: Page) => {
+    switch (id) {
+        case 'modules': return ICONS.modules;
+        case 'quizzes': return ICONS.quizzes;
+        case 'activities': return ICONS.activities;
+        case 'achievements': return ICONS.achievements;
+        case 'boletim': return ICONS.boletim;
+        case 'join_class': return ICONS.join_class;
+        case 'interactive_map': return ICONS.map;
+        case 'teacher_dashboard': return ICONS.teacher_dashboard;
+        case 'teacher_pending_activities': return ICONS.teacher_pending_activities;
+        case 'teacher_create_module': return ICONS.teacher_create_module;
+        case 'teacher_create_activity': return ICONS.teacher_create_activity;
+        case 'teacher_statistics': return ICONS.teacher_statistics;
+        case 'teacher_school_records': return ICONS.teacher_school_records;
+        case 'teacher_repository': return ICONS.repository;
+        case 'teacher_module_repository': return ICONS.modules;
+        case 'director_dashboard': return ICONS.director_dashboard;
+        case 'secretariat_dashboard': return ICONS.dashboard;
+        case 'secretariat_schools': return ICONS.director_dashboard;
+        case 'secretariat_statistics': return ICONS.teacher_statistics;
+        case 'guardian_dashboard': return <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21v-1a6 6 0 00-1.78-4.125a4 4 0 00-6.44 0A6 6 0 003 20v1h12z" /></svg>;
+        case 'admin_dashboard': return ICONS.dashboard;
+        case 'admin_users': return ICONS.admin_users;
+        case 'admin_modules': return ICONS.modules;
+        case 'admin_quizzes': return ICONS.quizzes;
+        case 'admin_achievements': return ICONS.achievements;
+        case 'admin_stats': return ICONS.teacher_statistics;
+        case 'admin_tests': return ICONS.admin_tests;
+        default: return null;
+    }
+};
 
 const StudentNotificationBadge: React.FC = () => {
     const { unreadNotificationCount } = useStudentNotificationsContext();
@@ -118,13 +66,59 @@ const TeacherPendingBadge: React.FC = () => {
 export const Sidebar: React.FC = () => {
     const { currentPage, setCurrentPage, isMobileMenuOpen, toggleMobileMenu } = useNavigation();
     const { handleLogout: onLogout, userRole } = useAuth();
+    const { t } = useLanguage();
     
-    let navItems = studentNavItems;
-    if (userRole === 'admin') navItems = adminNavItems;
-    else if (userRole === 'direcao') navItems = directorNavItems;
-    else if (userRole === 'secretaria') navItems = secretariatNavItems;
-    else if (userRole === 'professor') navItems = teacherNavItems;
-    else if (userRole === 'responsavel') navItems = guardianNavItems;
+    const navItems = useMemo(() => {
+        if (userRole === 'aluno') {
+            return [
+                { id: 'modules' as Page, label: t('sidebar.modules') },
+                { id: 'quizzes' as Page, label: t('sidebar.quizzes') },
+                { id: 'activities' as Page, label: t('sidebar.activities') },
+                { id: 'interactive_map' as Page, label: t('sidebar.map') },
+                { id: 'achievements' as Page, label: t('sidebar.achievements') },
+                { id: 'boletim' as Page, label: t('sidebar.boletim') },
+                { id: 'join_class' as Page, label: t('sidebar.turmas') },
+            ];
+        } else if (userRole === 'professor') {
+            return [
+                { id: 'teacher_dashboard' as Page, label: t('sidebar.teacher_dashboard') },
+                { id: 'teacher_pending_activities' as Page, label: t('sidebar.pending') },
+                { id: 'modules' as Page, label: t('sidebar.modules') },
+                { id: 'interactive_map' as Page, label: t('sidebar.map') },
+                { id: 'teacher_module_repository' as Page, label: t('sidebar.repo_modules') }, 
+                { id: 'teacher_repository' as Page, label: t('sidebar.repo_questions') },
+                { id: 'teacher_statistics' as Page, label: t('sidebar.stats') },
+                { id: 'teacher_school_records' as Page, label: t('sidebar.history') },
+            ];
+        } else if (userRole === 'direcao') {
+            return [
+                { id: 'director_dashboard' as Page, label: t('sidebar.director_panel') },
+                { id: 'teacher_statistics' as Page, label: t('sidebar.stats') },
+                { id: 'teacher_school_records' as Page, label: t('sidebar.history') },
+                { id: 'modules' as Page, label: t('sidebar.repo_modules') },
+            ];
+        } else if (userRole === 'secretaria') {
+            return [
+                { id: 'secretariat_dashboard' as Page, label: t('sidebar.secretariat_panel') },
+                { id: 'secretariat_schools' as Page, label: t('sidebar.monitor') },
+                { id: 'secretariat_statistics' as Page, label: t('sidebar.state_data') },
+            ];
+        } else if (userRole === 'admin') {
+            return [
+                { id: 'admin_dashboard' as Page, label: t('sidebar.admin_dash') },
+                { id: 'admin_modules' as Page, label: t('sidebar.admin_mods') },
+                { id: 'admin_quizzes' as Page, label: t('sidebar.admin_quiz') },
+                { id: 'admin_achievements' as Page, label: t('sidebar.admin_achv') },
+                { id: 'admin_stats' as Page, label: t('sidebar.stats') },
+                { id: 'admin_tests' as Page, label: t('sidebar.admin_tests') },
+            ];
+        } else if (userRole === 'responsavel') {
+            return [
+                { id: 'guardian_dashboard' as Page, label: t('sidebar.guardian_panel') },
+            ];
+        }
+        return [];
+    }, [userRole, t]);
 
     const showProfileLink = true;
     const showNotificationsLink = userRole === 'aluno';
@@ -133,12 +127,12 @@ export const Sidebar: React.FC = () => {
         <>
             {/* Overlay for mobile */}
             <div
-                className={`fixed inset-0 bg-black/60 z-20 lg:hidden transition-opacity ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                className={`fixed inset-0 bg-black/60 z-40 lg:hidden transition-opacity ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 onClick={toggleMobileMenu}
                 aria-hidden="true"
             ></div>
 
-            <aside className={`w-64 bg-blue-950 text-slate-200 flex flex-col h-full border-r border-blue-900 dark:bg-slate-900 dark:border-slate-800 hc-bg-override hc-border-override fixed inset-y-0 left-0 z-30 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <aside className={`w-64 bg-blue-950 text-slate-200 flex flex-col h-full border-r border-blue-900 dark:bg-slate-900 dark:border-slate-800 hc-bg-override hc-border-override fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 <div className="p-5 border-b border-blue-900 dark:border-slate-800 hc-border-override">
                     <Logo />
                 </div>
@@ -153,7 +147,7 @@ export const Sidebar: React.FC = () => {
                             } hc-link-override`}
                         >
                             <div className="flex items-center space-x-3">
-                                <span aria-hidden="true">{iconMap[item.id]}</span>
+                                <span aria-hidden="true">{getIcon(item.id)}</span>
                                 <span>{item.label}</span>
                             </div>
                             {item.id === 'teacher_pending_activities' && (userRole === 'professor') && (
@@ -173,7 +167,7 @@ export const Sidebar: React.FC = () => {
                         >
                             <div className="flex items-center space-x-3">
                                 <span aria-hidden="true">{ICONS['notifications']}</span>
-                                <span>Notificações</span>
+                                <span>{t('sidebar.notifications')}</span>
                             </div>
                             <StudentNotificationBadge />
                         </button>
@@ -187,12 +181,12 @@ export const Sidebar: React.FC = () => {
                             } hc-link-override`}
                         >
                             <span aria-hidden="true">{ICONS.profile}</span>
-                            <span>Perfil</span>
+                            <span>{t('sidebar.profile')}</span>
                         </button>
                      )}
                     <button onClick={onLogout} className="flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors duration-200 w-full text-left hover:bg-blue-900 dark:hover:bg-white/10 hc-link-override">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                        <span>Sair</span>
+                        <span>{t('sidebar.logout')}</span>
                     </button>
                 </div>
             </aside>

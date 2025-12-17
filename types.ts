@@ -39,6 +39,7 @@ export interface Achievement {
   points: number;
   unlocked: boolean;
   tier: BadgeTier;
+  imageUrl?: string; // New: Custom image URL replacing the default emoji
   // Admin fields
   criterion?: string;
   criterionType?: 'modules' | 'quizzes' | 'activities';

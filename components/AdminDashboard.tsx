@@ -1,10 +1,16 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from './common/Card';
-import { ICONS } from '../constants/index';
+import { ICONS, SpinnerIcon } from '../constants/index';
 import { useAdminData } from '../contexts/AdminDataContext';
 import { useNavigation } from '../contexts/NavigationContext';
 import { useAuth } from '../contexts/AuthContext';
+import { Modal } from './common/Modal';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from './firebaseClient';
+import { useToast } from '../contexts/ToastContext';
+import { InputField } from './common/FormHelpers';
+import type { HistoricalEra } from '../types';
 
 const WelcomeBanner: React.FC = () => {
     const { user } = useAuth();
@@ -44,12 +50,123 @@ const Skeleton: React.FC<{ className?: string }> = ({ className }) => (
     <div className={`animate-pulse bg-slate-200 dark:bg-slate-700 rounded-xl ${className}`} />
 );
 
+// --- MAP CONFIG MODAL ---
+const MapConfigModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+    const { addToast } = useToast();
+    const [backgrounds, setBackgrounds] = useState<Record<string, string>>({
+        'Antiga': '',
+        'Média': '',
+        'Moderna': '',
+        'Contemporânea': ''
+    });
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            const loadConfigs = async () => {
+                setIsLoading(true);
+                try {
+                    const docRef = doc(db, 'system_settings', 'timeline_backgrounds');
+                    const snap = await getDoc(docRef);
+                    if (snap.exists()) {
+                        // Mapeia para formato simples (pega apenas a primeira URL se for array antigo)
+                        const data = snap.data();
+                        const newBgs: any = {};
+                        ['Antiga', 'Média', 'Moderna', 'Contemporânea'].forEach(era => {
+                            const val = data[era];
+                            newBgs[era] = Array.isArray(val) ? val[0] : (val || '');
+                        });
+                        setBackgrounds(newBgs);
+                    }
+                } catch (error) {
+                    console.error("Erro ao carregar configs do mapa", error);
+                    addToast("Erro ao carregar configurações.", "error");
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+            loadConfigs();
+        }
+    }, [isOpen, addToast]);
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            // Salva como array de strings para manter compatibilidade com o componente InteractiveMap
+            const payload: any = {};
+            Object.entries(backgrounds).forEach(([era, url]) => {
+                payload[era] = url ? [url] : [];
+            });
+
+            await setDoc(doc(db, 'system_settings', 'timeline_backgrounds'), payload);
+            addToast("Imagens do mapa atualizadas!", "success");
+            onClose();
+        } catch (error) {
+            console.error("Erro ao salvar mapa", error);
+            addToast("Erro ao salvar.", "error");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleChange = (era: string, value: string) => {
+        setBackgrounds(prev => ({ ...prev, [era]: value }));
+    };
+
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} title="Configurar Mapa Interativo">
+            <div className="space-y-4">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Defina as URLs das imagens de fundo para cada era histórica do Mapa Interativo.
+                </p>
+                
+                {isLoading ? (
+                    <div className="flex justify-center py-8"><SpinnerIcon className="h-8 w-8 text-indigo-500" /></div>
+                ) : (
+                    <>
+                        {(['Antiga', 'Média', 'Moderna', 'Contemporânea'] as const).map(era => (
+                            <InputField key={era} label={`Idade ${era} (URL da Imagem)`}>
+                                <div className="flex gap-2 items-center">
+                                    <input 
+                                        type="text" 
+                                        value={backgrounds[era]} 
+                                        onChange={e => handleChange(era, e.target.value)}
+                                        placeholder="https://..."
+                                        className="w-full p-2 border border-gray-300 rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                                    />
+                                    {backgrounds[era] && (
+                                        <div className="w-10 h-10 rounded border overflow-hidden flex-shrink-0 bg-slate-200">
+                                            <img src={backgrounds[era]} alt={era} className="w-full h-full object-cover" />
+                                        </div>
+                                    )}
+                                </div>
+                            </InputField>
+                        ))}
+                    </>
+                )}
+
+                <div className="flex justify-end space-x-3 pt-4 border-t dark:border-slate-700">
+                    <button onClick={onClose} className="px-4 py-2 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white">Cancelar</button>
+                    <button 
+                        onClick={handleSave} 
+                        disabled={isSaving || isLoading}
+                        className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center"
+                    >
+                        {isSaving ? <SpinnerIcon className="h-4 w-4 mr-2" /> : null}
+                        Salvar Alterações
+                    </button>
+                </div>
+            </div>
+        </Modal>
+    );
+};
 
 const AdminDashboard: React.FC = () => {
-    // FIX: Use totalModulesCount from context which is the real server count, 
-    // instead of modules.length which is just the paginated loaded amount.
+    // FIX: Use totalModulesCount from context which is the real server count
     const { totalModulesCount, quizzes, achievements, isLoading } = useAdminData();
     const { setCurrentPage } = useNavigation();
+    const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
     return (
         <div className="space-y-8">
@@ -81,9 +198,11 @@ const AdminDashboard: React.FC = () => {
                    <QuickActionButton label="Gerenciar Quizzes" onClick={() => setCurrentPage('admin_quizzes')} />
                    <QuickActionButton label="Gerenciar Conquistas" onClick={() => setCurrentPage('admin_achievements')} />
                    <QuickActionButton label="Executar Testes" onClick={() => setCurrentPage('admin_tests')} isPrimary />
+                   <QuickActionButton label="Configurar Mapa" onClick={() => setIsMapModalOpen(true)} />
                 </div>
             </Card>
 
+            <MapConfigModal isOpen={isMapModalOpen} onClose={() => setIsMapModalOpen(false)} />
         </div>
     );
 };

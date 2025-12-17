@@ -1,6 +1,10 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
+import { 
+  initializeFirestore, 
+  persistentLocalCache, 
+  persistentMultipleTabManager 
+} from 'firebase/firestore';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -16,15 +20,12 @@ const firebaseConfig = {
 // Exportamos 'app' para ser usado por módulos lazy (ex: firebaseStorage.ts)
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app);
 
-// Habilita persistência offline (IndexedDB)
-enableIndexedDbPersistence(db).catch((err) => {
-    if (err.code == 'failed-precondition') {
-        // Múltiplas abas abertas
-        console.warn('Persistence failed: Multiple tabs open');
-    } else if (err.code == 'unimplemented') {
-        // Navegador não suportado
-        console.warn('Persistence failed: Browser not supported');
-    }
+// Inicializa o Firestore com as novas configurações de cache persistente (Modern API)
+// Substitui enableIndexedDbPersistence() que foi depreciado
+// persistentMultipleTabManager lida automaticamente com múltiplas abas abertas
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager()
+  })
 });

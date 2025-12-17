@@ -4,21 +4,20 @@ import { queryClient, persister } from '../utils/queryClient';
 import { SettingsProvider } from '../contexts/SettingsContext';
 import { AuthProvider } from '../contexts/AuthContext';
 import { ToastProvider } from '../contexts/ToastContext';
+import { LanguageProvider } from '../contexts/LanguageContext';
 
-interface AppProvidersProps {
-    children: React.ReactNode;
-}
-
-export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
+export function AppProviders({ children }: { children?: React.ReactNode }) {
     return (
         <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
-            <SettingsProvider>
-                <AuthProvider>
-                    <ToastProvider>
-                        {children}
-                    </ToastProvider>
-                </AuthProvider>
-            </SettingsProvider>
+            <LanguageProvider>
+                <SettingsProvider>
+                    <AuthProvider>
+                        <ToastProvider>
+                            {children}
+                        </ToastProvider>
+                    </AuthProvider>
+                </SettingsProvider>
+            </LanguageProvider>
         </PersistQueryClientProvider>
     );
-};
+}

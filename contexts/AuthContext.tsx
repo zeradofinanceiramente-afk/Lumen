@@ -1,5 +1,3 @@
-
-
 import React, { createContext, useState, useCallback, useContext, ReactNode, useEffect } from 'react';
 import type { Role, User } from '../types';
 import { auth, db } from '../components/firebaseClient';
@@ -36,7 +34,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // FIX: Refactored the provider component to a standard function declaration to resolve errors where the 'children' prop was not being correctly recognized by the type system.
-export function AuthProvider({ children }: { children?: ReactNode }) {
+export function AuthProvider({ children }: { children?: React.ReactNode }) {
     const [authState, setAuthState] = useState<AuthState>('loading');
     const [user, setUser] = useState<User | null>(null);
     const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);

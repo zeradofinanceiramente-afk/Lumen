@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useMemo } from 'react';
 import { 
     collection, query, where, getDocs, doc, getDoc, 
@@ -50,7 +51,12 @@ export function useStudentContent(user: User | null) {
                         ...n,
                         timestamp: n.timestamp?.toDate ? n.timestamp.toDate().toISOString() : n.timestamp
                     }));
-                    return { id: d.id, ...data, notices } as TeacherClass;
+
+                    // FIX: Initialize arrays to prevent iteration errors if missing in Firestore doc
+                    const modules = Array.isArray(data.modules) ? data.modules : [];
+                    const activities = Array.isArray(data.activities) ? data.activities : [];
+
+                    return { id: d.id, ...data, notices, modules, activities } as TeacherClass;
                 })
                 .filter((c): c is TeacherClass => c !== null);
         },
