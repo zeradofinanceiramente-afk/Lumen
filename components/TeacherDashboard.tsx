@@ -1,6 +1,6 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
-import type { TeacherClass, Student, ClassNotice, Activity, User, ClassInvitation } from '../types';
+import React, { useEffect } from 'react';
+import type { TeacherClass, ClassNotice, Activity, User, ClassInvitation } from '../types';
 import { Card } from './common/Card';
 import { ICONS, SpinnerIcon } from '../constants/index';
 import { useTeacherClassContext } from '../contexts/TeacherClassContext';
@@ -10,6 +10,7 @@ import { useNavigation } from '../contexts/NavigationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Modal } from './common/Modal';
 import { SubmissionsModal } from './common/SubmissionsModal';
+import { useTeacherDashboardUI } from '../hooks/teacher/useTeacherDashboardUI';
 
 // Helper for input fields for consistency
 const InputField: React.FC<{ label: string, required?: boolean, children: React.ReactNode }> = ({ label, required, children }) => (
@@ -63,8 +64,8 @@ interface PostNoticeModalProps {
 }
 
 const PostNoticeModal: React.FC<PostNoticeModalProps> = ({ isOpen, onClose, onPost, className }) => {
-    const [noticeText, setNoticeText] = useState('');
-    const [isPosting, setIsPosting] = useState(false);
+    const [noticeText, setNoticeText] = React.useState('');
+    const [isPosting, setIsPosting] = React.useState(false);
 
     const handlePost = async () => {
         if (noticeText.trim() && !isPosting) {
@@ -117,12 +118,12 @@ const PostNoticeModal: React.FC<PostNoticeModalProps> = ({ isOpen, onClose, onPo
 interface CreateClassModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onCreate: (className: string) => Promise<{ success: boolean } | void>;
+    onCreate: (className: string) => Promise<any>;
 }
 
 const CreateClassModal: React.FC<CreateClassModalProps> = ({ isOpen, onClose, onCreate }) => {
-    const [className, setClassName] = useState('');
-    const [isCreating, setIsCreating] = useState(false);
+    const [className, setClassName] = React.useState('');
+    const [isCreating, setIsCreating] = React.useState(false);
 
     const handleCreate = async () => {
         if (className.trim() && !isCreating) {
@@ -209,10 +210,10 @@ interface ClassCardProps {
 }
 
 const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData, onPostNoticeClick, onViewSubmissionsClick, onDeleteModule, user, onFetchClassDetails }) => {
-    const { setCurrentPage, startEditingModule, openClass } = useNavigation();
-    const [activeTab, setActiveTab] = useState<ClassCardTab>('overview');
-    const [copySuccess, setCopySuccess] = useState(false);
-    const [loadingDetails, setLoadingDetails] = useState(false);
+    const { setCurrentPage, openClass } = useNavigation();
+    const [activeTab, setActiveTab] = React.useState<ClassCardTab>('overview');
+    const [copySuccess, setCopySuccess] = React.useState(false);
+    const [loadingDetails, setLoadingDetails] = React.useState(false);
     
     const handleCopyCode = () => {
         navigator.clipboard.writeText(classData.code).then(() => {
@@ -360,17 +361,14 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData, onPostNotic
 });
 
 const TeacherDashboard: React.FC = () => {
-    // Consumindo múltiplos contextos (Separação de responsabilidades)
+    // Hooks
     const { teacherClasses, fetchTeacherClasses, handleCreateClass, fetchClassDetails, isLoadingClasses } = useTeacherClassContext();
     const { fetchModulesLibrary, handleDeleteModule, handleGradeActivity, isLoadingContent } = useTeacherAcademicContext();
     const { pendingInvitations, handleAcceptInvite, handleDeclineInvite, handlePostNotice, isSubmittingComm, isLoadingComm } = useTeacherCommunicationContext();
     const { user } = useAuth();
     
-    const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
-    const [selectedClassForNotice, setSelectedClassForNotice] = useState<TeacherClass | null>(null);
-    const [isSubmissionsModalOpen, setIsSubmissionsModalOpen] = useState(false);
-    const [activityForSubmissions, setActivityForSubmissions] = useState<Activity | null>(null);
-    const [isCreateClassModalOpen, setIsCreateClassModalOpen] = useState(false);
+    // UI Logic from custom hook
+    const ui = useTeacherDashboardUI();
 
     // Aggregated loading state
     const isLoading = isLoadingClasses || isLoadingContent || isLoadingComm;
@@ -381,23 +379,12 @@ const TeacherDashboard: React.FC = () => {
     }, [fetchModulesLibrary]);
 
     const handleFetchAll = () => {
-        // Trigger updates across all contexts
         fetchTeacherClasses(true);
     };
-
-    const handlePostNoticeClick = useCallback((classData: TeacherClass) => {
-        setSelectedClassForNotice(classData);
-        setIsNoticeModalOpen(true);
-    }, []);
-
-    const handleViewSubmissionsClick = useCallback((activity: Activity) => {
-        setActivityForSubmissions(activity);
-        setIsSubmissionsModalOpen(true);
-    }, []);
     
     const onPostNoticeWrapper = async (noticeText: string) => {
-        if (!selectedClassForNotice) return;
-        await handlePostNotice(selectedClassForNotice.id, noticeText);
+        if (!ui.selectedClassForNotice) return;
+        await handlePostNotice(ui.selectedClassForNotice.id, noticeText);
     };
     
     return (
@@ -412,7 +399,7 @@ const TeacherDashboard: React.FC = () => {
                     <span>Sincronizar</span>
                 </button>
                 <button 
-                    onClick={() => setIsCreateClassModalOpen(true)}
+                    onClick={ui.openCreateClassModal}
                     className="flex items-center justify-center px-4 py-2 bg-blue-200 text-blue-900 font-semibold rounded-lg shadow-sm hover:bg-blue-300 transition-colors dark:bg-indigo-500 dark:text-white dark:hover:bg-indigo-600 hc-button-primary-override">
                     <div className="h-5 w-5 mr-2">{ICONS.plus}</div>
                     <span>Nova Turma</span>
@@ -441,8 +428,8 @@ const TeacherDashboard: React.FC = () => {
                             key={c.id} 
                             classData={c}
                             user={user}
-                            onPostNoticeClick={handlePostNoticeClick}
-                            onViewSubmissionsClick={handleViewSubmissionsClick}
+                            onPostNoticeClick={ui.openNoticeModal}
+                            onViewSubmissionsClick={ui.openSubmissionsModal}
                             onDeleteModule={handleDeleteModule}
                             onFetchClassDetails={fetchClassDetails}
                         />
@@ -477,30 +464,27 @@ const TeacherDashboard: React.FC = () => {
                  </div>
             </Card>
 
-            {selectedClassForNotice && (
+            {ui.selectedClassForNotice && (
                 <PostNoticeModal
-                    isOpen={isNoticeModalOpen}
-                    onClose={() => setIsNoticeModalOpen(false)}
+                    isOpen={ui.isNoticeModalOpen}
+                    onClose={ui.closeNoticeModal}
                     onPost={onPostNoticeWrapper}
-                    className={selectedClassForNotice.name}
+                    className={ui.selectedClassForNotice.name}
                 />
             )}
             
-             {activityForSubmissions && (
+             {ui.activityForSubmissions && (
                 <SubmissionsModal
-                    isOpen={isSubmissionsModalOpen}
-                    onClose={() => {
-                        setIsSubmissionsModalOpen(false);
-                        setActivityForSubmissions(null);
-                    }}
-                    activity={activityForSubmissions}
+                    isOpen={ui.isSubmissionsModalOpen}
+                    onClose={ui.closeSubmissionsModal}
+                    activity={ui.activityForSubmissions}
                     onGradeActivity={handleGradeActivity}
                 />
             )}
             
             <CreateClassModal
-                isOpen={isCreateClassModalOpen}
-                onClose={() => setIsCreateClassModalOpen(false)}
+                isOpen={ui.isCreateClassModalOpen}
+                onClose={ui.closeCreateClassModal}
                 onCreate={handleCreateClass}
             />
         </div>

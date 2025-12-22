@@ -5,9 +5,9 @@ import { SpinnerIcon } from '../constants/index';
 import { useNavigation } from '../contexts/NavigationContext';
 import type { ActivityItem } from '../types';
 import { useToast } from '../contexts/ToastContext';
-import { generateFeedbackAndGrade } from '../utils/gradingAI';
 import { useTeacherGrading } from '../hooks/teacher/useTeacherGrading';
 import { useAuth } from '../contexts/AuthContext';
+import { streamGradingFeedback } from '../services/gradingService';
 
 // Sub-components
 import { StudentListSidebar } from './grading/StudentListSidebar';
@@ -164,14 +164,29 @@ const TeacherGradingView: React.FC = () => {
         if (!item || !answer) return;
 
         setGradingItemIds(prev => new Set(prev).add(itemId));
+        
+        // Header for this specific AI grading session
+        const header = `\n\n[IA - Questão ${items.indexOf(item) + 1}]:\n`;
+        setCurrentFeedback(prev => (prev || '') + header);
+
         try {
-            const result = await generateFeedbackAndGrade(item.question, answer, item.points);
-            setQuestionScores(prev => ({ ...prev, [itemId]: result.grade }));
-            const feedbackToAdd = `\n[IA - Questão ${items.indexOf(item) + 1}]: ${result.feedback}`;
-            setCurrentFeedback(prev => prev ? prev + feedbackToAdd : feedbackToAdd.trim());
-            addToast("Questão corrigida pela IA!", "success");
+            const result = await streamGradingFeedback(
+                item.question,
+                answer,
+                item.points,
+                (textChunk) => {
+                    // Update main feedback textarea in real-time
+                    setCurrentFeedback(prev => prev + textChunk);
+                }
+            );
+
+            // Update score at the end
+            setQuestionScores(prev => ({ ...prev, [itemId]: result.finalGrade }));
+            addToast("Questão corrigida com sucesso!", "success");
+
         } catch (error) {
             addToast("Erro ao corrigir com IA.", "error");
+            console.error(error);
         } finally {
             setGradingItemIds(prev => {
                 const newSet = new Set(prev);
@@ -185,18 +200,29 @@ const TeacherGradingView: React.FC = () => {
         setIsGradingAll(true);
         try {
             const textItems = items.filter(i => i.type === 'text');
-            let accumulatedFeedback = currentFeedback;
-            const newScores = { ...questionScores };
-
+            
             for (const item of textItems) {
                 const answer = studentAnswers[item.id];
                 if (answer) {
                     setGradingItemIds(prev => new Set(prev).add(item.id));
+                    
+                    const header = `\n\n[IA - Questão ${items.indexOf(item) + 1}]:\n`;
+                    setCurrentFeedback(prev => (prev || '') + header);
+
                     try {
-                        const result = await generateFeedbackAndGrade(item.question, answer, item.points);
-                        newScores[item.id] = result.grade;
-                        accumulatedFeedback += `\n\n[IA - Questão ${items.indexOf(item) + 1}]: ${result.feedback}`;
+                        const result = await streamGradingFeedback(
+                            item.question,
+                            answer,
+                            item.points,
+                            (textChunk) => {
+                                setCurrentFeedback(prev => prev + textChunk);
+                            }
+                        );
+                        
+                        setQuestionScores(prev => ({ ...prev, [item.id]: result.finalGrade }));
+
                     } catch (e) { console.error(e); }
+                    
                     setGradingItemIds(prev => {
                         const newSet = new Set(prev);
                         newSet.delete(item.id);
@@ -204,9 +230,7 @@ const TeacherGradingView: React.FC = () => {
                     });
                 }
             }
-            setQuestionScores(newScores);
-            setCurrentFeedback(accumulatedFeedback.trim());
-            addToast("Correção automática concluída!", "success");
+            addToast("Correção em massa concluída!", "success");
         } catch (error) {
             addToast("Erro ao executar correção em massa.", "error");
         } finally {
