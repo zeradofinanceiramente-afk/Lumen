@@ -1,29 +1,15 @@
 
-
-
-
-
-
-
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigation } from '../contexts/NavigationContext';
 import { useTeacherClassContext } from '../contexts/TeacherClassContext';
 import { useTeacherCommunicationContext } from '../contexts/TeacherCommunicationContext';
 import { Card } from './common/Card';
-import { ICONS, SpinnerIcon } from '../constants/index';
+import { ICONS, SpinnerIcon, SUBJECTS_LIST } from '../constants/index';
 import { Modal } from './common/Modal';
 import type { Turno, AttendanceSession, AttendanceRecord, AttendanceStatus, Activity } from '../types'; // Added Activity type
 import { collection, getDocs, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebaseClient';
 import { useAuth } from '../contexts/AuthContext';
-
-// --- Constants ---
-const AVAILABLE_SUBJECTS = [
-    'Artes', 'Biologia', 'Ciências', 'Educação Física', 'Espanhol', 'Filosofia', 'Física', 
-    'Geografia', 'História', 'História Sergipana', 'Inglês', 'Matemática', 
-    'Português / Literatura', 'Química', 'Sociologia', 'Tecnologia / Informática'
-];
 
 // --- Helper Components ---
 const InputField: React.FC<{ label: string, required?: boolean, children: React.ReactNode }> = ({ label, required, children }) => (
@@ -93,7 +79,7 @@ const InviteTeacherModal: React.FC<InviteTeacherModalProps> = ({ isOpen, onClose
                         Matérias/Disciplinas (Selecione uma ou mais) <span className="text-red-500">*</span>
                     </label>
                     <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto p-1">
-                        {AVAILABLE_SUBJECTS.map(subj => {
+                        {SUBJECTS_LIST.map(subj => {
                             const isSelected = selectedSubjects.includes(subj);
                             return (
                                 <button

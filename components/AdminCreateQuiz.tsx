@@ -1,23 +1,12 @@
 
 import React, { useState, useEffect, useContext } from 'react';
 import { Card } from './common/Card';
-import { ICONS, SpinnerIcon } from '../constants/index';
+import { ICONS, SpinnerIcon, SUBJECTS_LIST, SCHOOL_YEARS } from '../constants/index';
 import { AdminDataContext } from '../contexts/AdminDataContext';
 import { useNavigation } from '../contexts/NavigationContext';
 import type { QuizQuestion, Quiz } from '../types';
 import { useToast } from '../contexts/ToastContext';
 import { MultiSelect } from './common/FormHelpers';
-
-const ADMIN_SUBJECTS = [
-    'Artes', 'Biologia', 'Ciências', 'Educação Física', 'Espanhol', 'Filosofia', 'Física', 
-    'Geografia', 'História', 'História Sergipana', 'Inglês', 'Matemática', 
-    'Português / Literatura', 'Química', 'Sociologia', 'Tecnologia / Informática'
-];
-
-const SCHOOL_YEARS = [
-    "6º Ano", "7º Ano", "8º Ano", "9º Ano",
-    "1º Ano (Ensino Médio)", "2º Ano (Ensino Médio)", "3º Ano (Ensino Médio)",
-];
 
 const AdminCreateQuiz: React.FC = () => {
     const { handleSaveQuiz, handleUpdateQuiz, isSubmitting } = useContext(AdminDataContext)!;
@@ -196,7 +185,7 @@ const AdminCreateQuiz: React.FC = () => {
                         <MultiSelect 
                             id="quiz-subjects"
                             label="Matérias (Filtro)" 
-                            options={ADMIN_SUBJECTS} 
+                            options={SUBJECTS_LIST} 
                             selected={selectedSubjects} 
                             onChange={(val) => { setSelectedSubjects(val); setFormErrors(prev => ({ ...prev, subjects: false })); }}
                             error={formErrors.subjects}

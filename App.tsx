@@ -4,6 +4,7 @@ import { useAuth } from './contexts/AuthContext';
 import { NavigationProvider, useNavigation } from './contexts/NavigationContext';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { OfflineIndicator } from './components/common/OfflineIndicator';
+import { DebugTools } from './components/common/DebugTools';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { LoginPage } from './components/LoginPage';
@@ -14,7 +15,7 @@ import './styles/themes.css';
 
 // Providers
 import { AppProviders } from './components/AppProviders';
-import { StudentContextWrapper, TeacherContextWrapper, AdminContextWrapper, SecretariatContextWrapper } from './components/RoleContextWrappers';
+import { StudentContextWrapper, TeacherContextWrapper, AdminContextWrapper, SecretariatContextWrapper, StateSecretariatContextWrapper } from './components/RoleContextWrappers';
 
 // Lazy-loaded page components
 const Modules = lazy(() => import('./components/Modules'));
@@ -46,6 +47,9 @@ const DirectorDashboard = lazy(() => import('./components/DirectorDashboard'));
 
 // Secretariat Components
 const SecretariatDashboard = lazy(() => import('./components/SecretariatDashboard'));
+
+// State Secretariat Components
+const StateSecretariatDashboard = lazy(() => import('./components/StateSecretariatDashboard'));
 
 // Guardian Components
 const GuardianDashboard = lazy(() => import('./components/GuardianDashboard'));
@@ -81,6 +85,7 @@ const PAGE_TITLES: Record<string, string> = {
     secretariat_dashboard: 'Painel da Secretaria',
     secretariat_schools: 'Monitoramento de Escolas',
     secretariat_statistics: 'Estatísticas Estaduais',
+    state_secretariat_dashboard: 'Painel Estadual',
     guardian_dashboard: 'Painel do Responsável',
     admin_dashboard: 'Painel do Administrador',
     admin_users: 'Gerenciar Usuários',
@@ -211,6 +216,14 @@ const MainLayout: React.FC = () => {
             }
         }
 
+        if (userRole === 'secretaria_estadual') {
+            switch (currentPage) {
+                case 'state_secretariat_dashboard': return <StateSecretariatDashboard />;
+                case 'profile': return <Profile />;
+                default: return <StateSecretariatDashboard />;
+            }
+        }
+
         if (userRole === 'responsavel') {
             switch (currentPage) {
                 case 'guardian_dashboard': return <GuardianDashboard />;
@@ -314,6 +327,11 @@ const AuthenticatedAppContent = () => {
                     <MainLayout />
                 </SecretariatContextWrapper>
             )}
+            {userRole === 'secretaria_estadual' && (
+                <StateSecretariatContextWrapper>
+                    <MainLayout />
+                </StateSecretariatContextWrapper>
+            )}
         </NavigationProvider>
     );
 };
@@ -364,6 +382,7 @@ const AppContent = () => {
 const App = () => {
     return (
         <AppProviders>
+            <DebugTools />
             <AppContent />
         </AppProviders>
     );

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Module, ModulePage, ModulePageContent, ModulePageContentType, HistoricalEra, LessonPlan } from '../../types';
-import { ICONS, SpinnerIcon } from '../../constants/index';
+import { ICONS, SpinnerIcon, SUBJECTS_LIST, SCHOOL_YEARS } from '../../constants/index';
 import { useToast } from '../../contexts/ToastContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseClient';
@@ -14,17 +14,6 @@ import { useModuleEditor } from '../../hooks/useModuleEditor';
 import { ModuleMetadataForm } from '../modules/ModuleMetadataForm';
 import { ModuleContentEditor } from '../modules/ModuleContentEditor';
 import { AIGeneratorModal } from '../modules/AIGeneratorModal';
-
-export const SUBJECTS_LIST = [
-    'Artes', 'Biologia', 'Ciências', 'Educação Física', 'Espanhol', 'Filosofia', 'Física', 
-    'Geografia', 'História', 'História Sergipana', 'Inglês', 'Matemática', 
-    'Português / Literatura', 'Química', 'Sociologia', 'Tecnologia / Informática'
-];
-
-export const SCHOOL_YEARS = [
-    "6º Ano", "7º Ano", "8º Ano", "9º Ano",
-    "1º Ano (Ensino Médio)", "2º Ano (Ensino Médio)", "3º Ano (Ensino Médio)",
-];
 
 const DIDACTIC_SYSTEM_PROMPT = `Você é um assistente especializado em criar material didático. Crie conteúdos claros e objetivos. Use fontes oficiais.`;
 
@@ -245,8 +234,6 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({
     const handleAddAIContent = (content: string | string[], type: ModulePageContentType) => {
         if (aiTargetPageId === null) return;
         
-        // FIX: Calculate new pages array first, then pass to setPages
-        // setPages in useModuleEditor only accepts ModulePage[], not a callback function
         const newPages = pages.map(p => {
             if (p.id === aiTargetPageId) {
                 const newBlock: ModulePageContent = {

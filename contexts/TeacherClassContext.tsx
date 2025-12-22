@@ -18,7 +18,6 @@ export interface TeacherClassContextType {
     handleCreateAttendanceSession: (classId: string, date: string, turno: Turno, horario: number) => Promise<any>;
     handleUpdateAttendanceStatus: (sessionId: string, recordId: string, status: AttendanceStatus) => Promise<void>;
     handleLeaveClass: (classId: string) => Promise<void>;
-    getAttendanceSession: (sessionId: string) => Promise<AttendanceSession | null>;
     setTeacherClasses: React.Dispatch<React.SetStateAction<TeacherClass[]>>;
 }
 

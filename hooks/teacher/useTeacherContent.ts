@@ -202,29 +202,29 @@ export function useTeacherContent(
                 summaryData.unidades[unidadeKey] = { subjects: {} };
             }
             if (!summaryData.unidades[unidadeKey]!.subjects[materiaKey]) {
-                summaryData.unidades[unidadeKey]!.subjects[materiaKey] = { activities: [], totalPoints: 0 };
+                summaryData.unidades[unidadeKey]!.subjects[materiaKey] = { activities: {}, totalPoints: 0 }; // FIX: [] -> {}
             }
 
             const subjectEntry = summaryData.unidades[unidadeKey]!.subjects[materiaKey];
             
             // Verifica se a atividade já existe no relatório
-            const existingActivityIndex = subjectEntry.activities.findIndex(a => a.id === activityId);
+            const existingActivity = subjectEntry.activities[activityId];
 
-            if (existingActivityIndex > -1) {
+            if (existingActivity) {
                 // Atualizar atividade existente
-                const oldGrade = subjectEntry.activities[existingActivityIndex].grade;
-                subjectEntry.activities[existingActivityIndex].grade = grade;
+                const oldGrade = existingActivity.grade;
+                existingActivity.grade = grade;
                 // Atualizar total de pontos (subtrair antigo, somar novo)
                 subjectEntry.totalPoints = (subjectEntry.totalPoints - oldGrade) + grade;
             } else {
                 // Adicionar nova atividade
-                subjectEntry.activities.push({
+                subjectEntry.activities[activityId] = {
                     id: activityId,
                     title: title,
                     grade: grade,
                     maxPoints: maxPoints,
                     materia: materiaKey
-                });
+                };
                 subjectEntry.totalPoints += grade;
             }
 

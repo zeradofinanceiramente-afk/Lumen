@@ -2,8 +2,7 @@
 import React, { useMemo } from 'react';
 import { Card } from '../common/Card';
 import { InputField, SelectField, MultiSelect } from '../common/FormHelpers';
-import { SpinnerIcon } from '../../constants/index';
-import { SCHOOL_YEARS, SUBJECTS_LIST } from '../common/ModuleForm';
+import { SpinnerIcon, SCHOOL_YEARS, SUBJECTS_LIST } from '../../constants/index';
 import { HistoricalEra, LessonPlan } from '../../types';
 
 // --- MOCK DATABASE UNIDADES TEMÁTICAS ---

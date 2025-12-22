@@ -3,7 +3,8 @@ import React from 'react';
 import { useAdminData } from '../contexts/AdminDataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigation } from '../contexts/NavigationContext';
-import { ModuleForm, SCHOOL_YEARS } from './common/ModuleForm';
+import { ModuleForm } from './common/ModuleForm';
+import { SCHOOL_YEARS } from '../constants/index';
 
 const AdminCreateModule: React.FC = () => {
     const { user } = useAuth();

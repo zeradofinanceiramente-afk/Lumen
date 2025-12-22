@@ -17,10 +17,6 @@ export function useTeacherClasses(user: User | null, addToast: (msg: string, typ
         queryFn: async () => {
             if (!user) return [];
             
-            // Optimization: If profile has summary, use it for initial render (Fast Path)? 
-            // In React Query, we can use placeholderData or initialData if we passed the user prop deeper.
-            // For now, we stick to the robust fetch to ensure consistency.
-            
             const qClasses = query(collection(db, "classes"), where("teachers", "array-contains", user.id));
             const snapClasses = await getDocs(qClasses);
             
@@ -45,9 +41,10 @@ export function useTeacherClasses(user: User | null, addToast: (msg: string, typ
                     students: Array.isArray(data.students) ? data.students : [],
                     notices: myNotices,
                     noticeCount: myNotices.length,
+                    // Arrays are now optional in type, but initialized here for UI safety
                     modules: [],
                     activities: [], 
-                    isFullyLoaded: false, // We will use a separate query for details if needed or just fetch on demand
+                    isFullyLoaded: false, 
                     isSummaryOnly: false,
                     isArchived: data.isArchived || false
                 } as TeacherClass;
@@ -126,12 +123,7 @@ export function useTeacherClasses(user: User | null, addToast: (msg: string, typ
     });
 
     // --- 3. CLASS DETAILS (On-Demand) ---
-    // Instead of complex state merging, we can rely on a specific query for details 
-    // or just update the cache manually. For now, sticking to the existing pattern 
-    // of "fetching details into state" via a manual function but using queryClient to store it would be better.
-    // However, to keep compatibility with the Context interface:
     const fetchClassDetails = useCallback(async (classId: string) => {
-        // This is a "Imperative Fetch" pattern to enrich the cache
         if (!user) return;
         try {
             const [snapActivities, snapSessions] = await Promise.all([
@@ -158,11 +150,6 @@ export function useTeacherClasses(user: User | null, addToast: (msg: string, typ
                 });
             });
             
-            // We can store sessions in a separate cache if we wanted, 
-            // but the Context interface expects 'attendanceSessionsByClass' map.
-            // We will build that derived state in the Context or return it here.
-            // For now, let's attach sessions to the class object in cache or use a separate query.
-            // Let's use queryClient to store sessions separately.
             queryClient.setQueryData(['classSessions', classId], sessions);
 
         } catch (error) {
@@ -227,7 +214,6 @@ export function useTeacherClasses(user: User | null, addToast: (msg: string, typ
         handleLeaveClass: leaveClassMutation.mutateAsync,
         handleCreateAttendanceSession: (id: string, d: string, t: Turno, h: number) => createSessionMutation.mutateAsync({ classId: id, date: d, turno: t, horario: h }),
         handleUpdateAttendanceStatus: updateAttendanceStatus,
-        getAttendanceSession: async () => null, // Legacy, unused
         setTeacherClasses: () => {} // No-op, managed by Query
     };
 }

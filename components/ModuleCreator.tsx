@@ -4,7 +4,8 @@ import { useTeacherAcademicContext } from '../contexts/TeacherAcademicContext';
 import { useTeacherClassContext } from '../contexts/TeacherClassContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigation } from '../contexts/NavigationContext';
-import { ModuleForm, SCHOOL_YEARS } from './common/ModuleForm';
+import { ModuleForm } from './common/ModuleForm';
+import { SCHOOL_YEARS } from '../constants/index';
 
 const ModuleCreator: React.FC = () => {
     const { user } = useAuth();

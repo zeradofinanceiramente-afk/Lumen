@@ -1,8 +1,9 @@
+
 import React, { useState, useMemo } from 'react';
 import { useStudentAcademic } from '../contexts/StudentAcademicContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Card } from './common/Card';
-import type { Unidade, ClassGradeReport } from '../types';
+import type { Unidade, ClassGradeReport, GradeReportActivityDetail } from '../types';
 import { SpinnerIcon } from '../constants/index';
 
 // Helper para ordenar unidades
@@ -91,7 +92,9 @@ const ClassReportCard: React.FC<{ classId: string; classReport: ClassGradeReport
                                         const subjectData = unitData.subjects[subjectName];
                                         if (!subjectData) return null;
                                         
-                                        const sortedActivities = [...(subjectData.activities || [])].sort((a, b) => a.title.localeCompare(b.title));
+                                        // UPDATED: Convert Map to Array for rendering with type assertion
+                                        const activityList = Object.values(subjectData.activities || {}) as GradeReportActivityDetail[];
+                                        const sortedActivities = activityList.sort((a, b) => a.title.localeCompare(b.title));
                                         const colorClass = getScoreColor(subjectData.totalPoints);
                                         
                                         return (

@@ -16,6 +16,19 @@ export function useSecretariatData(user: User | null, addToast: (msg: string, ty
         totalStudents: 0
     });
 
+    // Mock data generator for advanced stats (until full aggregation pipeline is ready)
+    const generateMockStats = () => ({
+        averageAttendance: 70 + Math.random() * 25, // 70-95%
+        activeStudentRate: 80 + Math.random() * 20, // 80-100%
+        performanceBySubject: {
+            'História': 6 + Math.random() * 3,
+            'Geografia': 6 + Math.random() * 3,
+            'Ciências': 5 + Math.random() * 4,
+            'Matemática': 4 + Math.random() * 4,
+            'Português': 5 + Math.random() * 3
+        }
+    });
+
     const fetchSchools = useCallback(async () => {
         if (!user || user.role !== 'secretaria') return;
         setIsLoading(true);
@@ -42,9 +55,6 @@ export function useSecretariatData(user: User | null, addToast: (msg: string, ty
             }
 
             // 2. Fetch Schools (Directors) Details
-            // Note: Firestore 'in' query limited to 10. If > 10, need multiple queries.
-            // Simplified for Phase 1 (assuming < 10 or fetch individually)
-            
             const schoolPromises = linkedSchoolIds.map(async (directorId) => {
                 const directorRef = doc(db, "users", directorId);
                 const directorSnap = await getDoc(directorRef);
@@ -53,8 +63,7 @@ export function useSecretariatData(user: User | null, addToast: (msg: string, ty
                 
                 const directorData = directorSnap.data();
                 
-                // Fetch stats for this school (aggregate from classes where teacherId == directorId or creatorRole == direcao)
-                // Assuming Directors create classes with their ID as 'teacherId' or we check creatorId
+                // Fetch stats for this school
                 const qClasses = query(collection(db, "classes"), where("teacherId", "==", directorId));
                 const classesSnap = await getDocs(qClasses);
                 
@@ -67,12 +76,16 @@ export function useSecretariatData(user: User | null, addToast: (msg: string, ty
                     schoolTotalStudents += (clsData.studentCount || (clsData.students?.length || 0));
                 });
 
+                // Generate advanced stats (Simulation for UI demonstration)
+                const advancedStats = generateMockStats();
+
                 return {
                     id: directorId,
                     name: directorData.name || 'Escola sem nome',
                     email: directorData.email || '',
                     totalClasses: schoolTotalClasses,
-                    totalStudents: schoolTotalStudents
+                    totalStudents: schoolTotalStudents,
+                    ...advancedStats
                 } as SchoolData;
             });
 

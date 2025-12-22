@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useTeacherClassContext } from '../contexts/TeacherClassContext';
 import { Card } from './common/Card';
 import { ICONS, SpinnerIcon } from '../constants/index';
-import type { Unidade, StudentGradeSummaryDoc } from '../types';
+import type { Unidade, StudentGradeSummaryDoc, GradeReportActivityDetail } from '../types';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from './firebaseClient';
 import { useQuery } from '@tanstack/react-query';
@@ -203,14 +203,17 @@ const SchoolRecords: React.FC = () => {
                                                             {subjects.map((subject, idx) => {
                                                                 const subjData = unitData.subjects[subject];
                                                                 const colorClass = getScoreColor(subjData.totalPoints);
+                                                                // UPDATED: Convert Map to Array for display with type assertion
+                                                                const activityList = Object.values(subjData.activities || {}) as GradeReportActivityDetail[];
+
                                                                 return (
                                                                     <div key={subject} className={`p-4 ${idx > 0 ? 'border-t border-dashed border-slate-200 dark:border-slate-700' : ''}`}>
                                                                         <div className="flex justify-between items-center mb-2">
                                                                             <h4 className="font-bold text-slate-700 dark:text-slate-300 uppercase text-xs tracking-wide">{subject}</h4>
-                                                                            <span className={`px-2 py-0.5 rounded text-xs font-bold border ${colorClass}`}>Total: {subjData.totalPoints}</span>
+                                                                            <span className={`px-2 py-0.5 rounded text-xs font-bold border ${colorClass}`}>Total: {subjData.totalPoints.toFixed(1)}</span>
                                                                         </div>
                                                                         <ul className="space-y-1 pl-2 border-l-2 border-slate-200 dark:border-slate-700">
-                                                                            {subjData.activities.map(act => (
+                                                                            {activityList.map(act => (
                                                                                 <li key={act.id} className="flex justify-between items-center text-sm p-2 hover:bg-slate-50 dark:hover:bg-slate-700/20 rounded">
                                                                                     <span className="text-slate-600 dark:text-slate-400">{act.title}</span>
                                                                                     <span className="font-medium text-slate-700 dark:text-slate-300">{act.grade} <span className="text-xs text-slate-400">/ {act.maxPoints}</span></span>

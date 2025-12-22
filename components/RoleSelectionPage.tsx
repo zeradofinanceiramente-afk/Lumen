@@ -29,6 +29,10 @@ const SecretariatIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" /></svg>
 );
 
+const StateSecretariatIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v4" /></svg>
+);
+
 interface RoleSelectionPageProps {
     onRoleSelected: (role: Role) => void;
     error?: string | null;
@@ -89,7 +93,14 @@ export const RoleSelectionPage: React.FC<RoleSelectionPageProps> = ({ onRoleSele
                              className="w-full flex items-center justify-center py-3 px-4 border border-purple-300 rounded-lg shadow-sm text-base font-medium text-purple-700 bg-purple-100 hover:bg-purple-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-purple-500 transition-colors dark:bg-purple-900/50 dark:text-purple-200 dark:border-purple-700 dark:hover:bg-purple-900 hc-button-override"
                         >
                             <SecretariatIcon />
-                             <span className="ml-3">Sou Secretaria</span>
+                             <span className="ml-3">Sou Secretaria Municipal</span>
+                        </button>
+                        <button 
+                            onClick={() => onRoleSelected('secretaria_estadual')}
+                             className="w-full flex items-center justify-center py-3 px-4 border border-teal-300 rounded-lg shadow-sm text-base font-medium text-teal-700 bg-teal-100 hover:bg-teal-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-teal-500 transition-colors dark:bg-teal-900/50 dark:text-teal-200 dark:border-teal-700 dark:hover:bg-teal-900 hc-button-override"
+                        >
+                            <StateSecretariatIcon />
+                             <span className="ml-3">Sou Secretaria Estadual</span>
                         </button>
                     </div>
                 </div>

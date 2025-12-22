@@ -1,5 +1,5 @@
 
-export type Role = 'aluno' | 'professor' | 'admin' | 'direcao' | 'responsavel' | 'secretaria' | null;
+export type Role = 'aluno' | 'professor' | 'admin' | 'direcao' | 'responsavel' | 'secretaria' | 'secretaria_estadual' | null;
 
 export type BadgeTier = 'bronze' | 'silver' | 'gold';
 
@@ -22,6 +22,7 @@ export interface User {
   myClassesSummary?: ClassSummary[]; // New field for optimized loading
   wards?: string[]; // IDs of students managed by a 'responsavel'
   linkedSchoolIds?: string[]; // IDs of schools (Directors) managed by 'secretaria'
+  linkedMunicipalities?: string[]; // IDs of Municipal Secretariats managed by 'secretaria_estadual'
 }
 
 export type UserStatus = 'Ativo' | 'Pendente' | 'Inativo';
@@ -133,10 +134,12 @@ export type Page =
   // Direction (New)
   | 'director_dashboard'
   | 'director_teachers'
-  // Secretariat (New)
+  // Secretariat (Municipal)
   | 'secretariat_dashboard'
   | 'secretariat_schools'
   | 'secretariat_statistics'
+  // State Secretariat (New)
+  | 'state_secretariat_dashboard'
   // Guardian (New)
   | 'guardian_dashboard'
   // Admin
@@ -365,9 +368,9 @@ export interface TeacherClass {
   activityCount?: number; // Denormalized Counter
   moduleCount?: number; // Denormalized Counter
   noticeCount?: number; // Denormalized Counter
-  modules: Module[];
-  activities: Activity[];
-  notices: ClassNotice[];
+  modules?: Module[]; // OPTIONAL: Lazy Loaded
+  activities?: Activity[]; // OPTIONAL: Lazy Loaded
+  notices?: ClassNotice[]; // OPTIONAL: Lazy Loaded
   teacherId: string;
   teachers?: string[]; // Array of teacher IDs for Multi-Teacher support (N:N)
   subjects?: Record<string, string>; // Map of teacherId -> Subject
@@ -415,7 +418,7 @@ export interface GradeReportActivityDetail {
 }
 
 export interface GradeReportSubject {
-  activities: GradeReportActivityDetail[];
+  activities: Record<string, GradeReportActivityDetail>; // OPTIMIZATION: Changed from Array to Map for O(1) updates
   totalPoints: number;
 }
 
@@ -468,10 +471,11 @@ export interface AttendanceRecord {
 // --- Big Doc Types for new architecture ---
 
 // Document stored at: teacher_history/{teacherId}
+// OPTIMIZATION: Removed full class objects to prevent 1MB limit. Only store critical sync data.
+// OPTIMIZATION: Removed attendanceSessions. They should be fetched from collection.
 export interface TeacherHistoryDoc {
-  classes: TeacherClass[];
+  classesSummary: ClassSummary[]; 
   notifications: Notification[];
-  attendanceSessions: AttendanceSession[];
 }
 
 // --- Offline & Sync Types ---
@@ -493,4 +497,19 @@ export interface SchoolData {
     email: string;
     totalClasses: number;
     totalStudents: number;
+    // New Advanced Stats
+    averageAttendance?: number;
+    performanceBySubject?: Record<string, number>; // e.g. { "História": 8.5, "Matemática": 7.0 }
+    activeStudentRate?: number; // Percentage
+}
+
+// State Secretariat Types
+export interface MunicipalSecretariatData {
+    id: string;
+    name: string; // Name of the Municipal Secretary
+    email: string;
+    totalSchools: number; // Linked schools count
+    // New Advanced Stats
+    networkPerformance?: number; // Average grade across network
+    dropoutRiskRate?: number; // Estimated % at risk
 }
