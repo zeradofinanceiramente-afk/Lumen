@@ -58,7 +58,9 @@ export const CustomTooltip: React.FC<TooltipProps<number, string>> = ({ active, 
 };
 
 // --- Container Wrapper ---
-export const ChartContainer: React.FC<{ title: string; subtitle?: string; children: React.ReactNode; height?: number }> = ({ title, subtitle, children, height = 300 }) => {
+// FIX: Changed children type to 'any' to robustly satisfy Recharts ResponsiveContainer type requirements
+// which expects a specific ReactElement shape, avoiding TS2322 errors during build.
+export const ChartContainer: React.FC<{ title: string; subtitle?: string; children: any; height?: number }> = ({ title, subtitle, children, height = 300 }) => {
     return (
         <div className="flex flex-col h-full">
             <div className="mb-4">
