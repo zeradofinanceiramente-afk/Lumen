@@ -1,4 +1,3 @@
-
 // FILE: components/Sidebar.tsx
 import React, { useMemo } from 'react';
 import type { Page } from '../types';
@@ -11,6 +10,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 
 const getIcon = (id: Page) => {
     switch (id) {
+        case 'dashboard': return ICONS.dashboard;
         case 'modules': return ICONS.modules;
         case 'quizzes': return ICONS.quizzes;
         case 'activities': return ICONS.activities;
@@ -47,7 +47,7 @@ const StudentNotificationBadge: React.FC = () => {
     const { unreadNotificationCount } = useStudentNotificationsContext();
     if (unreadNotificationCount <= 0) return null;
     return (
-        <span className="bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center" aria-label={`${unreadNotificationCount} novas notificações`}>
+        <span className="bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border border-[#09090b]" aria-label={`${unreadNotificationCount} novas notificações`}>
             {unreadNotificationCount}
         </span>
     );
@@ -58,7 +58,7 @@ const TeacherPendingBadge: React.FC = () => {
     const pendingCount = dashboardStats.totalPendingSubmissions;
     if (pendingCount <= 0) return null;
     return (
-        <span className="bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center" aria-label={`${pendingCount} pendentes`}>
+        <span className="bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border border-[#09090b]" aria-label={`${pendingCount} pendentes`}>
             {pendingCount}
         </span>
     );
@@ -72,6 +72,7 @@ export const Sidebar: React.FC = () => {
     const navItems = useMemo(() => {
         if (userRole === 'aluno') {
             return [
+                { id: 'dashboard' as Page, label: 'Início' },
                 { id: 'modules' as Page, label: t('sidebar.modules') },
                 { id: 'quizzes' as Page, label: t('sidebar.quizzes') },
                 { id: 'activities' as Page, label: t('sidebar.activities') },
@@ -82,6 +83,7 @@ export const Sidebar: React.FC = () => {
             ];
         } else if (userRole === 'professor') {
             return [
+                { id: 'dashboard' as Page, label: 'Início' },
                 { id: 'teacher_dashboard' as Page, label: t('sidebar.teacher_dashboard') },
                 { id: 'teacher_pending_activities' as Page, label: t('sidebar.pending') },
                 { id: 'modules' as Page, label: t('sidebar.modules') },
@@ -93,6 +95,7 @@ export const Sidebar: React.FC = () => {
             ];
         } else if (userRole === 'direcao') {
             return [
+                { id: 'dashboard' as Page, label: 'Início' },
                 { id: 'director_dashboard' as Page, label: t('sidebar.director_panel') },
                 { id: 'teacher_statistics' as Page, label: t('sidebar.stats') },
                 { id: 'teacher_school_records' as Page, label: t('sidebar.history') },
@@ -100,16 +103,19 @@ export const Sidebar: React.FC = () => {
             ];
         } else if (userRole === 'secretaria') {
             return [
+                { id: 'dashboard' as Page, label: 'Início' },
                 { id: 'secretariat_dashboard' as Page, label: t('sidebar.secretariat_panel') },
                 { id: 'secretariat_schools' as Page, label: t('sidebar.monitor') },
                 { id: 'secretariat_statistics' as Page, label: t('sidebar.state_data') },
             ];
         } else if (userRole === 'secretaria_estadual') {
             return [
+                { id: 'dashboard' as Page, label: 'Início' },
                 { id: 'state_secretariat_dashboard' as Page, label: 'Painel Estadual' },
             ];
         } else if (userRole === 'admin') {
             return [
+                { id: 'dashboard' as Page, label: 'Início' },
                 { id: 'admin_dashboard' as Page, label: t('sidebar.admin_dash') },
                 { id: 'admin_modules' as Page, label: t('sidebar.admin_mods') },
                 { id: 'admin_quizzes' as Page, label: t('sidebar.admin_quiz') },
@@ -119,6 +125,7 @@ export const Sidebar: React.FC = () => {
             ];
         } else if (userRole === 'responsavel') {
             return [
+                { id: 'dashboard' as Page, label: 'Início' },
                 { id: 'guardian_dashboard' as Page, label: t('sidebar.guardian_panel') },
             ];
         }
@@ -130,30 +137,34 @@ export const Sidebar: React.FC = () => {
     
     return (
         <>
-            {/* Overlay for mobile */}
+            {/* Overlay for all screens (Drawer behavior) */}
             <div
-                className={`fixed inset-0 bg-black/60 z-40 lg:hidden transition-opacity ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                className={`fixed inset-0 bg-black/60 z-40 transition-opacity ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 onClick={toggleMobileMenu}
                 aria-hidden="true"
             ></div>
 
-            <aside className={`w-64 bg-blue-950 text-slate-200 flex flex-col h-full border-r border-blue-900 dark:bg-slate-900 dark:border-slate-800 hc-bg-override hc-border-override fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                <div className="p-5 border-b border-blue-900 dark:border-slate-800 hc-border-override">
+            {/* Sidebar with Glassmorphism */}
+            <aside className={`w-64 glass-sidebar text-slate-200 flex flex-col h-full fixed lg:static inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+                <div className="p-5 border-b border-white/10 flex items-center justify-center">
                     <Logo />
                 </div>
-                <nav className="flex-1 px-4 py-5 space-y-2" aria-label="Navegação Principal">
+                
+                <nav className="flex-1 px-4 py-5 space-y-2 custom-scrollbar overflow-y-auto" aria-label="Navegação Principal">
                     {navItems.map(item => (
                         <button
                             key={item.id}
-                            onClick={() => setCurrentPage(item.id)}
+                            onClick={() => { setCurrentPage(item.id); toggleMobileMenu(); }}
                             aria-current={currentPage === item.id ? 'page' : undefined}
-                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors duration-200 text-left ${
-                                currentPage === item.id ? 'bg-blue-800 text-white font-semibold dark:bg-indigo-500' : 'hover:bg-blue-900 dark:hover:bg-white/10'
-                            } hc-link-override`}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 text-left group ${
+                                currentPage === item.id 
+                                ? 'bg-brand text-white shadow-[0_0_15px_rgba(var(--brand-rgb),0.4)] border border-white/20' 
+                                : 'hover:bg-white/10 text-slate-400 hover:text-white border border-transparent'
+                            }`}
                         >
                             <div className="flex items-center space-x-3">
-                                <span aria-hidden="true">{getIcon(item.id)}</span>
-                                <span>{item.label}</span>
+                                <span aria-hidden="true" className={currentPage === item.id ? 'text-white' : 'text-slate-400 group-hover:text-white transition-colors'}>{getIcon(item.id)}</span>
+                                <span className="font-medium tracking-wide">{item.label}</span>
                             </div>
                             {item.id === 'teacher_pending_activities' && (userRole === 'professor') && (
                                 <TeacherPendingBadge />
@@ -161,17 +172,18 @@ export const Sidebar: React.FC = () => {
                         </button>
                     ))}
                 </nav>
-                <div className="px-4 py-5 border-t border-blue-900 dark:border-slate-800 space-y-2 hc-border-override">
+                
+                <div className="px-4 py-5 border-t border-white/10 space-y-2">
                      {showNotificationsLink && (
                         <button
-                            onClick={() => setCurrentPage('notifications')}
+                            onClick={() => { setCurrentPage('notifications'); toggleMobileMenu(); }}
                             aria-current={currentPage === 'notifications' ? 'page' : undefined}
-                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors duration-200 text-left ${
-                                currentPage === 'notifications' ? 'bg-blue-800 text-white font-semibold dark:bg-indigo-500' : 'hover:bg-blue-900 dark:hover:bg-white/10'
-                            } hc-link-override`}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 text-left ${
+                                currentPage === 'notifications' ? 'bg-brand text-white shadow-[0_0_15px_rgba(var(--brand-rgb),0.4)] border border-white/20' : 'hover:bg-white/10 text-slate-400 hover:text-white'
+                            }`}
                         >
                             <div className="flex items-center space-x-3">
-                                <span aria-hidden="true">{ICONS['notifications']}</span>
+                                <span aria-hidden="true" className={currentPage === 'notifications' ? 'text-white' : 'text-slate-400'}>{ICONS['notifications']}</span>
                                 <span>{t('sidebar.notifications')}</span>
                             </div>
                             <StudentNotificationBadge />
@@ -179,17 +191,17 @@ export const Sidebar: React.FC = () => {
                      )}
                      {showProfileLink && (
                          <button
-                            onClick={() => setCurrentPage('profile')}
+                            onClick={() => { setCurrentPage('profile'); toggleMobileMenu(); }}
                             aria-current={currentPage === 'profile' ? 'page' : undefined}
-                            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors duration-200 text-left ${
-                                currentPage === 'profile' ? 'bg-blue-800 text-white font-semibold dark:bg-indigo-500' : 'hover:bg-blue-900 dark:hover:bg-white/10'
-                            } hc-link-override`}
+                            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-left ${
+                                currentPage === 'profile' ? 'bg-brand text-white shadow-[0_0_15px_rgba(var(--brand-rgb),0.4)] border border-white/20' : 'hover:bg-white/10 text-slate-400 hover:text-white'
+                            }`}
                         >
-                            <span aria-hidden="true">{ICONS.profile}</span>
+                            <span aria-hidden="true" className={currentPage === 'profile' ? 'text-white' : 'text-slate-400'}>{ICONS.profile}</span>
                             <span>{t('sidebar.profile')}</span>
                         </button>
                      )}
-                    <button onClick={onLogout} className="flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors duration-200 w-full text-left hover:bg-blue-900 dark:hover:bg-white/10 hc-link-override">
+                    <button onClick={onLogout} className="flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all duration-200 w-full text-left hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-transparent hover:border-red-500/30">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                         <span>{t('sidebar.logout')}</span>
                     </button>

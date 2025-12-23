@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 
 export const ZoomControls: React.FC = () => {
     // State to track the current zoom scale factor
     const [scale, setScale] = useState(1);
+    const [isOpen, setIsOpen] = useState(false);
 
     // Effect to set the initial scale based on the CSS variable when the component mounts
     useEffect(() => {
@@ -26,22 +28,35 @@ export const ZoomControls: React.FC = () => {
         document.documentElement.style.setProperty('--root-font-size', '16px');
     };
 
+    if (!isOpen) {
+        return (
+            <button
+                onClick={() => setIsOpen(true)}
+                className="flex items-center justify-center w-10 h-10 bg-slate-100/10 hover:bg-slate-100/20 backdrop-blur-md border border-white/10 rounded-full text-slate-200 transition-all shadow-sm"
+                aria-label="Abrir controles de zoom"
+                title="Ajustar tamanho do texto"
+            >
+                <span className="text-lg font-bold">Aa</span>
+            </button>
+        );
+    }
+
     return (
         <div 
-            className="flex items-center space-x-1 bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-lg p-1" 
+            className="flex items-center space-x-1 bg-slate-900/90 backdrop-blur-md border border-white/20 rounded-full p-1 shadow-xl animate-fade-in" 
             role="group" 
             aria-label="Controles de zoom"
         >
             <button 
                 onClick={() => changeScale(-0.1)} 
                 disabled={scale <= 0.75}
-                className="px-3 py-1.5 rounded text-lg font-bold disabled:opacity-50 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="w-8 h-8 rounded-full text-lg font-bold disabled:opacity-30 text-slate-200 hover:bg-white/10 flex items-center justify-center transition-colors"
                 aria-label="Diminuir zoom"
             >
                 -
             </button>
             <span 
-                className="w-12 text-center text-sm font-semibold text-slate-700 dark:text-slate-200 tabular-nums flex items-center justify-center"
+                className="w-10 text-center text-xs font-mono font-semibold text-white/90 tabular-nums flex items-center justify-center"
                 aria-live="polite"
             >
                 {Math.round(scale * 100)}%
@@ -49,17 +64,18 @@ export const ZoomControls: React.FC = () => {
             <button 
                 onClick={() => changeScale(0.1)} 
                 disabled={scale >= 1.5}
-                className="px-3 py-1.5 rounded text-lg font-bold disabled:opacity-50 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="w-8 h-8 rounded-full text-lg font-bold disabled:opacity-30 text-slate-200 hover:bg-white/10 flex items-center justify-center transition-colors"
                 aria-label="Aumentar zoom"
             >
                 +
             </button>
+            <div className="w-px h-4 bg-white/20 mx-1"></div>
             <button 
-                onClick={resetScale} 
-                className="px-3 py-1.5 rounded text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                aria-label="Resetar zoom"
+                onClick={() => setIsOpen(false)} 
+                className="w-8 h-8 rounded-full text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/10 flex items-center justify-center transition-colors"
+                aria-label="Fechar controles de zoom"
             >
-                Resetar
+                ✕
             </button>
         </div>
     );

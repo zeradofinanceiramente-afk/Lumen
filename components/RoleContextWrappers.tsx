@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { StudentAcademicProvider } from '../contexts/StudentAcademicContext';
 import { StudentNotificationProvider } from '../contexts/StudentNotificationContext';
@@ -25,29 +24,37 @@ export const StudentContextWrapper: React.FC<WrapperProps> = ({ children }) => (
 );
 
 export const TeacherContextWrapper: React.FC<WrapperProps> = ({ children }) => (
-    <TeacherClassProvider>
-        <TeacherAcademicProvider>
-            <TeacherCommunicationProvider>
-                {children}
-            </TeacherCommunicationProvider>
-        </TeacherAcademicProvider>
-    </TeacherClassProvider>
+    <StudentAcademicProvider>
+        <TeacherClassProvider>
+            <TeacherAcademicProvider>
+                <TeacherCommunicationProvider>
+                    {children}
+                </TeacherCommunicationProvider>
+            </TeacherAcademicProvider>
+        </TeacherClassProvider>
+    </StudentAcademicProvider>
 );
 
 export const AdminContextWrapper: React.FC<WrapperProps> = ({ children }) => (
-    <AdminDataProvider>
-        {children}
-    </AdminDataProvider>
+    <StudentAcademicProvider>
+        <AdminDataProvider>
+            {children}
+        </AdminDataProvider>
+    </StudentAcademicProvider>
 );
 
 export const SecretariatContextWrapper: React.FC<WrapperProps> = ({ children }) => (
-    <SecretariatProvider>
-        {children}
-    </SecretariatProvider>
+    <StudentAcademicProvider>
+        <SecretariatProvider>
+            {children}
+        </SecretariatProvider>
+    </StudentAcademicProvider>
 );
 
 export const StateSecretariatContextWrapper: React.FC<WrapperProps> = ({ children }) => (
-    <StateSecretariatProvider>
-        {children}
-    </StateSecretariatProvider>
+    <StudentAcademicProvider>
+        <StateSecretariatProvider>
+            {children}
+        </StateSecretariatProvider>
+    </StudentAcademicProvider>
 );

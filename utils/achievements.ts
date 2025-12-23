@@ -47,8 +47,7 @@ export async function fetchUserAchievementsDoc(userId: string): Promise<UserAchi
         stats: {
           quizzesCompleted: 0,
           modulesCompleted: 0,
-          activitiesCompleted: 0,
-          loginStreak: 0
+          activitiesCompleted: 0
         },
         unlocked: {}, // Mapa vazio
         updatedAt: serverTimestamp()
@@ -60,7 +59,7 @@ export async function fetchUserAchievementsDoc(userId: string): Promise<UserAchi
   } catch (error) {
     console.error("Erro ao buscar documento de conquistas do usuário:", error);
     // Fallback seguro para não quebrar a UI
-    return { xp: 0, level: 1, stats: { quizzesCompleted: 0, modulesCompleted: 0, activitiesCompleted: 0, loginStreak: 0 }, unlocked: {} };
+    return { xp: 0, level: 1, stats: { quizzesCompleted: 0, modulesCompleted: 0, activitiesCompleted: 0 }, unlocked: {} };
   }
 }
 

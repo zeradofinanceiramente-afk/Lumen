@@ -46,7 +46,7 @@ export function NavigationProvider({ children }: { children?: React.ReactNode })
     const { authState, userRole } = useAuth();
     const location = useLocation();
 
-    const [currentPage, setCurrentPage] = useState<Page>('modules'); // Default safer
+    const [currentPage, setCurrentPage] = useState<Page>('dashboard'); // Default to Dashboard (Início)
     const [activeModule, setActiveModule] = useState<Module | null>(null);
     const [activeClass, setActiveClass] = useState<TeacherClass | null>(null);
     const [activeActivity, setActiveActivity] = useState<Activity | null>(null); // NEW
@@ -59,19 +59,10 @@ export function NavigationProvider({ children }: { children?: React.ReactNode })
 
     useEffect(() => {
         if (authState === 'authenticated') {
-            if (userRole === 'admin') {
-                setCurrentPage('admin_dashboard');
-            } else if (userRole === 'direcao') {
-                setCurrentPage('director_dashboard');
-            } else if (userRole === 'responsavel') {
-                setCurrentPage('guardian_dashboard');
-            } else if (userRole === 'professor') {
-                setCurrentPage('teacher_dashboard'); // Direct to My Classes (Minhas Turmas)
-            } else {
-                setCurrentPage('modules'); // Direct to Modules for Students
-            }
+            // Set 'dashboard' as the universal landing page for all roles
+            setCurrentPage('dashboard');
         }
-    }, [authState, userRole]);
+    }, [authState]);
 
 
     const toggleMobileMenu = useCallback(() => setIsMobileMenuOpen(prev => !prev), []);
@@ -218,7 +209,7 @@ export function NavigationProvider({ children }: { children?: React.ReactNode })
             </NavigationActionsContext.Provider>
         </NavigationStateContext.Provider>
     );
-};
+}
 
 // Custom hooks to consume the separated contexts. These are now internal to the module.
 const useNavigationState = (): NavigationState => {

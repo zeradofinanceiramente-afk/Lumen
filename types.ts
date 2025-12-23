@@ -55,8 +55,6 @@ export interface UserGamificationStats {
   quizzesCompleted: number;
   modulesCompleted: number;
   activitiesCompleted: number;
-  loginStreak: number;
-  lastLoginDate?: string; // Track day for streak calculation
   [key: string]: any; // Extensible
 }
 
@@ -101,7 +99,6 @@ export interface UserStats {
   level: number;
   xpForNextLevel: number;
   levelName: string;
-  streak: number; // Current daily streak
 }
 
 // FIX: Added Page type export to resolve import errors across the application.

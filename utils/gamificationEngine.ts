@@ -58,7 +58,7 @@ export function checkNewAchievements(
                 }
                 break;
             
-            // Futuro: Adicionar novos tipos aqui (ex: 'loginStreak', 'xpTotal')
+            // Futuro: Adicionar novos tipos aqui (ex: 'xpTotal')
             default:
                 break;
         }
@@ -113,8 +113,7 @@ export async function processGamificationEvent(
                     stats: {
                         quizzesCompleted: 0,
                         modulesCompleted: 0,
-                        activitiesCompleted: 0,
-                        loginStreak: 0
+                        activitiesCompleted: 0
                     },
                     unlocked: {},
                     updatedAt: serverTimestamp()
@@ -124,7 +123,7 @@ export async function processGamificationEvent(
             }
 
             // Inicializa stats se undefined (migração segura)
-            if (!currentData.stats) currentData.stats = { quizzesCompleted: 0, modulesCompleted: 0, activitiesCompleted: 0, loginStreak: 0 };
+            if (!currentData.stats) currentData.stats = { quizzesCompleted: 0, modulesCompleted: 0, activitiesCompleted: 0 };
             if (!currentData.unlocked) currentData.unlocked = {};
 
             // 3. Incrementar Stats baseados no evento

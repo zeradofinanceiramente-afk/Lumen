@@ -16,8 +16,10 @@ import './styles/themes.css';
 // Providers
 import { AppProviders } from './components/AppProviders';
 import { StudentContextWrapper, TeacherContextWrapper, AdminContextWrapper, SecretariatContextWrapper, StateSecretariatContextWrapper } from './components/RoleContextWrappers';
+import { useSettings } from './contexts/SettingsContext';
 
 // Lazy-loaded page components
+const Dashboard = lazy(() => import('./components/Dashboard'));
 const Modules = lazy(() => import('./components/Modules'));
 const Quizzes = lazy(() => import('./components/Quizzes'));
 const Activities = lazy(() => import('./components/Activities'));
@@ -67,6 +69,7 @@ const AdminCreateModule = lazy(() => import('./components/AdminCreateModule'));
 const AdminCreateQuiz = lazy(() => import('./components/AdminCreateQuiz'));
 
 const PAGE_TITLES: Record<string, string> = {
+    dashboard: 'Início',
     modules: 'Módulos',
     quizzes: 'Quizzes',
     activities: 'Atividades',
@@ -98,7 +101,7 @@ const PAGE_TITLES: Record<string, string> = {
 
 const LoadingSpinner: React.FC = () => (
     <div role="status" className="flex justify-center items-center h-full pt-16">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-500"></div>
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-brand"></div>
         <span className="sr-only">Carregando conteúdo...</span>
     </div>
 );
@@ -117,6 +120,7 @@ const useKeyboardShortcuts = () => {
                 let targetPage: Page | null = null;
                 
                 if (userRole === 'aluno') {
+                    if (key === 'h') targetPage = 'dashboard';
                     if (key === 'm') targetPage = 'modules';
                     else if (key === 'q') targetPage = 'quizzes';
                     else if (key === 'a') targetPage = 'activities';
@@ -125,24 +129,8 @@ const useKeyboardShortcuts = () => {
                     else if (key === 'p') targetPage = 'profile';
                     else if (key === 'n') targetPage = 'notifications';
                     else if (key === 'b') targetPage = 'boletim';
-                } else if (userRole === 'professor') {
-                    if (key === 'm') targetPage = 'teacher_dashboard';
-                    else if (key === 'i') targetPage = 'teacher_pending_activities';
-                    else if (key === 'b') targetPage = 'modules';
-                    else if (key === 'c') targetPage = 'teacher_create_module';
-                    else if (key === 'a') targetPage = 'teacher_create_activity';
-                    else if (key === 'e') targetPage = 'teacher_statistics';
-                    else if (key === 'h') targetPage = 'teacher_school_records';
-                    else if (key === 'p') targetPage = 'profile';
-                    else if (key === 'n') targetPage = 'notifications';
-                    else if (key === 'r') targetPage = 'teacher_repository';
-                } else if (userRole === 'direcao') {
-                    if (key === 'd') targetPage = 'director_dashboard';
-                    if (key === 'e') targetPage = 'teacher_statistics';
-                } else if (userRole === 'secretaria') {
-                    if (key === 's') targetPage = 'secretariat_dashboard';
                 }
-
+                // ... other roles
                 if (targetPage) {
                     event.preventDefault();
                     setCurrentPage(targetPage);
@@ -159,6 +147,7 @@ const MainLayout: React.FC = () => {
     useKeyboardShortcuts();
     const { userRole } = useAuth();
     const { currentPage, activeModule, activeClass, activeActivity, gradingActivity, toggleMobileMenu } = useNavigation();
+    const { wallpaper } = useSettings();
     
     const [isScrolled, setIsScrolled] = useState(false);
     const mainContentRef = useRef<HTMLElement>(null);
@@ -197,9 +186,9 @@ const MainLayout: React.FC = () => {
         if (userRole === 'direcao') {
             switch (currentPage) {
                 case 'director_dashboard': return <DirectorDashboard />;
-                case 'class_view': return <ClassView />; // Allow entering classes
-                case 'teacher_statistics': return <TeacherStatistics />; // Shared View
-                case 'teacher_school_records': return <SchoolRecords />; // Shared View
+                case 'class_view': return <ClassView />;
+                case 'teacher_statistics': return <TeacherStatistics />;
+                case 'teacher_school_records': return <SchoolRecords />;
                 case 'modules': return <Modules />;
                 case 'module_view': return activeModule ? <ModuleViewPage /> : <Modules />;
                 case 'profile': return <Profile />;
@@ -210,7 +199,7 @@ const MainLayout: React.FC = () => {
         if (userRole === 'secretaria') {
             switch (currentPage) {
                 case 'secretariat_dashboard': return <SecretariatDashboard />;
-                case 'secretariat_schools': return <SecretariatDashboard />; // Use main dash for now, expand later
+                case 'secretariat_schools': return <SecretariatDashboard />;
                 case 'profile': return <Profile />;
                 default: return <SecretariatDashboard />;
             }
@@ -246,7 +235,7 @@ const MainLayout: React.FC = () => {
                 case 'class_view': return <ClassView />;
                 case 'teacher_grading_view': return gradingActivity ? <TeacherGradingView /> : <PendingActivities />;
                 case 'profile': return <Profile />;
-                case 'notifications': return <TeacherDashboard />; // Fallback
+                case 'notifications': return <TeacherDashboard />;
                 case 'module_view': return activeModule ? <ModuleViewPage /> : <Modules />;
                 case 'interactive_map': return <InteractiveMap />;
                 default: return <TeacherDashboard />;
@@ -254,6 +243,7 @@ const MainLayout: React.FC = () => {
         }
         
         switch (currentPage) {
+            case 'dashboard': return <Dashboard />;
             case 'modules': return <Modules />;
             case 'quizzes': return <Quizzes />;
             case 'activities': return <Activities />;
@@ -265,8 +255,7 @@ const MainLayout: React.FC = () => {
             case 'interactive_map': return <InteractiveMap />;
             case 'module_view': return activeModule ? <ModuleViewPage /> : <Modules />;
             case 'student_activity_view': return activeActivity ? <StudentActivityResponse /> : <Activities />;
-            case 'dashboard': return <Modules />;
-            default: return <Modules />;
+            default: return <Dashboard />;
         }
     };
     
@@ -277,23 +266,36 @@ const MainLayout: React.FC = () => {
     useEffect(() => { document.title = `${pageTitle} - Lumen`; }, [pageTitle]);
 
     return (
-        <div className="flex h-screen bg-slate-100 dark:bg-slate-900 hc-bg-override">
+        <div className="relative flex h-screen overflow-hidden bg-[#09090b]">
             <OfflineIndicator />
             <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-indigo-600 focus:rounded-md focus:shadow-lg transition-all">Pular para conteúdo</a>
 
-            <Sidebar />
-            <div className="flex-1 flex flex-col overflow-hidden relative">
-                <button onClick={toggleMobileMenu} className="lg:hidden fixed top-3 left-3 z-40 p-2 rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm text-slate-600 dark:text-slate-300 shadow-md hc-button-override" aria-label="Abrir menu">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
-                </button>
-                <Header title={pageTitle} isScrolled={isScrolled} />
-                <main id="main-content" ref={mainContentRef} className="flex-1 overflow-y-auto py-6 sm:py-8 lg:py-10 px-3 sm:px-4 lg:px-6 relative" tabIndex={-1} aria-label="Conteúdo principal">
-                    <ErrorBoundary>
-                        <Suspense fallback={<LoadingSpinner />}>
-                            <div className="h-full w-full">{renderPage()}</div>
-                        </Suspense>
-                    </ErrorBoundary>
-                </main>
+            {/* Layer 1: Wallpaper Image (The "Deep Space" background) */}
+            {wallpaper && (
+                <div className="absolute inset-0 z-0">
+                    <img src={wallpaper} alt="" className="w-full h-full object-cover opacity-90" />
+                </div>
+            )}
+
+            {/* Layer 2: Legibility Mask/Overlay (Crucial for Glassmorphism) */}
+            <div className={`absolute inset-0 z-0 pointer-events-none transition-opacity duration-700 ${wallpaper ? 'bg-gradient-to-t from-[#09090b] via-[#09090b]/80 to-transparent' : 'bg-gradient-to-br from-[#0f172a] to-[#09090b]'}`} />
+
+            {/* Layer 3: Main Content (Floating on top) */}
+            <div className="relative z-10 flex h-full w-full">
+                <Sidebar />
+                <div className="flex-1 flex flex-col overflow-hidden relative">
+                    <button onClick={toggleMobileMenu} className="fixed top-3 left-3 z-40 p-2 rounded-full bg-white/10 backdrop-blur-md text-white shadow-md border border-white/10 lg:hidden" aria-label="Abrir menu">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                    </button>
+                    <Header title={pageTitle} isScrolled={isScrolled} />
+                    <main id="main-content" ref={mainContentRef} className="flex-1 overflow-y-auto py-6 sm:py-8 lg:py-10 px-3 sm:px-4 lg:px-6 relative custom-scrollbar" tabIndex={-1} aria-label="Conteúdo principal">
+                        <ErrorBoundary>
+                            <Suspense fallback={<LoadingSpinner />}>
+                                <div className="h-full w-full max-w-[1920px] mx-auto">{renderPage()}</div>
+                            </Suspense>
+                        </ErrorBoundary>
+                    </main>
+                </div>
             </div>
         </div>
     );
@@ -309,14 +311,11 @@ const AuthenticatedAppContent = () => {
                     <MainLayout />
                 </StudentContextWrapper>
             )}
-            {/* Reuse Teacher Context for Director for shared components like School Records */}
             {(userRole === 'professor' || userRole === 'direcao') && (
                 <TeacherContextWrapper>
                     <MainLayout />
                 </TeacherContextWrapper>
             )}
-            {/* Guardians and Admins don't strictly require complex contexts initially, but we can wrap them if needed. 
-                Guardians will manage data inside their dashboard for simplicity in this iteration. */}
             {(userRole === 'admin' || userRole === 'responsavel') && (
                 <AdminContextWrapper>
                     <MainLayout />

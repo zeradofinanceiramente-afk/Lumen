@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from './common/Card';
 import { ICONS, SpinnerIcon } from '../constants/index';
@@ -163,11 +162,98 @@ const MapConfigModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
     );
 };
 
+// --- DEFAULT COVER CONFIG MODAL ---
+const DefaultCoverModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+    const { addToast } = useToast();
+    const [defaultCoverUrl, setDefaultCoverUrl] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            const loadConfig = async () => {
+                setIsLoading(true);
+                try {
+                    const docRef = doc(db, 'system_settings', 'dashboard_config');
+                    const snap = await getDoc(docRef);
+                    if (snap.exists()) {
+                        setDefaultCoverUrl(snap.data().defaultCoverUrl || '');
+                    }
+                } catch (error) {
+                    console.error("Erro ao carregar config da capa", error);
+                    addToast("Erro ao carregar configurações.", "error");
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+            loadConfig();
+        }
+    }, [isOpen, addToast]);
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            await setDoc(doc(db, 'system_settings', 'dashboard_config'), { defaultCoverUrl: defaultCoverUrl }, { merge: true });
+            addToast("Capa padrão atualizada!", "success");
+            onClose();
+        } catch (error) {
+            console.error("Erro ao salvar capa", error);
+            addToast("Erro ao salvar.", "error");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} title="Configurar Capa Padrão">
+            <div className="space-y-4">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Defina a imagem de capa que aparecerá no card "Explorar Módulos" para usuários que ainda não iniciaram nenhum módulo.
+                </p>
+                
+                {isLoading ? (
+                    <div className="flex justify-center py-8"><SpinnerIcon className="h-8 w-8 text-indigo-500" /></div>
+                ) : (
+                    <InputField label="URL da Imagem Padrão">
+                        <div className="flex gap-2 items-center">
+                            <input 
+                                type="text" 
+                                value={defaultCoverUrl} 
+                                onChange={e => setDefaultCoverUrl(e.target.value)}
+                                placeholder="https://..."
+                                className="w-full p-2 border border-gray-300 rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                            />
+                            {defaultCoverUrl && (
+                                <div className="w-16 h-10 rounded border overflow-hidden flex-shrink-0 bg-slate-200">
+                                    <img src={defaultCoverUrl} alt="Preview" className="w-full h-full object-cover" />
+                                </div>
+                            )}
+                        </div>
+                    </InputField>
+                )}
+
+                <div className="flex justify-end space-x-3 pt-4 border-t dark:border-slate-700">
+                    <button onClick={onClose} className="px-4 py-2 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white">Cancelar</button>
+                    <button 
+                        onClick={handleSave} 
+                        disabled={isSaving || isLoading}
+                        className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center"
+                    >
+                        {isSaving ? <SpinnerIcon className="h-4 w-4 mr-2" /> : null}
+                        Salvar
+                    </button>
+                </div>
+            </div>
+        </Modal>
+    );
+};
+
 const AdminDashboard: React.FC = () => {
     // FIX: Use totalModulesCount from context which is the real server count
     const { totalModulesCount, quizzes, achievements, isLoading } = useAdminData();
     const { setCurrentPage } = useNavigation();
     const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+    const [isCoverModalOpen, setIsCoverModalOpen] = useState(false);
 
     return (
         <div className="space-y-8">
@@ -200,10 +286,12 @@ const AdminDashboard: React.FC = () => {
                    <QuickActionButton label="Gerenciar Conquistas" onClick={() => setCurrentPage('admin_achievements')} />
                    <QuickActionButton label="Executar Testes" onClick={() => setCurrentPage('admin_tests')} isPrimary />
                    <QuickActionButton label="Configurar Mapa" onClick={() => setIsMapModalOpen(true)} />
+                   <QuickActionButton label="Configurar Capa Padrão" onClick={() => setIsCoverModalOpen(true)} />
                 </div>
             </Card>
 
             <MapConfigModal isOpen={isMapModalOpen} onClose={() => setIsMapModalOpen(false)} />
+            <DefaultCoverModal isOpen={isCoverModalOpen} onClose={() => setIsCoverModalOpen(false)} />
         </div>
     );
 };
