@@ -197,7 +197,8 @@ const Modules: React.FC = () => {
         });
         const progressValues = await Promise.all(progressPromises);
         
-        const finalModules = results.map((m, i) => ({ ...m, progress: progressValues[i] }));
+        // Explicit cast to Module[] to ensure type consistency
+        const finalModules: Module[] = results.map((m, i) => ({ ...m, progress: progressValues[i] }));
 
         return { 
             modules: finalModules, 
@@ -225,7 +226,7 @@ const Modules: React.FC = () => {
     }, [data]);
 
     const displayedModules = useMemo(() => {
-        let mods = isStudent ? flattenedModules : [];
+        let mods: Module[] = isStudent ? flattenedModules : [];
         if (isTeacher) {
              mods = teacherContext?.modules || [];
              if (searchScope === 'my_modules') {
