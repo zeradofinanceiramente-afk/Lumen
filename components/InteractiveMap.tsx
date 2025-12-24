@@ -4,12 +4,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigation } from '../contexts/NavigationContext';
 import { TeacherAcademicContext } from '../contexts/TeacherAcademicContext';
 import { StudentAcademicContext } from '../contexts/StudentAcademicContext';
-import { SpinnerIcon } from '../constants/index';
+import { SpinnerIcon, ICONS } from '../constants/index';
 import type { HistoricalEra, Module, Activity } from '../types';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from './firebaseClient';
 
-// --- Configuration ---
+// --- Configuration & Assets ---
 
 const DEFAULT_BACKGROUNDS: Record<HistoricalEra, string[]> = {
     'Pré-História': ['https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1600&auto=format&fit=crop'],
@@ -19,13 +19,13 @@ const DEFAULT_BACKGROUNDS: Record<HistoricalEra, string[]> = {
     'Contemporânea': ['https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?q=80&w=1600&auto=format&fit=crop'],
 };
 
-// Color Palettes for Gradient Interpolation
-const ERA_PALETTES: Record<HistoricalEra, { start: string, end: string }> = {
-    'Pré-História': { start: '#8D6E63', end: '#D7CCC8' }, // Brown -> Light Brown
-    'Antiga': { start: '#FFD700', end: '#FFF59D' }, // Gold -> Pastel Yellow
-    'Média': { start: '#D1C4E9', end: '#D500F9' }, // Pastel Purple -> Neon Purple
-    'Moderna': { start: '#C62828', end: '#F48FB1' }, // Imperial Red -> Pinkish
-    'Contemporânea': { start: '#80CBC4', end: '#004D40' }, // Aqua -> Intense Teal
+// Neon Palette for Gamer Aesthetic
+const ERA_COLORS: Record<HistoricalEra, string> = {
+    'Pré-História': '#F59E0B', // Amber
+    'Antiga': '#EAB308',       // Yellow/Gold
+    'Média': '#D946EF',        // Fuchsia/Magical
+    'Moderna': '#EF4444',      // Red/Revolution
+    'Contemporânea': '#06B6D4', // Cyan/Future
 };
 
 interface TimelineItem {
@@ -37,190 +37,181 @@ interface TimelineItem {
     data: Module | Activity;
 }
 
-// --- Helpers ---
-
-const interpolateColor = (color1: string, color2: string, factor: number) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color1);
-    const result2 = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color2);
-    
-    if (!result || !result2) return color1;
-
-    const r1 = parseInt(result[1], 16);
-    const g1 = parseInt(result[2], 16);
-    const b1 = parseInt(result[3], 16);
-
-    const r2 = parseInt(result2[1], 16);
-    const g2 = parseInt(result2[2], 16);
-    const b2 = parseInt(result2[3], 16);
-
-    const r = Math.round(r1 + factor * (r2 - r1));
-    const g = Math.round(g1 + factor * (g2 - g1));
-    const b = Math.round(b1 + factor * (b2 - b1));
-
-    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-};
-
-const getItemColor = (era: HistoricalEra, index: number, total: number) => {
-    const palette = ERA_PALETTES[era];
-    if (!palette) return '#FFFFFF';
-    if (total <= 1) return palette.start;
-    
-    const factor = index / (total - 1);
-    return interpolateColor(palette.start, palette.end, factor);
-};
-
 // --- Components ---
+
+const CyberGrid: React.FC = () => (
+    <div 
+        className="absolute bottom-0 left-0 right-0 h-[50vh] z-0 pointer-events-none opacity-40"
+        style={{
+            background: `
+                linear-gradient(to bottom, transparent 0%, #000 100%),
+                repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 100px),
+                repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 100px)
+            `,
+            transform: 'perspective(1000px) rotateX(60deg) scale(2)',
+            transformOrigin: 'bottom center',
+            width: '100%',
+            maskImage: 'linear-gradient(to bottom, transparent, black)'
+        }}
+    />
+);
 
 const TimelineNode: React.FC<{
     item: TimelineItem;
     index: number;
-    total: number;
     onClick: (item: TimelineItem) => void;
-    era: HistoricalEra;
-}> = React.memo(({ item, index, total, onClick, era }) => {
-    // 3D Depth Logic - Staggered layout
-    // 0 = Close, 1 = Mid, 2 = Far
-    const depthIndex = index % 3;
+    color: string;
+}> = React.memo(({ item, index, onClick, color }) => {
+    // Staggered layout logic
+    const isOdd = index % 2 !== 0;
+    const height = isOdd ? 280 : 380; // Alternating heights
     
-    // Z-Index: Closer items must be on top
-    const zIndex = 100 - depthIndex * 10;
+    // Depth simulation
+    const zIndex = 50 + (index % 5);
 
-    // Transform Z logic for visual depth
-    // The deeper the item, the smaller it scales and moves up (simulating horizon) due to perspective
-    const zTransform = depthIndex === 0 ? 0 : depthIndex === 1 ? -100 : -200;
-    
-    // Vertical Staggering via Height instead of Translation
-    // This ensures the anchor point (bottom: 0) always stays on the timeline axis
-    const baseHeight = 350;
-    const heightStagger = depthIndex === 0 ? 0 : depthIndex === 1 ? 60 : 120;
-    const totalHeight = baseHeight + heightStagger;
-
-    const blur = depthIndex === 2 ? 'blur-[1px]' : 'blur-none';
-    const opacity = depthIndex === 2 ? 'opacity-80' : 'opacity-100';
-
-    const anchorColor = getItemColor(era, index, total);
     const coverImage = (item.data as any).coverImageUrl || (item.data as any).imageUrl;
 
     return (
         <div 
-            className={`absolute bottom-0 w-20 flex flex-col items-center justify-end transition-all duration-500 ease-out group/node ${blur} ${opacity}`}
+            className="absolute bottom-0 w-24 flex flex-col items-center justify-end group/node transition-all duration-500"
             style={{ 
-                left: `${index * 300 + 150}px`, // Horizontal spacing
-                zIndex,
-                transform: `translate3d(0, 0, ${zTransform}px)`, // No Y translation to keep anchor on line
-                height: `${totalHeight}px`
+                left: `${index * 220 + 100}px`, // Tighter spacing
+                height: `${height}px`,
+                zIndex
             }}
         >
-            {/* 3D Connector Line (Tether) */}
+            {/* Holographic Beam */}
             <div 
-                className="absolute bottom-0 left-1/2 w-[2px] origin-bottom bg-gradient-to-t from-white via-white/40 to-transparent transition-all duration-500 group-hover/node:w-[3px] group-hover/node:from-indigo-400 group-hover/node:via-indigo-300/50"
-                style={{ 
-                    height: '100%', 
-                    transform: 'translateX(-50%)',
-                    boxShadow: '0 0 10px rgba(255,255,255,0.2)'
-                }}
+                className="absolute bottom-0 w-[1px] bg-gradient-to-t from-transparent via-white/20 to-white/60 group-hover/node:w-[2px] group-hover/node:via-white/50 transition-all duration-300"
+                style={{ height: '100%', boxShadow: `0 0 15px ${color}40` }}
             />
 
-            {/* Anchor Point (On the Timeline Axis) */}
+            {/* The Anchor (Data Point on the Floor) */}
             <div 
-                className="absolute bottom-[-8px] left-1/2 -translate-x-1/2 w-5 h-5 rounded-full border-4 bg-slate-900 shadow-[0_0_20px_rgba(255,255,255,0.8)] cursor-pointer transition-transform duration-300 group-hover/node:scale-125 group-hover/node:bg-white z-50 hover:shadow-[0_0_30px_#fff]"
-                style={{ borderColor: anchorColor }}
-                onClick={(e) => { e.stopPropagation(); onClick(item); }}
+                className="absolute -bottom-3 w-6 h-6 rounded-full border-2 bg-[#09090b] flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.2)] group-hover/node:scale-125 transition-transform duration-300 z-10"
+                style={{ borderColor: color, boxShadow: `0 0 10px ${color}` }}
             >
-                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] font-mono font-bold text-white/90 bg-black/70 px-2 py-0.5 rounded whitespace-nowrap group-hover/node:text-white group-hover/node:bg-indigo-600 transition-colors border border-white/10">
-                    {item.year > 0 ? item.year : `${Math.abs(item.year)} a.C.`}
-                </div>
+                <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
             </div>
 
-            {/* Floating Card */}
+            {/* Year Label (Floating above anchor) */}
+            <div className="absolute bottom-6 bg-black/80 text-[10px] font-mono font-bold text-slate-300 px-2 py-0.5 rounded border border-white/10 group-hover/node:text-white group-hover/node:border-white/30 transition-colors">
+                {item.year > 0 ? item.year : `${Math.abs(item.year)} a.C.`}
+            </div>
+
+            {/* The Card (Floating UI) */}
             <div 
                 onClick={(e) => { e.stopPropagation(); onClick(item); }}
-                className="absolute top-0 left-1/2 -translate-x-1/2 w-64 bg-slate-900/90 backdrop-blur-xl rounded-xl shadow-2xl cursor-pointer border border-white/10 overflow-hidden ring-1 ring-white/5 group-hover/node:ring-indigo-400/50 group-hover/node:shadow-[0_0_50px_rgba(79,70,229,0.3)] group-hover/node:scale-105 group-hover/node:-translate-y-2 transition-all duration-300 origin-bottom"
+                className="relative mb-auto w-64 bg-[#0d1117]/90 backdrop-blur-xl rounded-lg border border-white/10 overflow-hidden cursor-pointer transform transition-all duration-300 group-hover/node:scale-110 group-hover/node:z-50 group-hover/node:border-white/30 group-hover/node:shadow-[0_0_30px_rgba(0,0,0,0.5)] origin-bottom"
             >
-                {/* Image Area */}
-                {coverImage && (
-                    <div className="h-32 w-full overflow-hidden relative">
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent z-10" />
+                {/* Glow Effect on Hover */}
+                <div 
+                    className="absolute inset-0 opacity-0 group-hover/node:opacity-20 transition-opacity duration-300 pointer-events-none"
+                    style={{ background: `linear-gradient(to top, ${color}, transparent)` }}
+                />
+
+                {/* Content */}
+                <div className="h-28 w-full relative">
+                    {coverImage ? (
                         <img 
                             src={coverImage} 
                             alt="" 
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover/node:scale-110" 
+                            className="w-full h-full object-cover opacity-90 group-hover/node:opacity-100 transition-all duration-300" 
                         />
-                        <div className="absolute top-2 right-2 z-20">
-                            <span 
-                                className="text-[9px] uppercase font-bold px-2 py-0.5 rounded text-slate-900 shadow-sm border border-white/20"
-                                style={{ backgroundColor: anchorColor }}
-                            >
-                                {item.type === 'module' ? 'Módulo' : 'Atividade'}
-                            </span>
-                        </div>
+                    ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-slate-800 to-black" />
+                    )}
+                    
+                    {/* Badge */}
+                    <div className="absolute top-2 right-2">
+                        <span 
+                            className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded text-black shadow-sm"
+                            style={{ backgroundColor: color }}
+                        >
+                            {item.type === 'module' ? 'MOD' : 'ACT'}
+                        </span>
                     </div>
-                )}
+                </div>
 
-                <div className={`p-4 relative z-20 ${coverImage ? '-mt-8' : ''}`}>
-                    <h4 className="text-sm font-bold text-white leading-tight mb-1 drop-shadow-md group-hover/node:text-indigo-200 transition-colors">
+                <div className="p-3 border-t border-white/5">
+                    <h4 className="text-xs font-bold text-slate-200 leading-tight mb-1 group-hover/node:text-white truncate">
                         {item.title}
                     </h4>
-                    <p className="text-[10px] text-slate-400 line-clamp-2 leading-relaxed">
-                        {(item.data as any).description}
-                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                        <span className="h-1 flex-1 bg-slate-800 rounded-full overflow-hidden">
+                            <div 
+                                className="h-full bg-white/50" 
+                                style={{ width: `${Math.random() * 100}%` }} // Simulating progress/activity
+                            /> 
+                        </span>
+                        <span className="text-[9px] font-mono text-slate-500">
+                            {item.type === 'module' ? 'INIT' : 'TASK'}
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
     );
 });
 
-const BackgroundLayer: React.FC<{
-    eraSections: { era: HistoricalEra, left: number, width: number }[];
-    backgrounds: Record<HistoricalEra, string[]>;
-    cameraX: number;
-    totalWidth: number;
+const HeadsUpDisplay: React.FC<{
     zoom: number;
-}> = ({ eraSections, backgrounds, cameraX, totalWidth, zoom }) => {
-    // Strictly synchronized background (1:1 mapping with content)
-    // Removed parallax factor to ensure strict Era correlation
-    const bgOffset = -cameraX;
-
+    setZoom: (z: number) => void;
+    resetCamera: () => void;
+    eraSections: { era: HistoricalEra, left: number }[];
+    onJumpToEra: (left: number) => void;
+}> = ({ zoom, setZoom, resetCamera, eraSections, onJumpToEra }) => {
     return (
-        <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
-            {/* We create a container that is wide enough to hold all backgrounds */}
-            <div 
-                className="absolute top-0 bottom-0 flex will-change-transform origin-top-left"
-                style={{ 
-                    transform: `translateX(${bgOffset}px) scale(${zoom})`,
-                    width: `${totalWidth}px` // Ensure it spans properly
-                }}
-            >
-                {eraSections.map(section => (
-                    <div 
-                        key={section.era}
-                        className="relative h-full border-r border-white/5"
-                        style={{ width: `${section.width}px` }}
+        <>
+            {/* Top Right Controls (Zoom) */}
+            <div className="absolute top-6 right-6 z-50 flex flex-col gap-2">
+                <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-lg p-1.5 flex flex-col items-center gap-2 shadow-2xl">
+                    <button 
+                        onClick={() => setZoom(Math.min(2, zoom + 0.1))}
+                        className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+                        title="Zoom In"
                     >
-                        {/* Background Image(s) */}
-                        <div className="absolute inset-0 flex">
-                            {backgrounds[section.era]?.map((img, idx) => (
-                                <div 
-                                    key={idx} 
-                                    className="h-full flex-1 bg-cover bg-center opacity-30"
-                                    style={{ backgroundImage: `url(${img})` }}
-                                />
-                            ))}
-                        </div>
-                        
-                        {/* Overlay Gradients for Depth - Lighter for visibility */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/40" />
-                        
-                        {/* Huge Era Title in Background */}
-                        <div className="absolute top-20 left-10 opacity-10">
-                            <h2 className="text-[12rem] font-bold text-white font-epic tracking-widest uppercase leading-none select-none whitespace-nowrap">
-                                {section.era}
-                            </h2>
-                        </div>
-                    </div>
-                ))}
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" /></svg>
+                    </button>
+                    <div className="w-full h-[1px] bg-white/10" />
+                    <span className="text-[10px] font-mono font-bold text-brand">{Math.round(zoom * 100)}%</span>
+                    <div className="w-full h-[1px] bg-white/10" />
+                    <button 
+                        onClick={() => setZoom(Math.max(0.5, zoom - 0.1))}
+                        className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+                        title="Zoom Out"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clipRule="evenodd" /></svg>
+                    </button>
+                </div>
+                
+                <button 
+                    onClick={resetCamera}
+                    className="bg-brand/10 hover:bg-brand/20 backdrop-blur-md border border-brand/30 text-brand rounded-lg p-2 text-xs font-bold uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(var(--brand-rgb),0.2)]"
+                >
+                    Reset View
+                </button>
             </div>
-        </div>
+
+            {/* Bottom Era Navigation (Fast Travel) */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-4xl">
+                <div className="bg-black/70 backdrop-blur-xl border border-white/10 rounded-full px-2 py-2 flex items-center justify-between shadow-2xl">
+                    {eraSections.map((section) => (
+                        <button
+                            key={section.era}
+                            onClick={() => onJumpToEra(section.left)}
+                            className="flex-1 px-4 py-2 rounded-full text-xs font-bold text-slate-400 hover:text-white hover:bg-white/10 transition-all uppercase tracking-wide truncate group relative"
+                        >
+                            <span 
+                                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                style={{ backgroundColor: ERA_COLORS[section.era] }}
+                            />
+                            {section.era}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </>
     );
 };
 
@@ -235,21 +226,15 @@ const InteractiveMap: React.FC = () => {
     const [publicModules, setPublicModules] = useState<Module[]>([]);
     const [isLoadingPublic, setIsLoadingPublic] = useState(false);
 
-    // --- Virtual Camera State ---
-    const viewportRef = useRef<HTMLDivElement>(null);
+    // Camera & Physics
     const [cameraX, setCameraX] = useState(0);
     const [zoom, setZoom] = useState(1);
     
-    // Gestures State
     const [isDragging, setIsDragging] = useState(false);
     const lastX = useRef(0);
-    const lastTouchDistance = useRef<number | null>(null);
+    const viewportRef = useRef<HTMLDivElement>(null);
 
-    // Constraints
-    const MIN_ZOOM = 0.5;
-    const MAX_ZOOM = 1.8;
-    
-    // Data Loading (Backgrounds from Firestore)
+    // Initial Data Fetching
     useEffect(() => {
         const fetchBackgrounds = async () => {
             try {
@@ -258,28 +243,19 @@ const InteractiveMap: React.FC = () => {
                 if (snap.exists()) {
                     const data = snap.data();
                     const mergedBgs = { ...DEFAULT_BACKGROUNDS };
-                    
                     ['Pré-História', 'Antiga', 'Média', 'Moderna', 'Contemporânea'].forEach(era => {
-                        // Check if exists and has valid content
                         if (data[era] && Array.isArray(data[era]) && data[era].length > 0 && data[era][0] !== '') {
                             mergedBgs[era as HistoricalEra] = data[era];
                         }
                     });
                     setBackgrounds(mergedBgs);
                 }
-            } catch (err) {
-                console.error("Failed to load map backgrounds", err);
-            }
+            } catch (err) { console.error(err); }
         };
         fetchBackgrounds();
     }, []);
 
-    useEffect(() => {
-        if (userRole === 'professor' && teacherContext?.modules.length === 0) {
-            teacherContext.fetchModulesLibrary();
-        }
-    }, [userRole, teacherContext]);
-
+    // Load Public Modules for Students
     useEffect(() => {
         if (userRole === 'aluno') {
             setIsLoadingPublic(true);
@@ -287,11 +263,13 @@ const InteractiveMap: React.FC = () => {
             getDocs(q).then(snap => {
                 setPublicModules(snap.docs.map(d => ({ id: d.id, ...d.data() } as Module)));
             }).finally(() => setIsLoadingPublic(false));
+        } else if (userRole === 'professor' && teacherContext?.modules.length === 0) {
+            teacherContext.fetchModulesLibrary();
         }
-    }, [userRole]);
+    }, [userRole, teacherContext]);
 
-    // Calculate Items & Sections
-    const { eraSections } = useMemo(() => {
+    // Data Processing & Layout Calculation
+    const { items, eraSections, totalWidth } = useMemo(() => {
         let modules: Module[] = [];
         let activities: Activity[] = [];
 
@@ -303,204 +281,167 @@ const InteractiveMap: React.FC = () => {
                 if (Array.isArray(cls.activities)) activities.push(...cls.activities);
             });
             modules.push(...publicModules);
-            // Remove duplicates
+            // Dedupe
             modules = Array.from(new Map(modules.map(m => [m.id, m])).values());
             activities = Array.from(new Map(activities.map(a => [a.id, a])).values());
         }
 
-        const items: TimelineItem[] = [];
+        const rawItems: TimelineItem[] = [];
         const pushItem = (obj: any, type: 'module' | 'activity') => {
             if (obj.historicalYear !== undefined && obj.historicalEra) {
-                items.push({ id: obj.id, type, title: obj.title, year: obj.historicalYear, era: obj.historicalEra, data: obj });
+                rawItems.push({ id: obj.id, type, title: obj.title, year: obj.historicalYear, era: obj.historicalEra, data: obj });
             }
         };
         modules.forEach(m => pushItem(m, 'module'));
         activities.forEach(a => pushItem(a, 'activity'));
-        items.sort((a, b) => a.year - b.year);
+        rawItems.sort((a, b) => a.year - b.year);
 
-        // Calculate layout
-        const sections: { era: HistoricalEra, left: number, width: number, items: TimelineItem[] }[] = [];
-        let currentLeft = 0;
+        // Calculate Era Sections
+        const sections: { era: HistoricalEra, left: number, width: number, bg: string }[] = [];
+        let currentX = 0;
         const ERAS: HistoricalEra[] = ['Pré-História', 'Antiga', 'Média', 'Moderna', 'Contemporânea'];
 
         ERAS.forEach(era => {
-            const eraItems = items.filter(i => i.era === era);
-            const width = Math.max(1200, eraItems.length * 300 + 400); // Minimum width + item spacing
-            sections.push({ era, left: currentLeft, width, items: eraItems });
-            currentLeft += width;
+            const count = rawItems.filter(i => i.era === era).length;
+            const width = Math.max(1600, count * 250); // Minimum screen width per era
+            const bg = backgrounds[era]?.[0] || '';
+            sections.push({ era, left: currentX, width, bg });
+            currentX += width;
         });
 
-        return { timelineItems: items, eraSections: sections };
-    }, [userRole, teacherContext?.modules, studentContext?.studentClasses, publicModules]);
+        return { items: rawItems, eraSections: sections, totalWidth: currentX };
+    }, [userRole, teacherContext?.modules, studentContext?.studentClasses, publicModules, backgrounds]);
 
-    const totalWidth = eraSections.reduce((acc, s) => acc + s.width, 0);
-
-    // --- Gesture Handlers ---
+    // --- Interaction Handlers ---
 
     const handleWheel = useCallback((e: WheelEvent) => {
         e.preventDefault();
-        e.stopPropagation();
-
         if (e.ctrlKey) {
-            // Pinch to zoom (trackpad)
-            const zoomDelta = -e.deltaY * 0.005;
-            setZoom(z => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z + zoomDelta)));
+            setZoom(z => Math.min(2, Math.max(0.5, z - e.deltaY * 0.005)));
         } else {
-            // Pan
-            setCameraX(x => Math.min(Math.max(0, x + e.deltaY + e.deltaX), totalWidth - window.innerWidth / zoom));
+            setCameraX(x => Math.max(0, Math.min(x + e.deltaX + e.deltaY, totalWidth - window.innerWidth)));
         }
-    }, [totalWidth, zoom]);
+    }, [totalWidth]);
 
-    const handleTouchStart = (e: React.TouchEvent) => {
-        if (e.touches.length === 1) {
-            setIsDragging(true);
-            lastX.current = e.touches[0].clientX;
-        } else if (e.touches.length === 2) {
-            // Pinch start
-            const dist = Math.hypot(
-                e.touches[0].clientX - e.touches[1].clientX,
-                e.touches[0].clientY - e.touches[1].clientY
-            );
-            lastTouchDistance.current = dist;
-        }
-    };
-
-    const handleTouchMove = (e: React.TouchEvent) => {
-        e.preventDefault(); // Critical for isolation
-        e.stopPropagation();
-
-        if (e.touches.length === 1 && isDragging) {
-            const deltaX = lastX.current - e.touches[0].clientX;
-            lastX.current = e.touches[0].clientX;
-            setCameraX(x => Math.min(Math.max(0, x + deltaX), totalWidth - window.innerWidth / zoom));
-        } else if (e.touches.length === 2 && lastTouchDistance.current !== null) {
-            const dist = Math.hypot(
-                e.touches[0].clientX - e.touches[1].clientX,
-                e.touches[0].clientY - e.touches[1].clientY
-            );
-            const delta = dist - lastTouchDistance.current;
-            lastTouchDistance.current = dist;
-            
-            const zoomSpeed = 0.005;
-            setZoom(z => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z + delta * zoomSpeed)));
-        }
-    };
-
-    const handleTouchEnd = () => {
-        setIsDragging(false);
-        lastTouchDistance.current = null;
-    };
-
-    // Attach non-passive wheel listener for full control
     useEffect(() => {
         const el = viewportRef.current;
-        if (el) {
-            el.addEventListener('wheel', handleWheel, { passive: false });
-        }
-        return () => {
-            if (el) el.removeEventListener('wheel', handleWheel);
-        };
+        if (el) el.addEventListener('wheel', handleWheel, { passive: false });
+        return () => el?.removeEventListener('wheel', handleWheel);
     }, [handleWheel]);
 
-    const handleItemClick = (item: TimelineItem) => {
-        if (item.type === 'module') startModule(item.data as Module);
-        else openActivity(item.data as Activity);
+    // Touch/Mouse Drag Logic
+    const handleStart = (clientX: number) => {
+        setIsDragging(true);
+        lastX.current = clientX;
+    };
+    const handleMove = (clientX: number) => {
+        if (!isDragging) return;
+        const delta = lastX.current - clientX;
+        lastX.current = clientX;
+        setCameraX(x => Math.max(0, Math.min(x + delta, totalWidth - window.innerWidth / zoom)));
+    };
+
+    const jumpToEra = (left: number) => {
+        setCameraX(left);
     };
 
     const isLoading = (userRole === 'aluno' ? studentContext?.isLoading : teacherContext?.isLoadingContent) || isLoadingPublic;
 
-    if (isLoading && totalWidth === 0) {
-        return <div className="h-[80vh] w-full flex items-center justify-center"><SpinnerIcon className="h-12 w-12 text-indigo-500" /></div>;
+    if (isLoading && items.length === 0) {
+        return <div className="h-[80vh] flex items-center justify-center"><SpinnerIcon className="h-12 w-12 text-brand" /></div>;
     }
 
     return (
         <div 
             ref={viewportRef}
-            className="h-[calc(100vh-6rem)] w-full relative overflow-hidden bg-black select-none touch-none rounded-xl shadow-2xl border border-slate-800"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
+            className="relative h-[calc(100vh-6rem)] w-full overflow-hidden bg-[#050505] select-none rounded-xl border border-white/10 shadow-2xl"
+            onMouseDown={e => handleStart(e.clientX)}
+            onMouseMove={e => handleMove(e.clientX)}
+            onMouseUp={() => setIsDragging(false)}
+            onMouseLeave={() => setIsDragging(false)}
+            onTouchStart={e => handleStart(e.touches[0].clientX)}
+            onTouchMove={e => handleMove(e.touches[0].clientX)}
+            onTouchEnd={() => setIsDragging(false)}
             style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
         >
-            {/* UI Overlay (Static) */}
-            <div className="absolute top-4 left-4 z-50 flex items-center gap-4 bg-black/60 backdrop-blur-md p-2 rounded-lg border border-white/10 text-white pointer-events-auto">
-                <div className="flex flex-col">
-                    <span className="text-[10px] uppercase text-gray-400 font-bold">Zoom</span>
-                    <span className="font-mono text-sm">{Math.round(zoom * 100)}%</span>
-                </div>
-                <div className="h-8 w-[1px] bg-white/20" />
-                <button 
-                    onClick={() => { setZoom(1); setCameraX(0); }}
-                    className="ml-2 p-1 hover:bg-white/20 rounded text-xs"
-                    title="Resetar Câmera"
-                >
-                    Reset
-                </button>
-            </div>
-
-            {/* LAYER 1: Background (Strict Sync, No Parallax) */}
-            <BackgroundLayer 
-                eraSections={eraSections} 
-                backgrounds={backgrounds} 
-                cameraX={cameraX} 
-                totalWidth={totalWidth} 
-                zoom={zoom}
+            <HeadsUpDisplay 
+                zoom={zoom} 
+                setZoom={setZoom} 
+                resetCamera={() => { setCameraX(0); setZoom(1); }}
+                eraSections={eraSections}
+                onJumpToEra={jumpToEra}
             />
 
-            {/* LAYER 2: World Content (Zoom + Pan) */}
+            {/* WORLD CONTAINER */}
             <div 
-                className="absolute inset-0 w-full h-full will-change-transform origin-top-left z-10"
-                style={{
-                    transform: `translateX(${-cameraX}px) scale(${zoom})`,
-                    width: `${totalWidth}px`
+                className="absolute inset-0 h-full will-change-transform"
+                style={{ 
+                    transform: `translateX(${-cameraX}px) scale(${zoom})`, 
+                    transformOrigin: 'top left',
+                    width: `${totalWidth}px` 
                 }}
             >
-                {/* 2.1 Floor Grid */}
-                <div 
-                    className="absolute bottom-0 left-0 right-0 h-[300px] z-10 pointer-events-none"
-                    style={{
-                        background: `
-                            linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.8) 20%, #000 100%),
-                            repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 150px),
-                            repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 50px)
-                        `,
-                        transform: 'perspective(800px) rotateX(40deg) scale(1.5)',
-                        transformOrigin: 'bottom center',
-                        width: '100%'
-                    }}
-                />
-
-                {/* 2.2 THE TIMELINE AXIS (The central line) - Elevated */}
-                <div 
-                    className="absolute bottom-[120px] left-0 right-0 h-[4px] z-20 pointer-events-none bg-indigo-500/50 shadow-[0_0_20px_#6366f1]"
-                    style={{
-                        background: 'linear-gradient(90deg, transparent 0%, #6366f1 10%, #a855f7 50%, #6366f1 90%, transparent 100%)',
-                        width: `${totalWidth}px`
-                    }}
-                />
-
-                {/* 2.3 Items Layer (Mapped strictly to avoid duplicates) */}
-                <div className="absolute top-0 bottom-[120px] left-0 right-0 z-30 pointer-events-none" style={{ perspective: '1000px' }}>
+                {/* 1. Backgrounds & Environment */}
+                <div className="absolute inset-0 flex h-full pointer-events-none">
                     {eraSections.map(section => (
-                        <div key={section.era} className="absolute top-0 bottom-0 pointer-events-auto" style={{ left: section.left, width: section.width }}>
-                            {section.items.map((item, idx) => (
-                                <TimelineNode 
-                                    key={item.id}
-                                    item={item}
-                                    index={idx}
-                                    total={section.items.length}
-                                    onClick={handleItemClick}
-                                    era={section.era}
-                                />
-                            ))}
+                        <div 
+                            key={section.era} 
+                            style={{ width: `${section.width}px` }} 
+                            className="relative h-full border-r border-white/5 overflow-hidden"
+                        >
+                            {/* Background Image */}
+                            <div 
+                                className="absolute inset-0 bg-cover bg-center opacity-30 blur-[2px] transition-all duration-1000"
+                                style={{ backgroundImage: `url(${section.bg})` }} 
+                            />
+                            
+                            {/* Era Title (Gigantic) */}
+                            <h1 className="absolute top-20 left-10 text-[10rem] font-black text-white/5 uppercase tracking-tighter whitespace-nowrap font-epic select-none">
+                                {section.era}
+                            </h1>
+
+                            {/* Section Color Fog */}
+                            <div 
+                                className="absolute bottom-0 inset-x-0 h-1/2 opacity-20"
+                                style={{ background: `linear-gradient(to top, ${ERA_COLORS[section.era]}, transparent)` }}
+                            />
                         </div>
                     ))}
                 </div>
-            </div>
-            
-            {/* Gesture Hint */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none opacity-50 text-white text-xs font-mono animate-pulse z-50">
-                PINCH TO ZOOM • DRAG TO PAN
+
+                <CyberGrid />
+
+                {/* 2. Timeline Track (The Beam) */}
+                <div className="absolute bottom-[100px] left-0 right-0 h-[2px] bg-white/20 shadow-[0_0_15px_rgba(255,255,255,0.3)] z-10">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-50" />
+                </div>
+
+                {/* 3. Items Layer */}
+                <div className="absolute inset-0 pointer-events-none z-20">
+                    {items.map((item, idx) => {
+                        // Calculate absolute position based on era offset
+                        const section = eraSections.find(s => s.era === item.era);
+                        if (!section) return null;
+                        
+                        // Relative index within era for spacing
+                        const eraItems = items.filter(i => i.era === item.era);
+                        const localIndex = eraItems.findIndex(i => i.id === item.id);
+                        
+                        // Position logic
+                        const leftPos = section.left + 200 + (localIndex * 220); 
+
+                        return (
+                            <div key={item.id} className="absolute bottom-[100px] pointer-events-auto" style={{ left: `${leftPos}px` }}>
+                                <TimelineNode 
+                                    item={item} 
+                                    index={idx} 
+                                    onClick={(i) => i.type === 'module' ? startModule(i.data as Module) : openActivity(i.data as Activity)} 
+                                    color={ERA_COLORS[item.era]}
+                                />
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
         </div>
     );

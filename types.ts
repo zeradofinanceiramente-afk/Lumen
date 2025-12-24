@@ -9,7 +9,7 @@ export interface ClassSummary {
   name: string;
   code: string;
   studentCount: number;
-  isArchived?: boolean; // New field for archiving
+  isArchived?: boolean; 
 }
 
 export interface User {
@@ -19,10 +19,10 @@ export interface User {
   role: Role;
   series?: string;
   avatarUrl?: string;
-  myClassesSummary?: ClassSummary[]; // New field for optimized loading
-  wards?: string[]; // IDs of students managed by a 'responsavel'
-  linkedSchoolIds?: string[]; // IDs of schools (Directors) managed by 'secretaria'
-  linkedMunicipalities?: string[]; // IDs of Municipal Secretariats managed by 'secretaria_estadual'
+  myClassesSummary?: ClassSummary[]; 
+  wards?: string[]; 
+  linkedSchoolIds?: string[]; 
+  linkedMunicipalities?: string[]; 
 }
 
 export type UserStatus = 'Ativo' | 'Pendente' | 'Inativo';
@@ -36,12 +36,11 @@ export interface Achievement {
   id: string;
   title: string;
   description: string;
-  date: string; // for unlocked achievements
+  date: string; 
   points: number;
   unlocked: boolean;
   tier: BadgeTier;
-  imageUrl?: string; // New: Custom image URL replacing the default emoji
-  // Admin fields
+  imageUrl?: string; 
   criterion?: string;
   criterionType?: 'modules' | 'quizzes' | 'activities';
   criterionCount?: number;
@@ -50,19 +49,18 @@ export interface Achievement {
   status?: 'Ativa' | 'Inativa';
 }
 
-// Novos tipos para a Fase 1 da Gamificação (Stat-Driven Architecture)
 export interface UserGamificationStats {
   quizzesCompleted: number;
   modulesCompleted: number;
   activitiesCompleted: number;
-  [key: string]: any; // Extensible
+  [key: string]: any; 
 }
 
 export interface UserAchievementsDoc {
   xp: number;
   level: number;
   stats: UserGamificationStats;
-  unlocked: Record<string, { date: string; seen: boolean }>; // Map<AchievementID, Data>
+  unlocked: Record<string, { date: string; seen: boolean }>; 
   updatedAt?: any;
 }
 
@@ -91,7 +89,9 @@ export interface Notification {
   read: boolean;
   timestamp: string;
   userId?: string;
-  groupCount?: number; // Novo campo para agrupamento
+  groupCount?: number; 
+  type: string;
+  actorName?: string;
 }
 
 export interface UserStats {
@@ -101,9 +101,7 @@ export interface UserStats {
   levelName: string;
 }
 
-// FIX: Added Page type export to resolve import errors across the application.
 export type Page =
-  // Student
   | 'dashboard'
   | 'modules'
   | 'quizzes'
@@ -114,9 +112,8 @@ export type Page =
   | 'notifications'
   | 'module_view'
   | 'boletim'
-  | 'student_activity_view' // NEW PAGE
-  | 'interactive_map' // NEW PAGE: TIMELINE
-  // Teacher
+  | 'student_activity_view' 
+  | 'interactive_map' 
   | 'teacher_dashboard'
   | 'teacher_main_dashboard'
   | 'teacher_create_module'
@@ -125,21 +122,16 @@ export type Page =
   | 'teacher_pending_activities'
   | 'teacher_school_records'
   | 'teacher_repository'
-  | 'teacher_module_repository' // New Page for Module Drafts
-  | 'teacher_grading_view' // NEW PAGE FOR GRADING
+  | 'teacher_module_repository' 
+  | 'teacher_grading_view' 
   | 'class_view'
-  // Direction (New)
   | 'director_dashboard'
   | 'director_teachers'
-  // Secretariat (Municipal)
   | 'secretariat_dashboard'
   | 'secretariat_schools'
   | 'secretariat_statistics'
-  // State Secretariat (New)
   | 'state_secretariat_dashboard'
-  // Guardian (New)
   | 'guardian_dashboard'
-  // Admin
   | 'admin_dashboard'
   | 'admin_users'
   | 'admin_modules'
@@ -149,9 +141,8 @@ export type Page =
   | 'admin_tests'
   | 'admin_create_quiz'
   | 'admin_create_achievement'
-  | 'admin_create_module'; // New admin specific page
+  | 'admin_create_module'; 
 
-// Module and Quiz Types
 export type ModulePageContentType =
   | 'title'
   | 'paragraph'
@@ -165,9 +156,9 @@ export type ModulePageContentType =
 export interface ModulePageContent {
   type: ModulePageContentType;
   content: string | string[];
-  alt?: string; // For images
+  alt?: string; 
   align?: 'left' | 'center' | 'right' | 'justify';
-  color?: string; // For text color
+  color?: string; 
 }
 
 export interface ModulePage {
@@ -186,7 +177,7 @@ export interface QuizQuestion {
   question: string;
   choices: QuizChoice[];
   correctAnswerId: string;
-  mediaUrl?: string; // Optional URL for an image or YouTube video
+  mediaUrl?: string; 
 }
 
 export type ModuleStatus = 'Concluído' | 'Em progresso' | 'Não iniciado';
@@ -194,7 +185,6 @@ export type ModuleDownloadState = 'not_downloaded' | 'downloading' | 'downloaded
 
 export type HistoricalEra = 'Pré-História' | 'Antiga' | 'Média' | 'Moderna' | 'Contemporânea';
 
-// New Interface for Lesson Plan
 export interface LessonPlan {
   objectives: string;
   methodology: string;
@@ -210,29 +200,23 @@ export interface Module {
   description: string;
   coverImageUrl?: string;
   videoUrl?: string;
-  series?: string | string[]; // Updated to support array
-  materia?: string | string[]; // Updated to support array
-  subjects?: string[]; // Explicit support for subjects array
+  series?: string | string[]; 
+  materia?: string | string[]; 
+  subjects?: string[]; 
   difficulty?: 'Fácil' | 'Médio' | 'Difícil';
   duration?: string;
   visibility?: 'specific_class' | 'public';
   classIds?: string[];
   creatorId?: string;
-  creatorName?: string; // Denormalized
+  creatorName?: string; 
   pages: ModulePage[];
   quiz: QuizQuestion[];
-  status?: 'Ativo' | 'Inativo' | 'Rascunho'; // Added Rascunho
-  progress?: number; // 0-100
+  status?: 'Ativo' | 'Inativo' | 'Rascunho'; 
+  progress?: number; 
   downloadState?: ModuleDownloadState;
-  
-  // Timeline Fields
   historicalYear?: number;
   historicalEra?: HistoricalEra;
-
-  // Lesson Plan Field
   lessonPlan?: LessonPlan;
-
-  // Admin fields
   date?: string;
   createdAt?: any;
 }
@@ -245,27 +229,71 @@ export interface Quiz {
   classId?: string;
   questions: QuizQuestion[];
   attempts?: number;
-  series?: string | string[]; // Updated to support array
-  materia?: string | string[]; // Updated to support array
-  subjects?: string[]; // Explicit support for subjects array
-  // Admin fields
+  series?: string | string[]; 
+  materia?: string | string[]; 
+  subjects?: string[]; 
   createdBy?: string;
   date?: string;
   status?: 'Ativo' | 'Inativo';
   moduleId?: string;
 }
 
-// Activity Types
-export type ActivityType = 'Mista' | 'Tarefa (Texto)' | 'Múltipla Escolha' | 'Envio de Arquivo'; 
+// --- ACTIVITY TYPES EXPANSION (AUSUBEL UPDATE) ---
+export type ActivityType = 
+  | 'Mista' 
+  | 'Tarefa (Texto)' 
+  | 'Múltipla Escolha' 
+  | 'Envio de Arquivo'
+  | 'VisualSourceAnalysis'   // Análise de Fonte Visual
+  | 'ConceptConnection'      // Conexão de Conceitos
+  | 'AdvanceOrganizer'       // Organizador Prévio
+  | 'ProgressiveTree'        // Diferenciação Progressiva
+  | 'IntegrativeDragDrop'    // Reconciliação Integrativa
+  | 'RoleplayScenario';      // Resolução de Problema/Roleplay
 
 export type ActivityItemType = 'text' | 'multiple_choice' | 'file_upload';
 
+// New Interfaces for Ausubel Activities
+export interface HotspotItem {
+  id: string;
+  x: number; // Percentage
+  y: number; // Percentage
+  label: string; // Correct Answer
+  feedback: string;
+}
+
+export interface ConnectionPair {
+  id: string;
+  left: string;
+  right: string;
+}
+
+export interface TreeData {
+  id: string;
+  label: string;
+  content: string;
+  children?: TreeData[];
+}
+
+export interface DraggableColumnItem {
+  id: string;
+  content: string;
+  correctColumnId: string; // 'A', 'B', or 'Intersection'
+}
+
+export interface RoleplayConfig {
+  personaName: string;
+  personaContext: string; // System Instruction for Gemini
+  initialMessage: string;
+  objective: string;
+}
+
+// Activity Item Generic
 export interface ActivityItem {
   id: string;
   type: ActivityItemType;
   question: string;
   points: number;
-  // Fields for multiple choice
   options?: { id: string; text: string }[];
   correctOptionId?: string;
 }
@@ -273,17 +301,17 @@ export interface ActivityItem {
 export interface ActivitySubmission {
   studentId: string;
   studentName: string;
-  studentAvatarUrl?: string; // Denormalized
-  studentSeries?: string; // Denormalized
+  studentAvatarUrl?: string; 
+  studentSeries?: string; 
   submissionDate: string;
-  content: string; // Legacy text content or JSON string of answers
-  answers?: Record<string, string>; // Map<ItemId, Answer (Text or OptionID)>
-  submittedFiles?: { name: string; url: string }[]; // New: For Student Uploads
-  status: 'Aguardando correção' | 'Corrigido' | 'Pendente Envio'; // Adicionado 'Pendente Envio' para offline
+  content: string; // JSON string for all new types
+  answers?: Record<string, string>; 
+  submittedFiles?: { name: string; url: string }[]; 
+  status: 'Aguardando correção' | 'Corrigido' | 'Pendente Envio'; 
   grade?: number;
   feedback?: string;
   gradedAt?: string;
-  scores?: Record<string, number>; // Map<ItemId, Score>
+  scores?: Record<string, number>; 
 }
 
 export type Unidade = '1ª Unidade' | '2ª Unidade' | '3ª Unidade' | '4ª Unidade';
@@ -294,15 +322,41 @@ export interface Activity {
   title: string;
   description: string;
   type: ActivityType;
-  items?: ActivityItem[]; // New hybrid structure
+  items?: ActivityItem[]; 
+  
+  // Specific Data for New Types (Polymorphic)
+  visualSourceData?: {
+    imageUrl: string;
+    hotspots: HotspotItem[];
+  };
+  conceptConnectionData?: {
+    leftColumn: { id: string; text: string }[];
+    rightColumn: { id: string; text: string }[];
+    pairs: ConnectionPair[];
+  };
+  advanceOrganizerData?: {
+    mediaUrl?: string;
+    analogyText: string;
+    targetConcept: string;
+  };
+  progressiveTreeData?: {
+    root: TreeData;
+  };
+  integrativeData?: {
+    columnA: string;
+    columnB: string;
+    items: DraggableColumnItem[];
+  };
+  roleplayData?: RoleplayConfig;
+
   gradingConfig?: {
     objectiveQuestions: 'automatic' | 'manual';
   };
   
-  classId?: string | null; // Optional for Drafts/Repository
-  className?: string; // Denormalized
+  classId?: string | null; 
+  className?: string; 
   creatorId?: string;
-  creatorName?: string; // Denormalized
+  creatorName?: string; 
   unidade?: Unidade;
   materia?: string;
   dueDate?: string;
@@ -310,24 +364,22 @@ export interface Activity {
   attachments?: File[];
   attachmentFiles?: { name: string; url: string }[];
   imageUrl?: string;
-  allowFileUpload?: boolean; // New: Allow students to upload files
+  allowFileUpload?: boolean; 
   
-  // Timeline Fields
   historicalYear?: number;
   historicalEra?: HistoricalEra;
 
-  // Legacy fields (to maintain backward compatibility if needed, though items[] is preferred)
   questions?: QuizQuestion[]; 
   
   isVisible: boolean;
   allowLateSubmissions: boolean;
   submissions?: ActivitySubmission[];
-  submissionCount?: number; // Denormalized
-  pendingSubmissionCount?: number; // Denormalized
+  submissionCount?: number; 
+  pendingSubmissionCount?: number; 
   date?: string;
-  createdAt?: string | any; // Novo campo para Badge "Nova"
+  createdAt?: string | any; 
   moduleId?: string;
-  status?: string; // 'Pendente' | 'Rascunho' | 'Ativo'
+  status?: string; 
 }
 
 export interface PendingActivity {
@@ -338,15 +390,14 @@ export interface PendingActivity {
     pendingCount: number;
 }
 
-// Teacher-specific types
 export interface Student {
   id: string;
   name: string;
   avatarUrl: string;
   xp: number;
   level: number;
-  overallProgress: number; // percentage
-  status?: 'active' | 'inactive'; // Added status
+  overallProgress: number; 
+  status?: 'active' | 'inactive'; 
 }
 
 export interface ClassNotice {
@@ -361,24 +412,23 @@ export interface TeacherClass {
   name: string;
   code: string;
   students: Student[];
-  studentCount?: number; // Denormalized Counter
-  activityCount?: number; // Denormalized Counter
-  moduleCount?: number; // Denormalized Counter
-  noticeCount?: number; // Denormalized Counter
-  modules?: Module[]; // OPTIONAL: Lazy Loaded
-  activities?: Activity[]; // OPTIONAL: Lazy Loaded
-  notices?: ClassNotice[]; // OPTIONAL: Lazy Loaded
+  studentCount?: number; 
+  activityCount?: number; 
+  moduleCount?: number; 
+  noticeCount?: number; 
+  modules?: Module[]; 
+  activities?: Activity[]; 
+  notices?: ClassNotice[]; 
   teacherId: string;
-  teachers?: string[]; // Array of teacher IDs for Multi-Teacher support (N:N)
-  subjects?: Record<string, string>; // Map of teacherId -> Subject
-  teacherNames?: Record<string, string>; // Denormalized Map of teacherId -> Name for UI
-  isFullyLoaded?: boolean; // Lazy loading flag: true if detailed activities/sessions are loaded
-  isSummaryOnly?: boolean; // New Flag: true if only ID/Name/Code loaded
-  inactiveTeachers?: string[]; // List of teachers who have "left" (soft delete)
-  isArchived?: boolean; // New Flag: Class is concluded/archived
+  teachers?: string[]; 
+  subjects?: Record<string, string>; 
+  teacherNames?: Record<string, string>; 
+  isFullyLoaded?: boolean; 
+  isSummaryOnly?: boolean; 
+  inactiveTeachers?: string[]; 
+  isArchived?: boolean; 
 }
 
-// Invitation Types
 export type InvitationType = 'class_co_teacher' | 'guardian_access_request';
 
 export interface ClassInvitation {
@@ -398,24 +448,23 @@ export interface ClassInvitation {
 export interface GuardianInvitation {
   id: string;
   type: 'guardian_access_request';
-  inviterId: string; // Guardian
+  inviterId: string; 
   inviterName: string;
-  inviteeId: string; // Student
+  inviteeId: string; 
   status: 'pending' | 'accepted' | 'rejected';
   timestamp: string;
 }
 
-// Grade Report types for "Big Document" architecture
 export interface GradeReportActivityDetail {
   id: string;
   title: string;
   grade: number;
   maxPoints: number;
-  materia: string; // Ensure materia is tracked per activity
+  materia: string; 
 }
 
 export interface GradeReportSubject {
-  activities: Record<string, GradeReportActivityDetail>; // OPTIMIZATION: Changed from Array to Map for O(1) updates
+  activities: Record<string, GradeReportActivityDetail>; 
   totalPoints: number;
 }
 
@@ -436,22 +485,20 @@ export interface GradeReport {
   [classId: string]: ClassGradeReport;
 }
 
-// Optimized Grade Document for Collection 'student_grades'
 export interface StudentGradeSummaryDoc extends ClassGradeReport {
     studentId: string;
     classId: string;
-    updatedAt: any; // Timestamp
+    updatedAt: any; 
 }
 
-// Attendance types
 export interface AttendanceSession {
   id: string;
   classId: string;
-  date: string; // ISO string date YYYY-MM-DD
+  date: string; 
   turno: Turno;
-  horario: number; // 1-6
-  createdBy: string; // teacherId
-  createdAt: string; // ISO string timestamp
+  horario: number; 
+  createdBy: string; 
+  createdAt: string; 
 }
 
 export type AttendanceStatus = 'presente' | 'ausente' | 'pendente';
@@ -460,53 +507,43 @@ export interface AttendanceRecord {
   id: string;
   sessionId: string;
   studentId: string;
-  studentName: string; // Denormalized for convenience
+  studentName: string; 
   status: AttendanceStatus;
-  updatedAt: string; // ISO string timestamp
+  updatedAt: string; 
 }
 
-// --- Big Doc Types for new architecture ---
-
-// Document stored at: teacher_history/{teacherId}
-// OPTIMIZATION: Removed full class objects to prevent 1MB limit. Only store critical sync data.
-// OPTIMIZATION: Removed attendanceSessions. They should be fetched from collection.
 export interface TeacherHistoryDoc {
   classesSummary: ClassSummary[]; 
   notifications: Notification[];
 }
 
-// --- Offline & Sync Types ---
 export type OfflineActionType = 'SUBMIT_ACTIVITY' | 'GRADE_ACTIVITY' | 'POST_NOTICE';
 
 export interface OfflineAction {
     id: string;
     type: OfflineActionType;
-    payload: any; // Generic payload depending on action type
+    payload: any; 
     timestamp: number;
-    retryCount?: number; // Para lógica de retry
-    lastError?: string; // Para debug
+    retryCount?: number; 
+    lastError?: string; 
 }
 
-// Secretariat Types
 export interface SchoolData {
     id: string;
-    name: string; // Name of the Director/School
+    name: string; 
     email: string;
     totalClasses: number;
     totalStudents: number;
-    // New Advanced Stats
     averageAttendance?: number;
-    performanceBySubject?: Record<string, number>; // e.g. { "História": 8.5, "Matemática": 7.0 }
-    activeStudentRate?: number; // Percentage
+    performanceBySubject?: Record<string, number>; 
+    activeStudentRate?: number; 
 }
 
-// State Secretariat Types
 export interface MunicipalSecretariatData {
     id: string;
-    name: string; // Name of the Municipal Secretary
+    name: string; 
     email: string;
-    totalSchools: number; // Linked schools count
-    // New Advanced Stats
-    networkPerformance?: number; // Average grade across network
-    dropoutRiskRate?: number; // Estimated % at risk
+    totalSchools: number; 
+    networkPerformance?: number; 
+    dropoutRiskRate?: number; 
 }

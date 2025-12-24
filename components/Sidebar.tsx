@@ -145,8 +145,8 @@ export const Sidebar: React.FC = () => {
                 aria-hidden="true"
             ></div>
 
-            {/* Sidebar with Glassmorphism */}
-            <aside className={`w-64 glass-sidebar text-slate-200 flex flex-col h-full fixed lg:static inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+            {/* Sidebar with Glassmorphism - Always Fixed/Floating now */}
+            <aside className={`w-64 glass-sidebar text-slate-200 flex flex-col h-full fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 <div className="p-5 border-b border-white/10 flex items-center justify-center">
                     <Logo />
                 </div>

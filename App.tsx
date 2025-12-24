@@ -33,7 +33,8 @@ const Boletim = lazy(() => import('./components/Boletim'));
 const InteractiveMap = lazy(() => import('./components/InteractiveMap'));
 
 // Teacher Components
-const TeacherDashboard = lazy(() => import('./components/TeacherDashboard'));
+const TeacherDashboard = lazy(() => import('./components/TeacherDashboard')); // Home (Simple)
+const TeacherClassesList = lazy(() => import('./components/TeacherClassesList')); // Minhas Turmas (List)
 const ModuleCreator = lazy(() => import('./components/ModuleCreator'));
 const CreateActivity = lazy(() => import('./components/CreateActivity'));
 const TeacherStatistics = lazy(() => import('./components/TeacherStatistics'));
@@ -79,7 +80,7 @@ const PAGE_TITLES: Record<string, string> = {
     notifications: 'Notificações',
     boletim: 'Boletim',
     interactive_map: 'Mapa Interativo',
-    teacher_dashboard: 'Minhas Turmas',
+    teacher_dashboard: 'Minhas Turmas', // Sidebar label matches this key
     teacher_statistics: 'Estatísticas',
     teacher_school_records: 'Histórico Escolar',
     teacher_repository: 'Banco de Questões',
@@ -223,7 +224,8 @@ const MainLayout: React.FC = () => {
 
         if (userRole === 'professor') {
             switch (currentPage) {
-                case 'teacher_dashboard': return <TeacherDashboard />;
+                case 'dashboard': return <TeacherDashboard />; // Início = Simple Dashboard
+                case 'teacher_dashboard': return <TeacherClassesList />; // Minhas Turmas = Full List
                 case 'teacher_pending_activities': return <PendingActivities />;
                 case 'modules': return <Modules />;
                 case 'teacher_create_module': return <ModuleCreator />;
@@ -242,6 +244,7 @@ const MainLayout: React.FC = () => {
             }
         }
         
+        // Student Views
         switch (currentPage) {
             case 'dashboard': return <Dashboard />;
             case 'modules': return <Modules />;
@@ -260,6 +263,11 @@ const MainLayout: React.FC = () => {
     };
     
     let pageTitle = PAGE_TITLES[currentPage] || 'Lumen';
+    // Override title for generic dashboard based on role to avoid confusion
+    if (currentPage === 'dashboard') {
+        pageTitle = 'Início';
+    }
+    
     if (currentPage === 'module_view' && activeModule) pageTitle = activeModule.title;
     if (currentPage === 'class_view' && activeClass) pageTitle = activeClass.name;
 
@@ -273,15 +281,14 @@ const MainLayout: React.FC = () => {
             <OfflineIndicator />
             <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-indigo-600 focus:rounded-md focus:shadow-lg transition-all">Pular para conteúdo</a>
 
-            {/* Layer 1: Wallpaper Image (The "Deep Space" background) */}
+            {/* Layer 1: Wallpaper Image */}
             {wallpaper && (
                 <div className="absolute inset-0 z-0">
                     <img src={wallpaper} alt="" className="w-full h-full object-cover opacity-90" />
                 </div>
             )}
 
-            {/* Layer 2: Legibility Mask/Overlay (Crucial for Glassmorphism & OLED Theme) */}
-            {/* Using inline styles to bind strictly to CSS Variables for True Black support */}
+            {/* Layer 2: Legibility Mask */}
             <div 
                 className="absolute inset-0 z-0 pointer-events-none transition-opacity duration-700" 
                 style={{ 
@@ -291,11 +298,11 @@ const MainLayout: React.FC = () => {
                 }}
             />
 
-            {/* Layer 3: Main Content (Floating on top) */}
+            {/* Layer 3: Main Content */}
             <div className="relative z-10 flex h-full w-full">
                 <Sidebar />
                 <div className="flex-1 flex flex-col overflow-hidden relative">
-                    <button onClick={toggleMobileMenu} className="fixed top-3 left-3 z-40 p-2 rounded-full bg-white/10 backdrop-blur-md text-white shadow-md border border-white/10 lg:hidden" aria-label="Abrir menu">
+                    <button onClick={toggleMobileMenu} className="fixed top-3 left-3 z-40 p-2 rounded-full bg-white/10 backdrop-blur-md text-white shadow-md border border-white/10" aria-label="Abrir menu">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
                     </button>
                     <Header title={pageTitle} isScrolled={isScrolled} />

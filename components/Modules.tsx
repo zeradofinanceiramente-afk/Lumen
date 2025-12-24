@@ -24,91 +24,116 @@ const ModuleCard: React.FC<{
     const isCompleted = module.progress === 100;
     const progress = module.progress || 0;
 
+    // Data formatada estilo "commit date"
+    const dateStr = module.date ? new Date(module.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : 'N/D';
+
+    // Cores de dificuldade estilo "Rank"
+    const difficultyColor = module.difficulty === 'Difícil' ? 'text-red-400 border-red-400/30 bg-red-400/10' :
+                            module.difficulty === 'Médio' ? 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10' :
+                            'text-green-400 border-green-400/30 bg-green-400/10';
+
     return (
         <div 
             onClick={() => onStartModule(module)}
-            className="relative h-64 rounded-3xl overflow-hidden cursor-pointer group shadow-lg hover:shadow-[0_0_30px_rgba(0,0,0,0.5)] transition-all duration-300 border border-white/10 hover:border-brand/50"
+            className="group relative flex flex-col bg-[#0d1117] border border-slate-800 rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:border-brand/50 hover:shadow-[0_0_20px_rgba(var(--brand-rgb),0.15)] hover:-translate-y-1"
             role="article"
             aria-label={`Módulo ${module.title}`}
             tabIndex={0}
         >
-            {/* Background Image */}
-            <div className="absolute inset-0 bg-slate-900">
+            {/* Header Image Area */}
+            <div className="relative h-32 w-full bg-slate-900 overflow-hidden border-b border-slate-800">
                 {module.coverImageUrl ? (
                     <img 
                         src={module.coverImageUrl} 
                         alt="" 
-                        className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" 
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
                         loading="lazy"
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-slate-800 to-black" />
+                    <div className="w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
                 )}
+                
+                {/* Download Button (Top Right) */}
+                <div className="absolute top-2 right-2 z-20">
+                     <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleDownload(module);
+                        }}
+                        disabled={downloadState === 'downloading'}
+                        className={`p-1.5 rounded-md backdrop-blur-md transition-all border text-xs font-mono flex items-center gap-1 ${
+                            downloadState === 'downloaded' 
+                                ? 'bg-green-500/20 text-green-400 border-green-500/50 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50' 
+                                : 'bg-black/50 text-slate-300 border-white/10 hover:bg-white/10 hover:text-white'
+                        }`}
+                        title={downloadState === 'downloaded' ? "Remover offline" : "Baixar para offline"}
+                    >
+                        {downloadState === 'downloading' ? (
+                            <SpinnerIcon className="h-3 w-3" />
+                        ) : downloadState === 'downloaded' ? (
+                            <>
+                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                                <span>OFFLINE</span>
+                            </>
+                        ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        )}
+                    </button>
+                </div>
+
+                {/* Materia Tag (Bottom Left of Image) */}
+                <div className="absolute bottom-2 left-2">
+                    <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-brand bg-black/80 backdrop-blur border border-brand/30 px-2 py-0.5 rounded">
+                        {Array.isArray(module.materia) ? module.materia[0] : module.materia}
+                    </span>
+                </div>
             </div>
 
-            {/* Gradient Overlay for Legibility */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-90" />
-
-            {/* Top Controls */}
-            <div className="absolute top-4 right-4 z-20 flex gap-2">
-                 <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleDownload(module);
-                    }}
-                    disabled={downloadState === 'downloading'}
-                    className={`p-2 rounded-full backdrop-blur-md transition-all border ${
-                        downloadState === 'downloaded' 
-                            ? 'bg-green-500/20 text-green-400 border-green-500/50 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50' 
-                            : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
-                    }`}
-                    title={downloadState === 'downloaded' ? "Remover download" : "Baixar para offline"}
-                >
-                    {downloadState === 'downloading' ? (
-                        <SpinnerIcon className="h-4 w-4" />
-                    ) : downloadState === 'downloaded' ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                    ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                    )}
-                </button>
-            </div>
-
-            {/* Content Area */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 flex flex-col justify-end h-full z-10">
-                <div className="transform transition-transform duration-300 group-hover:-translate-y-2">
-                    <div className="flex gap-2 mb-2">
+            {/* Content Body */}
+            <div className="p-4 flex flex-col flex-grow relative">
+                
+                {/* Title & Description */}
+                <div className="mb-4">
+                    <div className="flex justify-between items-start gap-2">
+                        <h3 className="text-base font-bold text-slate-200 group-hover:text-brand transition-colors line-clamp-1 leading-tight">
+                            {module.title}
+                        </h3>
                         {module.difficulty && (
-                            <span className="text-[10px] font-bold tracking-wider uppercase text-slate-300 bg-white/10 px-2 py-0.5 rounded border border-white/10">
+                            <span className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded border ${difficultyColor} flex-shrink-0`}>
                                 {module.difficulty}
                             </span>
                         )}
-                        {module.materia && (
-                            <span className="text-[10px] font-bold tracking-wider uppercase text-brand bg-brand/10 px-2 py-0.5 rounded border border-brand/20">
-                                {Array.isArray(module.materia) ? module.materia[0] : module.materia}
-                            </span>
-                        )}
                     </div>
-                    
-                    <h3 className="text-xl md:text-2xl font-bold text-white leading-tight mb-2 group-hover:text-brand transition-colors">
-                        {module.title}
-                    </h3>
-                    
-                    <p className="text-sm text-slate-400 line-clamp-2 mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 h-0 group-hover:h-auto">
+                    <p className="text-xs text-slate-500 mt-1 line-clamp-2 font-medium">
                         {module.description}
                     </p>
+                </div>
 
-                    {/* Progress Bar */}
-                    <div className="w-full bg-white/20 rounded-full h-1 mt-1">
-                        <div 
-                            className={`h-1 rounded-full shadow-[0_0_10px_currentColor] transition-all duration-500 ${isCompleted ? 'bg-green-400 text-green-400' : 'bg-brand text-brand'}`} 
-                            style={{ width: `${progress}%` }} 
-                        />
+                <div className="mt-auto space-y-3">
+                    {/* Meta Info Row */}
+                    <div className="flex items-center gap-4 text-[10px] font-mono text-slate-600">
+                        <div className="flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-700"></span>
+                            <span>{dateStr}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                            <span>{module.pages?.length || '?'} pgs</span>
+                        </div>
                     </div>
-                    <div className="flex justify-between items-center mt-1">
-                        <span className="text-[10px] text-slate-400 font-mono">
-                            {isCompleted ? 'Concluído' : `${progress}% Completo`}
-                        </span>
+
+                    {/* Progress Bar (XP Style) */}
+                    <div className="relative">
+                        <div className="flex justify-between text-[10px] font-mono text-slate-400 mb-1">
+                            <span>PROGRESSO</span>
+                            <span className={isCompleted ? 'text-green-400' : 'text-brand'}>{progress}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                            <div 
+                                className={`h-full transition-all duration-500 ${isCompleted ? 'bg-green-500 shadow-[0_0_10px_#22c55e]' : 'bg-brand shadow-[0_0_10px_var(--brand-color)]'}`} 
+                                style={{ width: `${progress}%` }} 
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -273,47 +298,66 @@ const Modules: React.FC = () => {
     };
 
     return (
-        <div className="space-y-8 animate-fade-in">
-            {/* Header / Search Area */}
-            <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-                <div className="flex gap-4 p-1 bg-white/5 rounded-2xl border border-white/10">
-                    <button 
-                        onClick={() => setSearchScope('my_modules')}
-                        className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${searchScope === 'my_modules' ? 'bg-brand text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
-                    >
-                        Meus Módulos
-                    </button>
-                    <button 
-                        onClick={() => setSearchScope('public')}
-                        className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${searchScope === 'public' ? 'bg-brand text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
-                    >
-                        Biblioteca Pública
-                    </button>
-                </div>
+        <div className="space-y-8 animate-fade-in pb-10">
+            {/* Header Controls (Repo Navigation Style) */}
+            <div className="border-b border-slate-800 pb-6">
+                <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+                    
+                    {/* Filter Tabs */}
+                    <div className="flex p-1 bg-[#0d1117] rounded-lg border border-slate-800">
+                        <button 
+                            onClick={() => setSearchScope('my_modules')}
+                            className={`px-4 py-2 rounded-md text-sm font-semibold transition-all ${
+                                searchScope === 'my_modules' 
+                                    ? 'bg-slate-800 text-white shadow-sm border border-slate-700' 
+                                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                            }`}
+                        >
+                            {isTeacher ? 'Meus Módulos' : 'Minhas Turmas'}
+                        </button>
+                        <button 
+                            onClick={() => setSearchScope('public')}
+                            className={`px-4 py-2 rounded-md text-sm font-semibold transition-all ${
+                                searchScope === 'public' 
+                                    ? 'bg-slate-800 text-white shadow-sm border border-slate-700' 
+                                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                            }`}
+                        >
+                            Biblioteca Global
+                        </button>
+                    </div>
 
-                <div className="relative w-full md:w-80">
-                    <input
-                        type="text"
-                        className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/50 transition-all backdrop-blur-md"
-                        placeholder="Buscar módulo..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                    />
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-500 absolute left-3 top-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+                    {/* Search Bar (Code Search Style) */}
+                    <div className="relative w-full md:w-96 group">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 group-focus-within:text-brand transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <input
+                            type="text"
+                            className="w-full pl-9 pr-4 py-2 bg-[#0d1117] border border-slate-800 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all font-mono"
+                            placeholder="Buscar módulos..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                        />
+                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <span className="text-[10px] text-slate-600 border border-slate-800 rounded px-1.5 py-0.5">/</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {/* Content Grid */}
             <div className="min-h-[50vh]">
                 {isLoading ? (
-                     <div className="flex justify-center py-20">
-                        <SpinnerIcon className="h-10 w-10 text-brand" />
+                     <div className="flex flex-col justify-center items-center py-20 space-y-4">
+                        <SpinnerIcon className="h-8 w-8 text-brand" />
+                        <p className="text-slate-500 text-sm font-mono animate-pulse">Carregando repositório...</p>
                     </div>
                 ) : displayedModules.length > 0 ? (
                     <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" role="list">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" role="list">
                             {displayedModules.map((module) => (
                                 <ModuleCard 
                                     key={module.id} 
@@ -330,17 +374,20 @@ const Modules: React.FC = () => {
                                 <button
                                     onClick={() => fetchNextPage()}
                                     disabled={isFetchingNextPage}
-                                    className="px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full font-semibold transition-all border border-white/10 backdrop-blur-md"
+                                    className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-md text-sm font-mono border border-slate-700 transition-colors"
                                 >
-                                    {isFetchingNextPage ? 'Carregando...' : 'Carregar Mais'}
+                                    {isFetchingNextPage ? 'Carregando...' : 'Carregar mais...'}
                                 </button>
                             </div>
                         )}
                     </>
                 ) : (
-                    <div className="flex flex-col items-center justify-center h-64 text-center border-2 border-dashed border-white/10 rounded-3xl bg-white/5">
-                        <p className="text-slate-400 text-lg">Nenhum módulo encontrado.</p>
-                        <p className="text-slate-500 text-sm mt-2">Tente mudar o filtro ou buscar outro termo.</p>
+                    <div className="flex flex-col items-center justify-center h-64 text-center border border-dashed border-slate-800 rounded-xl bg-[#0d1117]">
+                        <div className="p-4 bg-slate-800/50 rounded-full mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                        </div>
+                        <p className="text-slate-400 font-mono text-sm">Nenhum módulo encontrado.</p>
+                        <p className="text-slate-600 text-xs mt-1">Verifique os filtros ou tente outra busca.</p>
                     </div>
                 )}
             </div>

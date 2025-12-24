@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { 
     collection, query, where, orderBy, limit, onSnapshot, Timestamp, 
@@ -193,7 +194,9 @@ export function useStudentNotifications(user: User | null, studentClasses: Teach
                         deepLink: data.deepLink || { page: 'dashboard' },
                         read: false,
                         timestamp: dateObj.toISOString(),
-                        userId: user.id 
+                        userId: user.id,
+                        type: data.type || 'notice_post',
+                        actorName: data.authorName
                     } as Notification);
                 });
 
