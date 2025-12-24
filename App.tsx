@@ -66,6 +66,7 @@ const AdminManageQuizzes = lazy(() => import('./components/AdminManageQuizzes'))
 const AdminManageAchievements = lazy(() => import('./components/AdminManageAchievements'));
 const AdminStats = lazy(() => import('./components/AdminStats'));
 const AdminTests = lazy(() => import('./components/AdminTests'));
+const AdminDiagnostics = lazy(() => import('./components/AdminDiagnostics')); // NEW
 const CreateAchievement = lazy(() => import('./components/CreateAchievement'));
 const AdminCreateModule = lazy(() => import('./components/AdminCreateModule'));
 const AdminCreateQuiz = lazy(() => import('./components/AdminCreateQuiz'));
@@ -99,6 +100,7 @@ const PAGE_TITLES: Record<string, string> = {
     admin_achievements: 'Gerenciar Conquistas',
     admin_stats: 'Estatísticas da Plataforma',
     admin_tests: 'Painel de Testes',
+    admin_diagnostics: 'Diagnóstico do Sistema',
 };
 
 const LoadingSpinner: React.FC = () => (
@@ -177,6 +179,7 @@ const MainLayout: React.FC = () => {
                 case 'admin_achievements': return <AdminManageAchievements />;
                 case 'admin_stats': return <AdminStats />;
                 case 'admin_tests': return <AdminTests />;
+                case 'admin_diagnostics': return <AdminDiagnostics />;
                 case 'admin_create_module': return <AdminCreateModule />;
                 case 'admin_create_quiz': return <AdminCreateQuiz />;
                 case 'admin_create_achievement': return <CreateAchievement />;

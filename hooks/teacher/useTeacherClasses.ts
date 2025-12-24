@@ -1,8 +1,8 @@
 
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { 
-    collection, query, where, getDocs, doc, addDoc, serverTimestamp, getDoc, 
-    updateDoc, arrayUnion, orderBy
+    collection, query, where, getDocs, doc, addDoc, serverTimestamp, 
+    updateDoc, arrayUnion, writeBatch
 } from 'firebase/firestore';
 import { db } from '../../components/firebaseClient';
 import type { TeacherClass, AttendanceSession, Turno, User, Activity, ClassSummary, AttendanceStatus } from '../../types';
@@ -21,7 +21,6 @@ export function useTeacherClasses(user: User | null, addToast: (msg: string, typ
             const snapClasses = await getDocs(qClasses);
             
             const classes: TeacherClass[] = [];
-            const summaryToSave: ClassSummary[] = [];
 
             snapClasses.docs.forEach(d => {
                 const data = d.data();
@@ -41,7 +40,6 @@ export function useTeacherClasses(user: User | null, addToast: (msg: string, typ
                     students: Array.isArray(data.students) ? data.students : [],
                     notices: myNotices,
                     noticeCount: myNotices.length,
-                    // Arrays are now optional in type, but initialized here for UI safety
                     modules: [],
                     activities: [], 
                     isFullyLoaded: false, 
@@ -50,13 +48,7 @@ export function useTeacherClasses(user: User | null, addToast: (msg: string, typ
                 } as TeacherClass;
 
                 classes.push(cls);
-                summaryToSave.push({ id: d.id, name: data.name, code: data.code, studentCount: cls.studentCount || 0, isArchived: cls.isArchived });
             });
-
-            // Update user profile summary silently
-            if (summaryToSave.length > 0) {
-               updateDoc(doc(db, "users", user.id), { myClassesSummary: summaryToSave }).catch(console.error);
-            }
 
             return classes;
         },
@@ -67,14 +59,32 @@ export function useTeacherClasses(user: User | null, addToast: (msg: string, typ
     const teacherClasses = allClasses.filter(c => !c.isArchived);
     const archivedClasses = allClasses.filter(c => c.isArchived);
 
-    // --- 2. MUTATIONS ---
+    // --- 2. EFFECT: Sync User Summary ---
+    useEffect(() => {
+        if (user && allClasses.length > 0) {
+            const summaryToSave: ClassSummary[] = allClasses.map(c => ({
+                id: c.id,
+                name: c.name,
+                code: c.code,
+                studentCount: c.studentCount || (c.students?.length || 0),
+                isArchived: c.isArchived
+            }));
+
+            // Use fire-and-forget for side effects to avoid render loops
+            updateDoc(doc(db, "users", user.id), { myClassesSummary: summaryToSave })
+                .catch(err => console.warn("Failed to update class summary stats", err));
+        }
+    }, [allClasses, user]);
+
+    // --- 3. MUTATIONS ---
 
     const createClassMutation = useMutation({
-        mutationFn: async (name: string) => {
+        mutationFn: async ({ name, coverImageUrl }: { name: string, coverImageUrl?: string }) => {
             if (!user) throw new Error("User not authenticated");
             const code = Math.random().toString(36).substring(2, 8).toUpperCase();
             const newClassPayload = { 
                  name, 
+                 coverImageUrl: coverImageUrl || null,
                  teacherId: user.id, 
                  teachers: [user.id], 
                  subjects: { [user.id]: 'Regente' }, 
@@ -122,7 +132,7 @@ export function useTeacherClasses(user: User | null, addToast: (msg: string, typ
         onError: () => addToast("Erro ao sair da turma.", "error")
     });
 
-    // --- 3. CLASS DETAILS (On-Demand) ---
+    // --- 4. CLASS DETAILS (On-Demand) ---
     const fetchClassDetails = useCallback(async (classId: string) => {
         if (!user) return;
         try {
@@ -139,7 +149,6 @@ export function useTeacherClasses(user: User | null, addToast: (msg: string, typ
                 id: d.id, ...d.data(), createdAt: d.data().createdAt?.toDate?.().toISOString()
             } as AttendanceSession)).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-            // Manually update the cache for 'teacherClasses'
             queryClient.setQueryData(['teacherClasses', user.id], (old: TeacherClass[] | undefined) => {
                 if (!old) return old;
                 return old.map(c => {
@@ -157,12 +166,10 @@ export function useTeacherClasses(user: User | null, addToast: (msg: string, typ
         }
     }, [user, queryClient, teacherClasses]);
 
-    // Helper to get sessions from cache
     const getSessionsForClass = (classId: string) => {
         return queryClient.getQueryData<AttendanceSession[]>(['classSessions', classId]) || [];
     };
 
-    // Construct the sessions map for the context interface
     const attendanceSessionsByClass = allClasses.reduce((acc, cls) => {
         acc[cls.id] = getSessionsForClass(cls.id);
         return acc;
@@ -178,19 +185,17 @@ export function useTeacherClasses(user: User | null, addToast: (msg: string, typ
             
             const cls = allClasses.find(c => c.id === classId);
             if (cls?.students?.length) {
-                const batch = (await import('firebase/firestore')).writeBatch(db); // dynamic import just to be safe/clean
+                const batch = writeBatch(db);
                 const recordsRef = collection(db, "attendance_sessions", docRef.id, "records");
                 cls.students.forEach(student => {
                     batch.set(doc(recordsRef), { sessionId: docRef.id, studentId: student.id, studentName: student.name, status: 'pendente', updatedAt: serverTimestamp() });
                 });
                 await batch.commit();
             }
-            // Retorna a data ISO para o cache local imediato, em vez do objeto serverTimestamp
             return { ...sessionData, id: docRef.id, createdAt: new Date().toISOString() };
         },
         onSuccess: (newSession, variables) => {
             addToast("Chamada criada!", "success");
-            // Update cache manually
             queryClient.setQueryData(['classSessions', variables.classId], (old: any[] = []) => [newSession, ...old]);
         }
     });
@@ -201,6 +206,13 @@ export function useTeacherClasses(user: User | null, addToast: (msg: string, typ
         });
     };
 
+    const setTeacherClasses = useCallback((updater: any) => {
+        queryClient.setQueryData(['teacherClasses', user?.id], (oldData: TeacherClass[] | undefined) => {
+            if (!oldData) return [];
+            return typeof updater === 'function' ? updater(oldData) : updater;
+        });
+    }, [queryClient, user?.id]);
+
     return {
         teacherClasses,
         archivedClasses,
@@ -209,11 +221,11 @@ export function useTeacherClasses(user: User | null, addToast: (msg: string, typ
         isSubmittingClass: createClassMutation.isPending || archiveClassMutation.isPending || leaveClassMutation.isPending,
         fetchTeacherClasses: async (force?: boolean) => { if (force) refetch(); },
         fetchClassDetails,
-        handleCreateClass: createClassMutation.mutateAsync,
+        handleCreateClass: (name: string, coverImageUrl?: string) => createClassMutation.mutateAsync({ name, coverImageUrl }),
         handleArchiveClass: archiveClassMutation.mutateAsync,
         handleLeaveClass: leaveClassMutation.mutateAsync,
         handleCreateAttendanceSession: (id: string, d: string, t: Turno, h: number) => createSessionMutation.mutateAsync({ classId: id, date: d, turno: t, horario: h }),
         handleUpdateAttendanceStatus: updateAttendanceStatus,
-        setTeacherClasses: () => {} // No-op, managed by Query
+        setTeacherClasses
     };
 }

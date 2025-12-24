@@ -40,6 +40,7 @@ const getIcon = (id: Page) => {
         case 'admin_achievements': return ICONS.achievements;
         case 'admin_stats': return ICONS.teacher_statistics;
         case 'admin_tests': return ICONS.admin_tests;
+        case 'admin_diagnostics': return ICONS.diagnostics;
         default: return null;
     }
 };
@@ -123,6 +124,7 @@ export const Sidebar: React.FC = () => {
                 { id: 'admin_achievements' as Page, label: t('sidebar.admin_achv') },
                 { id: 'admin_stats' as Page, label: t('sidebar.stats') },
                 { id: 'admin_tests' as Page, label: t('sidebar.admin_tests') },
+                { id: 'admin_diagnostics' as Page, label: 'Diagnóstico do Sistema' }, // Adicionado aqui
             ];
         } else if (userRole === 'responsavel') {
             return [

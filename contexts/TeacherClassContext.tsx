@@ -13,7 +13,7 @@ export interface TeacherClassContextType {
     isSubmittingClass: boolean;
     fetchTeacherClasses: (forceRefresh?: boolean) => Promise<void>;
     fetchClassDetails: (classId: string) => Promise<void>;
-    handleCreateClass: (name: string) => Promise<{ success: boolean }>;
+    handleCreateClass: (name: string, coverImageUrl?: string) => Promise<{ success: boolean }>;
     handleArchiveClass: (classId: string) => Promise<void>;
     handleCreateAttendanceSession: (classId: string, date: string, turno: Turno, horario: number) => Promise<any>;
     handleUpdateAttendanceStatus: (sessionId: string, recordId: string, status: AttendanceStatus) => Promise<void>;

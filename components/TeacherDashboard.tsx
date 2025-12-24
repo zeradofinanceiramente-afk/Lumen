@@ -56,7 +56,7 @@ const TeacherDashboard: React.FC = () => {
             <div className="flex flex-col space-y-4 pt-0 px-2 max-w-4xl">
                 <h1 className="text-5xl md:text-7xl font-thin tracking-tight text-slate-800 dark:text-white drop-shadow-sm">
                     {greeting}, <br />
-                    <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+                    <span className="font-bold text-brand">
                         Professor {firstName}
                     </span>.
                 </h1>

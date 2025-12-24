@@ -1,32 +1,80 @@
 
 import React, { useState, useMemo } from 'react';
 import { useTeacherClassContext } from '../contexts/TeacherClassContext';
-import { Card } from './common/Card';
 import { useNavigation } from '../contexts/NavigationContext';
 import type { Activity, PendingActivity } from '../types';
 import { db } from './firebaseClient';
 import { doc, getDoc } from 'firebase/firestore';
 import { usePendingActivities } from '../hooks/teacher/usePendingActivities';
 import { useAuth } from '../contexts/AuthContext';
+import { ICONS, SpinnerIcon } from '../constants/index';
 
-const PendingActivityItem: React.FC<{ item: PendingActivity; onView: () => void }> = ({ item, onView }) => (
-    <button 
-        className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-lg transition-colors duration-200 cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+const IssueRow: React.FC<{ item: PendingActivity; onView: () => void }> = ({ item, onView }) => (
+    <div 
+        className="group flex items-start gap-4 p-4 border-b border-white/5 hover:bg-[#161b22] transition-colors cursor-pointer"
         onClick={onView}
-        aria-label={`Corrigir atividade ${item.title} da turma ${item.className}. ${item.pendingCount} submissões pendentes.`}
     >
-        <div>
-            <p className="font-semibold text-indigo-600 dark:text-indigo-400 hc-link-override">{item.title}</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 hc-text-secondary">{item.className}</p>
+        {/* Status Icon (Open Issue Style) */}
+        <div className="pt-1 text-green-400">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+            </svg>
         </div>
-        <div className="text-center flex items-center space-x-4">
-            <div className="text-right">
-                <p className="font-bold text-xl text-yellow-600 dark:text-yellow-400">{item.pendingCount}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 hc-text-secondary">Pendente(s)</p>
+
+        <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-sm font-semibold text-slate-100 group-hover:text-blue-400 transition-colors truncate">
+                    {item.title}
+                </h3>
+                <span className="hidden sm:inline-block px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-[10px] text-slate-400 font-mono">
+                    #{item.id.slice(-6)}
+                </span>
             </div>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            
+            <div className="flex items-center gap-3 text-xs text-slate-500">
+                <span className="font-mono bg-white/5 px-1.5 rounded text-slate-400 border border-white/5">
+                    {item.className}
+                </span>
+                <span>aberto agora</span>
+                <span>por alunos</span>
+            </div>
         </div>
-    </button>
+
+        {/* Action / Count */}
+        <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1 text-slate-400 group-hover:text-slate-200">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
+                    <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
+                </svg>
+                <span className="text-sm font-bold font-mono">{item.pendingCount}</span>
+            </div>
+            <button 
+                className="hidden md:flex px-3 py-1 bg-[#238636] hover:bg-[#2ea043] text-white text-xs font-bold rounded-md border border-[rgba(240,246,252,0.1)] transition-colors items-center gap-1 shadow-sm"
+            >
+                Review
+            </button>
+        </div>
+    </div>
+);
+
+const ZeroInboxState: React.FC = () => (
+    <div className="flex flex-col items-center justify-center py-20 text-center select-none">
+        <div className="w-24 h-24 mb-6 rounded-full bg-gradient-to-tr from-green-500/20 to-emerald-500/5 border border-green-500/30 flex items-center justify-center relative">
+            <div className="absolute inset-0 rounded-full animate-ping bg-green-500/10"></div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+        </div>
+        <h3 className="text-xl font-bold text-slate-200 mb-2">Zero Inbox</h3>
+        <p className="text-slate-500 max-w-sm text-sm">
+            Todas as submissões foram revisadas e processadas. O sistema está atualizado.
+        </p>
+        <div className="mt-6 flex items-center gap-2 px-3 py-1 bg-[#0d1117] border border-green-500/30 rounded text-[10px] font-mono text-green-400">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            SYSTEM_OPTIMAL
+        </div>
+    </div>
 );
 
 const PendingActivities: React.FC = () => {
@@ -56,7 +104,7 @@ const PendingActivities: React.FC = () => {
                 const activityData = { id: activitySnap.id, ...activitySnap.data() } as Activity;
                 startGrading(activityData);
             } else {
-                alert("Atividade não encontrada.");
+                alert("Atividade não encontrada. Hash inválido.");
             }
         } catch (error) {
             console.error("Error preparing grading:", error);
@@ -68,48 +116,66 @@ const PendingActivities: React.FC = () => {
     const isLoading = isFetching || isActionLoading;
 
     return (
-        <div className="space-y-6">
-            <Card className="!p-4">
-                <div className="flex justify-end items-center">
-                    <label htmlFor="class-filter" className="text-sm font-medium text-slate-600 dark:text-slate-300 mr-2">Filtrar por turma:</label>
+        <div className="space-y-6 animate-fade-in">
+            {/* Header / Filter Bar */}
+            <div className="flex flex-col md:flex-row justify-between items-end gap-4 border-b border-white/10 pb-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
+                        <span className="text-orange-400">●</span> Code Review
+                    </h2>
+                    <p className="text-xs text-slate-500 font-mono mt-1">
+                        {allPendingActivities.length} PENDING REQUESTS
+                    </p>
+                </div>
+                
+                <div className="flex items-center bg-[#0d1117] border border-white/10 rounded-lg p-1">
+                    <span className="text-xs text-slate-500 font-bold px-3">FILTER:</span>
                     <select
-                        id="class-filter"
                         value={selectedClassId}
                         onChange={e => setSelectedClassId(e.target.value)}
-                        className="p-2 border border-slate-300 rounded-lg bg-white text-slate-700 focus-visible:ring-2 focus-visible:ring-indigo-500 focus:outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200"
+                        className="bg-transparent text-sm text-slate-300 font-mono focus:outline-none py-1 pr-8 cursor-pointer hover:text-white"
                     >
-                        <option value="all">Todas as Turmas</option>
-                        {teacherClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        <option value="all">ALL_CLASSES</option>
+                        {teacherClasses.map(c => <option key={c.id} value={c.id}>{c.name.toUpperCase()}</option>)}
                     </select>
                 </div>
-            </Card>
+            </div>
 
-            <Card className="!p-0">
-                <div className="divide-y divide-slate-200 dark:divide-slate-700 hc-border-override">
-                    {isLoading && (
-                        <div className="p-4 text-center text-indigo-600" role="status" aria-live="polite">
-                            Carregando...
-                        </div>
-                    )}
-                    {!isLoading && pendingActivities.length > 0 ? (
-                        pendingActivities.map(item => (
-                            <PendingActivityItem 
+            {/* List Container */}
+            <div className="bg-[#0d1117] border border-white/10 rounded-xl overflow-hidden shadow-xl">
+                {/* List Header */}
+                <div className="bg-[#161b22] px-4 py-3 border-b border-white/10 flex justify-between items-center">
+                    <div className="flex gap-4 text-sm font-bold text-slate-300">
+                        <span className="flex items-center gap-1 text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                            {pendingActivities.length} Open
+                        </span>
+                        <span className="flex items-center gap-1 text-slate-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                            0 Closed
+                        </span>
+                    </div>
+                </div>
+
+                {isLoading ? (
+                    <div className="p-8 text-center text-slate-500 font-mono flex flex-col items-center">
+                        <SpinnerIcon className="h-6 w-6 mb-2 text-brand" />
+                        <span>SYNCING_DATA...</span>
+                    </div>
+                ) : pendingActivities.length > 0 ? (
+                    <div className="divide-y divide-white/5">
+                        {pendingActivities.map(item => (
+                            <IssueRow 
                                 key={`${item.id}-${item.classId}`} 
                                 item={item} 
                                 onView={() => handleOpenGrading(item)} 
                             />
-                        ))
-                    ) : !isLoading && (
-                         <div className="text-center py-20">
-                            <div className="inline-block bg-green-100 dark:bg-green-500/20 rounded-full p-5">
-                               <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-green-500 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                            </div>
-                            <h2 className="mt-4 text-xl font-bold text-slate-800 dark:text-slate-100 hc-text-primary">Tudo em dia!</h2>
-                            <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm hc-text-secondary">Nenhuma atividade pendente de correção.</p>
-                        </div>
-                    )}
-                </div>
-            </Card>
+                        ))}
+                    </div>
+                ) : (
+                    <ZeroInboxState />
+                )}
+            </div>
         </div>
     );
 };

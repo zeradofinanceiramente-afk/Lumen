@@ -140,6 +140,7 @@ export type Page =
   | 'admin_achievements'
   | 'admin_stats'
   | 'admin_tests'
+  | 'admin_diagnostics'
   | 'admin_create_quiz'
   | 'admin_create_achievement'
   | 'admin_create_module'; 
@@ -412,6 +413,7 @@ export interface TeacherClass {
   id: string;
   name: string;
   code: string;
+  coverImageUrl?: string; // New: Custom Class Background
   students: Student[];
   studentCount?: number; 
   activityCount?: number; 
