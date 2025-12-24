@@ -1,3 +1,4 @@
+
 // FILE: components/Sidebar.tsx
 import React, { useMemo } from 'react';
 import type { Page } from '../types';
@@ -139,7 +140,7 @@ export const Sidebar: React.FC = () => {
         <>
             {/* Overlay for all screens (Drawer behavior) */}
             <div
-                className={`fixed inset-0 bg-black/60 z-40 transition-opacity ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 onClick={toggleMobileMenu}
                 aria-hidden="true"
             ></div>
@@ -158,7 +159,7 @@ export const Sidebar: React.FC = () => {
                             aria-current={currentPage === item.id ? 'page' : undefined}
                             className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 text-left group ${
                                 currentPage === item.id 
-                                ? 'bg-brand text-white shadow-[0_0_15px_rgba(var(--brand-rgb),0.4)] border border-white/20' 
+                                ? 'bg-brand text-white shadow-brand-glow border border-white/20' 
                                 : 'hover:bg-white/10 text-slate-400 hover:text-white border border-transparent'
                             }`}
                         >
@@ -179,7 +180,7 @@ export const Sidebar: React.FC = () => {
                             onClick={() => { setCurrentPage('notifications'); toggleMobileMenu(); }}
                             aria-current={currentPage === 'notifications' ? 'page' : undefined}
                             className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 text-left ${
-                                currentPage === 'notifications' ? 'bg-brand text-white shadow-[0_0_15px_rgba(var(--brand-rgb),0.4)] border border-white/20' : 'hover:bg-white/10 text-slate-400 hover:text-white'
+                                currentPage === 'notifications' ? 'bg-brand text-white shadow-brand-glow border border-white/20' : 'hover:bg-white/10 text-slate-400 hover:text-white'
                             }`}
                         >
                             <div className="flex items-center space-x-3">
@@ -194,7 +195,7 @@ export const Sidebar: React.FC = () => {
                             onClick={() => { setCurrentPage('profile'); toggleMobileMenu(); }}
                             aria-current={currentPage === 'profile' ? 'page' : undefined}
                             className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-left ${
-                                currentPage === 'profile' ? 'bg-brand text-white shadow-[0_0_15px_rgba(var(--brand-rgb),0.4)] border border-white/20' : 'hover:bg-white/10 text-slate-400 hover:text-white'
+                                currentPage === 'profile' ? 'bg-brand text-white shadow-brand-glow border border-white/20' : 'hover:bg-white/10 text-slate-400 hover:text-white'
                             }`}
                         >
                             <span aria-hidden="true" className={currentPage === 'profile' ? 'text-white' : 'text-slate-400'}>{ICONS.profile}</span>

@@ -266,7 +266,10 @@ const MainLayout: React.FC = () => {
     useEffect(() => { document.title = `${pageTitle} - Lumen`; }, [pageTitle]);
 
     return (
-        <div className="relative flex h-screen overflow-hidden bg-[#09090b]">
+        <div 
+            className="relative flex h-screen overflow-hidden"
+            style={{ backgroundColor: 'var(--bg-main)' }} 
+        >
             <OfflineIndicator />
             <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-indigo-600 focus:rounded-md focus:shadow-lg transition-all">Pular para conteúdo</a>
 
@@ -277,8 +280,16 @@ const MainLayout: React.FC = () => {
                 </div>
             )}
 
-            {/* Layer 2: Legibility Mask/Overlay (Crucial for Glassmorphism) */}
-            <div className={`absolute inset-0 z-0 pointer-events-none transition-opacity duration-700 ${wallpaper ? 'bg-gradient-to-t from-[#09090b] via-[#09090b]/80 to-transparent' : 'bg-gradient-to-br from-[#0f172a] to-[#09090b]'}`} />
+            {/* Layer 2: Legibility Mask/Overlay (Crucial for Glassmorphism & OLED Theme) */}
+            {/* Using inline styles to bind strictly to CSS Variables for True Black support */}
+            <div 
+                className="absolute inset-0 z-0 pointer-events-none transition-opacity duration-700" 
+                style={{ 
+                    background: wallpaper 
+                        ? 'linear-gradient(to top, var(--bg-main) 0%, rgba(var(--bg-main-rgb), 0.85) 60%, rgba(var(--bg-main-rgb), 0.4) 100%)'
+                        : 'linear-gradient(to bottom right, var(--bg-gradient-start), var(--bg-gradient-end))'
+                }}
+            />
 
             {/* Layer 3: Main Content (Floating on top) */}
             <div className="relative z-10 flex h-full w-full">

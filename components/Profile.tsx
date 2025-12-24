@@ -64,73 +64,41 @@ const Profile: React.FC = () => {
             <h1 className="text-3xl font-bold text-white mb-6">Configurações & Perfil</h1>
 
             <Card className="border-l-4 border-brand">
-                <h2 className="text-xl font-bold text-slate-100 mb-6">Aparência</h2>
+                <h2 className="text-xl font-bold text-slate-100 mb-6">Personalização Visual</h2>
                 
                 {/* Theme Presets */}
                 <div className="mb-8">
-                    <p className="text-sm font-medium text-slate-400 mb-4 uppercase tracking-wider">Temas</p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div className="flex flex-col mb-4">
+                        <p className="text-sm font-bold text-slate-200 uppercase tracking-wider">Atmosfera (Tema)</p>
+                        <p className="text-xs text-slate-500">Define o fundo e a barra lateral.</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 max-w-md">
                         {PRESET_THEMES.map(preset => (
                             <button
                                 key={preset.id}
                                 onClick={() => applyThemePreset(preset.id)}
-                                className={`relative group rounded-2xl p-3 border transition-all text-left overflow-hidden ${theme === preset.id ? 'border-brand shadow-[0_0_15px_rgba(var(--brand-rgb),0.3)] bg-white/5' : 'border-white/10 hover:border-white/30 bg-black/20'}`}
+                                className={`relative group rounded-2xl p-4 border transition-all text-left overflow-hidden ${theme === preset.id ? 'border-brand shadow-[0_0_15px_rgba(var(--brand-rgb),0.3)] bg-white/10' : 'border-white/10 hover:border-white/30 bg-black/40'}`}
                             >
-                                <div 
-                                    className="w-full h-12 rounded-lg mb-3 shadow-inner" 
-                                    style={{ background: `linear-gradient(135deg, ${preset.colors[0]} 0%, ${preset.colors[1]} 100%)` }}
-                                />
-                                <span className={`text-xs font-bold block text-center ${theme === preset.id ? 'text-white' : 'text-slate-400'}`}>{preset.label}</span>
+                                <div className="flex items-center gap-3">
+                                    <div 
+                                        className="w-8 h-8 rounded-full shadow-inner border border-white/10" 
+                                        style={{ background: preset.colors[0] }}
+                                    />
+                                    <span className={`text-sm font-bold ${theme === preset.id ? 'text-white' : 'text-slate-400'}`}>{preset.label}</span>
+                                </div>
                             </button>
                         ))}
                     </div>
                 </div>
 
-                {/* Wallpaper Section */}
-                <div className="mb-8 p-6 bg-black/20 rounded-2xl border border-white/5">
-                    <div className="flex flex-col md:flex-row gap-6 items-center">
-                        <div className="w-full md:w-64 h-36 rounded-xl border border-white/10 overflow-hidden relative bg-black shadow-lg">
-                            {wallpaper ? (
-                                <img src={wallpaper} className="w-full h-full object-cover" alt="Wallpaper atual" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-slate-600 bg-white/5 text-xs text-center p-4">
-                                    Usando fundo padrão do tema
-                                </div>
-                            )}
-                            {isUploadingWallpaper && (
-                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm">
-                                    <SpinnerIcon className="h-6 w-6 text-brand" />
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex flex-col gap-3 items-start">
-                            <h3 className="font-bold text-white">Papel de Parede Personalizado</h3>
-                            <p className="text-sm text-slate-400 max-w-sm">
-                                Faça upload de uma imagem para substituir o fundo. A imagem será salva apenas neste dispositivo.
-                            </p>
-                            <div className="flex gap-3 mt-2">
-                                <label className="px-4 py-2 bg-brand text-white text-sm font-semibold rounded-lg hover:brightness-110 transition cursor-pointer flex items-center shadow-lg shadow-brand/20">
-                                    <span>Carregar Imagem</span>
-                                    <input type="file" className="hidden" accept="image/*" onChange={handleWallpaperChange} disabled={isUploadingWallpaper} />
-                                </label>
-                                {wallpaper && (
-                                    <button 
-                                        onClick={removeWallpaper}
-                                        className="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 text-sm font-semibold rounded-lg hover:bg-red-500/20 transition"
-                                    >
-                                        Remover
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 {/* Accent Color Picker */}
-                <div>
-                    <p className="text-sm font-medium text-slate-400 mb-4 uppercase tracking-wider">Cor de Destaque (Neon)</p>
+                <div className="mb-8">
+                    <div className="flex flex-col mb-4">
+                        <p className="text-sm font-bold text-slate-200 uppercase tracking-wider">Cor de destaque</p>
+                        <p className="text-xs text-slate-500">Define a cor dos botões e elementos interativos.</p>
+                    </div>
                     <div className="flex flex-wrap gap-3 items-center">
-                        {['#6366f1', '#3b82f6', '#0ea5e9', '#10b981', '#eab308', '#f97316', '#ef4444', '#d946ef'].map(color => (
+                        {['#4ade80', '#6366f1', '#3b82f6', '#0ea5e9', '#10b981', '#eab308', '#f97316', '#ef4444', '#d946ef', '#ffffff'].map(color => (
                             <button
                                 key={color}
                                 onClick={() => setAccentColor(color)}
@@ -146,6 +114,46 @@ const Profile: React.FC = () => {
                             onChange={(e) => setAccentColor(e.target.value)}
                             className="bg-transparent border-0 w-8 h-8 cursor-pointer p-0"
                         />
+                    </div>
+                </div>
+
+                {/* Wallpaper Section */}
+                <div className="p-6 bg-black/20 rounded-2xl border border-white/5">
+                    <div className="flex flex-col md:flex-row gap-6 items-center">
+                        <div className="w-full md:w-64 h-36 rounded-xl border border-white/10 overflow-hidden relative bg-black shadow-lg">
+                            {wallpaper ? (
+                                <img src={wallpaper} className="w-full h-full object-cover" alt="Wallpaper atual" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-600 bg-white/5 text-xs text-center p-4">
+                                    Usando fundo padrão
+                                </div>
+                            )}
+                            {isUploadingWallpaper && (
+                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm">
+                                    <SpinnerIcon className="h-6 w-6 text-brand" />
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex flex-col gap-3 items-start">
+                            <h3 className="font-bold text-white">Papel de Parede (Override)</h3>
+                            <p className="text-sm text-slate-400 max-w-sm">
+                                Você pode sobrepor o fundo do tema com uma imagem personalizada.
+                            </p>
+                            <div className="flex gap-3 mt-2">
+                                <label className="px-4 py-2 bg-brand text-white text-sm font-semibold rounded-lg hover:brightness-110 transition cursor-pointer flex items-center shadow-lg shadow-brand/20">
+                                    <span>Carregar Imagem</span>
+                                    <input type="file" className="hidden" accept="image/*" onChange={handleWallpaperChange} disabled={isUploadingWallpaper} />
+                                </label>
+                                {wallpaper && (
+                                    <button 
+                                        onClick={removeWallpaper}
+                                        className="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 text-sm font-semibold rounded-lg hover:bg-red-500/20 transition"
+                                    >
+                                        Remover Imagem
+                                    </button>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </Card>

@@ -30,11 +30,6 @@ const isRecent = (dateInput?: string | any) => {
 };
 
 const ActivityCard: React.FC<{ activity: Activity; submission?: ActivitySubmission; onClick: () => void }> = ({ activity, submission, onClick }) => {
-    const { theme } = useSettings();
-    const isAurora = theme === 'galactic-aurora';
-    const isDragon = theme === 'dragon-year';
-    const isEmerald = theme === 'emerald-sovereignty';
-
     const studentSubmission = submission;
     let statusText: string | null = null;
     let statusColor: string = '';
@@ -52,42 +47,25 @@ const ActivityCard: React.FC<{ activity: Activity; submission?: ActivitySubmissi
         }
     }
 
-    // Tag Styles based on Theme
+    // Tag Styles based on Theme (Simplified to Default)
     let materiaColor = '';
     let unidadeColor = '';
     let typeColor = '';
 
-    if (isAurora) {
-        materiaColor = 'bg-black text-[#E0AAFF] border border-[#E0AAFF]/40'; 
-        unidadeColor = 'bg-[#1a1b26] text-white border border-[#2E2F3E]'; 
-        typeColor = 'bg-black text-[#99F6E4] border border-[#99F6E4]/40'; 
-    } else if (isDragon) {
-        materiaColor = 'bg-[#5D0E0E] text-[#FFD700] border border-[#B71C1C]'; 
-        unidadeColor = 'bg-[#FFF8E7] text-[#3E2723] border border-[#8D6E63]'; 
-        typeColor = 'bg-[#2E7D32] text-white border border-[#1B5E20]'; 
-    } else if (isEmerald) {
-        materiaColor = 'bg-[#064E3B] text-[#34D399] border border-[#D4AF37]';
-        unidadeColor = 'bg-[#1F2937] text-[#E5E7EB] border border-[#374151]'; 
-        typeColor = 'bg-black text-[#D4AF37] border border-[#D4AF37]'; 
-    } else {
-        const materiaColorMap: { [key: string]: string } = {
-            'História': 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
-            'Geografia': 'bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300',
-            'Ciências': 'bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300',
-            'História Sergipana': 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
-        };
-        materiaColor = activity.materia ? materiaColorMap[activity.materia] || 'bg-gray-100 text-gray-700 border border-gray-200' : 'bg-gray-100 text-gray-700 border border-gray-200';
-        unidadeColor = 'bg-blue-50 text-blue-700 border border-blue-100 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600';
-        typeColor = 'bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-600 dark:text-slate-300 dark:border-slate-500';
-    }
+    const materiaColorMap: { [key: string]: string } = {
+        'História': 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
+        'Geografia': 'bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300',
+        'Ciências': 'bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300',
+        'História Sergipana': 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
+    };
+    materiaColor = activity.materia ? materiaColorMap[activity.materia] || 'bg-gray-100 text-gray-700 border border-gray-200' : 'bg-gray-100 text-gray-700 border border-gray-200';
+    unidadeColor = 'bg-blue-50 text-blue-700 border border-blue-100 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600';
+    typeColor = 'bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-600 dark:text-slate-300 dark:border-slate-500';
 
     const isNew = !studentSubmission && isRecent(activity.createdAt);
     const isRecentlyGraded = studentSubmission?.status === 'Corrigido' && isRecent(studentSubmission.gradedAt);
 
     let newBadgeClass = "absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg shadow-sm z-10";
-    if (isAurora) {
-        newBadgeClass = "absolute top-0 right-0 bg-[#00B7FF] text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg shadow-[0_0_10px_#00B7FF] border-l border-b border-[#00B7FF] z-10";
-    }
 
     const typeInfo = activity.items ? `${activity.items.length} questões` : activity.type;
     const dateInfo = activity.dueDate ? `Prazo: ${new Date(activity.dueDate).toLocaleDateString('pt-BR')}` : 'Sem prazo definido';
@@ -161,8 +139,6 @@ const Activities: React.FC = () => {
     const { studentClasses, userSubmissions, isLoading: isContextLoading } = useStudentAcademic();
     const { openActivity } = useNavigation(); 
     const { user } = useAuth();
-    const { theme } = useSettings();
-    const isAurora = theme === 'galactic-aurora';
     
     const [selectedClassId, setSelectedClassId] = useState('all');
     const [selectedUnidade, setSelectedUnidade] = useState('all');
@@ -374,9 +350,6 @@ const Activities: React.FC = () => {
     const filterSelectClasses = "flex-grow md:w-auto p-2.5 border border-slate-300 rounded-lg bg-white text-slate-700 focus-visible:ring-2 focus-visible:ring-indigo-500 focus:outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200";
 
     let searchButtonClass = "w-full md:w-auto px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors dark:ring-offset-slate-800 hc-button-primary-override";
-    if (isAurora) {
-        searchButtonClass = "w-full md:w-auto px-6 py-2.5 bg-[#00B7FF] text-white font-semibold rounded-lg hover:bg-[#0099CC] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors shadow-[0_0_15px_rgba(0,183,255,0.6)] border border-[#00B7FF] hc-button-primary-override";
-    }
 
     // --- CRITICAL LOADING CHECK ---
     // If context is loading (submissions not ready), don't render list to avoid flicker/race/crash

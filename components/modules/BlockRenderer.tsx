@@ -33,9 +33,6 @@ const SafeImage: React.FC<{ src: string; alt: string; className: string }> = ({ 
 };
 
 export const BlockRenderer: React.FC<{ content: ModulePageContent[] }> = React.memo(({ content }) => {
-    const { theme } = useSettings();
-    const isLight = theme === 'light';
-    
     const [isOnline, setIsOnline] = useState(navigator.onLine);
 
     useEffect(() => {
@@ -60,15 +57,7 @@ export const BlockRenderer: React.FC<{ content: ModulePageContent[] }> = React.m
                 };
                 const alignClass = item.align ? alignMap[item.align] : 'text-left';
                 
-                const colorIsWhite = item.color?.toLowerCase() === '#ffffff' || item.color?.toLowerCase() === 'white';
-                
-                let finalColor = item.color;
-                if (isLight) {
-                    if (!finalColor || colorIsWhite) {
-                        finalColor = '#191970';
-                    }
-                }
-                const textStyle = { color: finalColor };
+                const textStyle = { color: item.color };
 
                 switch (item.type) {
                     case 'title':

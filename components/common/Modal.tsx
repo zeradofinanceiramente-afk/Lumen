@@ -40,7 +40,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
                     leaveFrom="opacity-100"
                     leaveTo="opacity-0"
                 >
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" aria-hidden="true" />
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" aria-hidden="true" />
                 </TransitionChild>
 
                 <div className="fixed inset-0 overflow-y-auto">
@@ -55,15 +55,15 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
                             leaveTo="opacity-0 scale-95"
                         >
                             <DialogPanel 
-                                className={`transform overflow-hidden rounded-2xl bg-white dark:bg-slate-800 text-left align-middle shadow-xl transition-all hc-bg-override hc-border-override border border-slate-200 dark:border-slate-700 flex flex-col ${getSizeClasses()} ${size === 'full' ? '' : 'max-h-[90vh]'}`}
+                                className={`glass-modal transform overflow-hidden rounded-2xl text-left align-middle transition-all flex flex-col ${getSizeClasses()} ${size === 'full' ? '' : 'max-h-[90vh]'}`}
                             >
-                                <div className="flex justify-between items-center border-b dark:border-slate-700 p-4 sm:px-6 flex-shrink-0 hc-border-override">
-                                    <DialogTitle as="h3" className="text-lg font-bold leading-6 text-slate-900 dark:text-slate-100 hc-text-primary">
+                                <div className="flex justify-between items-center border-b border-white/10 p-4 sm:px-6 flex-shrink-0">
+                                    <DialogTitle as="h3" className="text-lg font-bold leading-6 text-slate-100">
                                         {title}
                                     </DialogTitle>
                                     <button
                                         type="button"
-                                        className="rounded-full p-2 text-slate-400 hover:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                        className="rounded-full p-2 text-slate-400 hover:text-white hover:bg-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                                         onClick={onClose}
                                         aria-label="Fechar"
                                     >
@@ -72,7 +72,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
                                         </svg>
                                     </button>
                                 </div>
-                                <div className={`p-4 sm:p-6 overflow-y-auto ${size === 'full' ? 'flex-1' : ''}`}>
+                                <div className={`p-4 sm:p-6 overflow-y-auto ${size === 'full' ? 'flex-1' : ''} text-slate-300`}>
                                     {children}
                                 </div>
                             </DialogPanel>
