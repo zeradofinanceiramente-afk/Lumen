@@ -155,12 +155,60 @@ const PublishModal: React.FC<{
     );
 };
 
+// --- Activity Type Selection Modal ---
+const ActivityTypeSelectionModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onSelectType: (type: 'classic' | 'interactive') => void;
+}> = ({ isOpen, onClose, onSelectType }) => {
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} title="Criar Nova Atividade" size="lg">
+            <div className="space-y-6 pb-4">
+                <p className="text-slate-600 dark:text-slate-300 text-center text-sm">
+                    Escolha o formato da atividade. Você pode criar tarefas tradicionais ou experiências interativas baseadas em aprendizagem significativa.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Option 1: Classic */}
+                    <button 
+                        onClick={() => onSelectType('classic')}
+                        className="flex flex-col items-center p-6 border rounded-xl transition-all duration-300 hover:scale-105 group bg-slate-50 hover:bg-white border-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 dark:border-slate-700 hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-500/50"
+                    >
+                        <div className="w-16 h-16 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4 text-3xl shadow-sm dark:bg-indigo-900/30 dark:text-indigo-300">
+                            📝
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">Atividade Clássica</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+                            Perguntas de texto, múltipla escolha ou envio de arquivos simples. Ideal para provas e exercícios de fixação.
+                        </p>
+                    </button>
+
+                    {/* Option 2: Interactive */}
+                    <button 
+                        onClick={() => onSelectType('interactive')}
+                        className="flex flex-col items-center p-6 border rounded-xl transition-all duration-300 hover:scale-105 group bg-gradient-to-br from-indigo-50 to-purple-50 hover:from-white hover:to-white border-indigo-200 dark:bg-gradient-to-br dark:from-indigo-900/20 dark:to-purple-900/20 dark:hover:from-slate-800 dark:hover:to-slate-800 dark:border-indigo-800 hover:shadow-lg hover:border-purple-400 dark:hover:border-purple-500/50"
+                    >
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center mb-4 text-3xl shadow-md">
+                            ✨
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">Experiência Interativa</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+                            Análise visual de fontes, conexão de conceitos, organizadores prévios e roleplay com IA. Baseado na teoria de Ausubel.
+                        </p>
+                    </button>
+                </div>
+            </div>
+        </Modal>
+    );
+};
+
 const TeacherRepository: React.FC = () => {
     const { draftActivities, handleDeleteActivity, handlePublishDraft } = useTeacherAcademicContext();
     const { teacherClasses } = useTeacherClassContext();
     const { startEditingActivity, setCurrentPage } = useNavigation();
     const [selectedDraft, setSelectedDraft] = useState<Activity | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+    const [isTypeSelectionOpen, setIsTypeSelectionOpen] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedMateria, setSelectedMateria] = useState('all');
@@ -187,7 +235,7 @@ const TeacherRepository: React.FC = () => {
 
     const handleUse = (activity: Activity) => {
         setSelectedDraft(activity);
-        setIsModalOpen(true);
+        setIsPublishModalOpen(true);
     };
 
     const handlePublishConfirm = async (classId: string, dueDate: string, points: number) => {
@@ -197,13 +245,26 @@ const TeacherRepository: React.FC = () => {
         }
     };
 
+    const handleCreateNewClick = () => {
+        setIsTypeSelectionOpen(true);
+    };
+
+    const handleTypeSelection = (type: 'classic' | 'interactive') => {
+        setIsTypeSelectionOpen(false);
+        if (type === 'classic') {
+            setCurrentPage('teacher_create_activity');
+        } else {
+            setCurrentPage('teacher_create_interactive_activity');
+        }
+    };
+
     const filterSelectClasses = "w-full md:w-auto p-2 border border-slate-300 rounded-lg bg-white text-slate-700 focus-visible:ring-2 focus-visible:ring-indigo-500 focus:outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200";
 
     return (
         <div className="space-y-6">
             <div className="flex justify-end items-center">
                 <button
-                    onClick={() => setCurrentPage('teacher_create_activity')}
+                    onClick={handleCreateNewClick}
                     className="flex items-center justify-center px-4 py-2 bg-blue-200 text-blue-900 font-semibold rounded-lg shadow-sm hover:bg-blue-300 transition-colors dark:bg-indigo-500 dark:text-white dark:hover:bg-indigo-600 hc-button-primary-override"
                 >
                     <div className="h-5 w-5 mr-2">{ICONS.plus}</div>
@@ -272,10 +333,16 @@ const TeacherRepository: React.FC = () => {
             )}
 
             <PublishModal 
-                isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
+                isOpen={isPublishModalOpen} 
+                onClose={() => setIsPublishModalOpen(false)} 
                 activity={selectedDraft}
                 onPublish={handlePublishConfirm}
+            />
+
+            <ActivityTypeSelectionModal 
+                isOpen={isTypeSelectionOpen}
+                onClose={() => setIsTypeSelectionOpen(false)}
+                onSelectType={handleTypeSelection}
             />
         </div>
     );

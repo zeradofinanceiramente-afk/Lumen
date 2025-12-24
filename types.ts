@@ -118,6 +118,7 @@ export type Page =
   | 'teacher_main_dashboard'
   | 'teacher_create_module'
   | 'teacher_create_activity'
+  | 'teacher_create_interactive_activity' 
   | 'teacher_statistics'
   | 'teacher_pending_activities'
   | 'teacher_school_records'

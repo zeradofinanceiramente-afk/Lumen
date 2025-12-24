@@ -37,6 +37,7 @@ const TeacherDashboard = lazy(() => import('./components/TeacherDashboard')); //
 const TeacherClassesList = lazy(() => import('./components/TeacherClassesList')); // Minhas Turmas (List)
 const ModuleCreator = lazy(() => import('./components/ModuleCreator'));
 const CreateActivity = lazy(() => import('./components/CreateActivity'));
+const CreateInteractiveActivity = lazy(() => import('./components/CreateInteractiveActivity')); // NEW
 const TeacherStatistics = lazy(() => import('./components/TeacherStatistics'));
 const PendingActivities = lazy(() => import('./components/PendingActivities'));
 const TeacherGradingView = lazy(() => import('./components/TeacherGradingView'));
@@ -230,6 +231,7 @@ const MainLayout: React.FC = () => {
                 case 'modules': return <Modules />;
                 case 'teacher_create_module': return <ModuleCreator />;
                 case 'teacher_create_activity': return <CreateActivity />;
+                case 'teacher_create_interactive_activity': return <CreateInteractiveActivity />; // NEW ROUTE
                 case 'teacher_repository': return <TeacherRepository />;
                 case 'teacher_module_repository': return <TeacherModuleRepository />;
                 case 'teacher_statistics': return <TeacherStatistics />;
