@@ -140,34 +140,38 @@ export const Sidebar: React.FC = () => {
     
     return (
         <>
-            {/* Overlay for all screens (Drawer behavior) */}
+            {/* Overlay for all screens (Drawer behavior) - High Contrast & Smoothness */}
             <div
-                className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-40 transition-all duration-500 ease-in-out ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 onClick={toggleMobileMenu}
                 aria-hidden="true"
             ></div>
 
             {/* Sidebar with Glassmorphism - Always Fixed/Floating now */}
-            <aside className={`w-64 glass-sidebar text-slate-200 flex flex-col h-full fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                <div className="p-5 border-b border-white/10 flex items-center justify-center">
+            <aside 
+                className={`w-72 glass-sidebar text-slate-200 flex flex-col h-full fixed inset-y-0 left-0 z-50 transform transition-transform duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${isMobileMenuOpen ? 'translate-x-0 shadow-[0_0_50px_rgba(0,0,0,0.5)]' : '-translate-x-full'}`}
+                id="main-sidebar"
+            >
+                {/* Header padding ajustado para não conflitar com o botão de toggle */}
+                <div className="p-6 pl-20 md:pl-6 border-b border-white/10 flex items-center justify-center md:justify-start min-h-[5rem]">
                     <Logo />
                 </div>
                 
-                <nav className="flex-1 px-4 py-5 space-y-2 custom-scrollbar overflow-y-auto" aria-label="Navegação Principal">
+                <nav className="flex-1 px-4 py-6 space-y-2 custom-scrollbar overflow-y-auto" aria-label="Navegação Principal">
                     {navItems.map(item => (
                         <button
                             key={item.id}
                             onClick={() => { setCurrentPage(item.id); toggleMobileMenu(); }}
                             aria-current={currentPage === item.id ? 'page' : undefined}
-                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 text-left group ${
+                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 text-left group border ${
                                 currentPage === item.id 
-                                ? 'bg-brand text-white shadow-brand-glow border border-white/20' 
-                                : 'hover:bg-white/10 text-slate-400 hover:text-white border border-transparent'
+                                ? 'bg-brand text-white shadow-brand-glow border-white/20 font-bold' 
+                                : 'hover:bg-white/5 text-slate-400 hover:text-white border-transparent hover:border-white/5'
                             }`}
                         >
-                            <div className="flex items-center space-x-3">
-                                <span aria-hidden="true" className={currentPage === item.id ? 'text-white' : 'text-slate-400 group-hover:text-white transition-colors'}>{getIcon(item.id)}</span>
-                                <span className="font-medium tracking-wide">{item.label}</span>
+                            <div className="flex items-center space-x-4">
+                                <span aria-hidden="true" className={currentPage === item.id ? 'text-white scale-110' : 'text-slate-400 group-hover:text-white transition-all'}>{getIcon(item.id)}</span>
+                                <span className="tracking-wide text-sm">{item.label}</span>
                             </div>
                             {item.id === 'teacher_pending_activities' && (userRole === 'professor') && (
                                 <TeacherPendingBadge />
@@ -176,18 +180,18 @@ export const Sidebar: React.FC = () => {
                     ))}
                 </nav>
                 
-                <div className="px-4 py-5 border-t border-white/10 space-y-2">
+                <div className="px-4 py-6 border-t border-white/10 space-y-2 bg-gradient-to-t from-black/40 to-transparent">
                      {showNotificationsLink && (
                         <button
                             onClick={() => { setCurrentPage('notifications'); toggleMobileMenu(); }}
                             aria-current={currentPage === 'notifications' ? 'page' : undefined}
-                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 text-left ${
-                                currentPage === 'notifications' ? 'bg-brand text-white shadow-brand-glow border border-white/20' : 'hover:bg-white/10 text-slate-400 hover:text-white'
+                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 text-left border ${
+                                currentPage === 'notifications' ? 'bg-brand text-white shadow-brand-glow border-white/20' : 'hover:bg-white/5 text-slate-400 hover:text-white border-transparent'
                             }`}
                         >
-                            <div className="flex items-center space-x-3">
+                            <div className="flex items-center space-x-4">
                                 <span aria-hidden="true" className={currentPage === 'notifications' ? 'text-white' : 'text-slate-400'}>{ICONS['notifications']}</span>
-                                <span>{t('sidebar.notifications')}</span>
+                                <span className="text-sm font-medium">{t('sidebar.notifications')}</span>
                             </div>
                             <StudentNotificationBadge />
                         </button>
@@ -196,17 +200,17 @@ export const Sidebar: React.FC = () => {
                          <button
                             onClick={() => { setCurrentPage('profile'); toggleMobileMenu(); }}
                             aria-current={currentPage === 'profile' ? 'page' : undefined}
-                            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-left ${
-                                currentPage === 'profile' ? 'bg-brand text-white shadow-brand-glow border border-white/20' : 'hover:bg-white/10 text-slate-400 hover:text-white'
+                            className={`w-full flex items-center space-x-4 px-4 py-3 rounded-xl transition-all duration-200 text-left border ${
+                                currentPage === 'profile' ? 'bg-brand text-white shadow-brand-glow border-white/20' : 'hover:bg-white/5 text-slate-400 hover:text-white border-transparent'
                             }`}
                         >
                             <span aria-hidden="true" className={currentPage === 'profile' ? 'text-white' : 'text-slate-400'}>{ICONS.profile}</span>
-                            <span>{t('sidebar.profile')}</span>
+                            <span className="text-sm font-medium">{t('sidebar.profile')}</span>
                         </button>
                      )}
-                    <button onClick={onLogout} className="flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all duration-200 w-full text-left hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-transparent hover:border-red-500/30">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                        <span>{t('sidebar.logout')}</span>
+                    <button onClick={onLogout} className="flex items-center space-x-4 px-4 py-3 rounded-xl transition-all duration-200 w-full text-left hover:bg-red-900/20 text-slate-400 hover:text-red-400 border border-transparent hover:border-red-900/30 group">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                        <span className="text-sm font-medium">{t('sidebar.logout')}</span>
                     </button>
                 </div>
             </aside>

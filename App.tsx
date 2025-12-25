@@ -150,7 +150,7 @@ const useKeyboardShortcuts = () => {
 const MainLayout: React.FC = () => {
     useKeyboardShortcuts();
     const { userRole } = useAuth();
-    const { currentPage, activeModule, activeClass, activeActivity, gradingActivity, toggleMobileMenu } = useNavigation();
+    const { currentPage, activeModule, activeClass, activeActivity, gradingActivity, toggleMobileMenu, isMobileMenuOpen } = useNavigation();
     const { wallpaper, enableWallpaperMask } = useSettings();
     
     const [isScrolled, setIsScrolled] = useState(false);
@@ -309,9 +309,26 @@ const MainLayout: React.FC = () => {
             <div className="relative z-10 flex h-full w-full">
                 <Sidebar />
                 <div className="flex-1 flex flex-col overflow-hidden relative">
-                    <button onClick={toggleMobileMenu} className="fixed top-3 left-3 z-40 p-2 rounded-full bg-white/10 backdrop-blur-md text-white shadow-md border border-white/10" aria-label="Abrir menu">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                    {/* Animated Hamburger Trigger */}
+                    <button 
+                        onClick={toggleMobileMenu} 
+                        className={`fixed top-4 left-4 z-50 p-2.5 rounded-xl backdrop-blur-xl border transition-all duration-300 group ${
+                            isMobileMenuOpen 
+                                ? 'bg-red-500/10 border-red-500/30 text-red-400 rotate-90' 
+                                : 'bg-[#0d1117]/60 border-white/10 text-slate-200 hover:bg-[#0d1117]/90 hover:border-brand/30 hover:text-brand'
+                        }`}
+                        aria-label={isMobileMenuOpen ? "Fechar Menu" : "Abrir Menu"}
+                    >
+                        <div className="relative w-5 h-4 flex flex-col justify-between overflow-hidden">
+                            {/* Line 1 */}
+                            <span className={`absolute top-0 left-0 w-full h-0.5 bg-current rounded-full transition-transform duration-300 origin-center ${isMobileMenuOpen ? 'rotate-45 translate-y-[7px]' : 'translate-y-0'}`} />
+                            {/* Line 2 */}
+                            <span className={`absolute top-[7px] left-0 w-full h-0.5 bg-current rounded-full transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0 translate-x-4' : 'opacity-100'}`} />
+                            {/* Line 3 */}
+                            <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-current rounded-full transition-transform duration-300 origin-center ${isMobileMenuOpen ? '-rotate-45 -translate-y-[7px]' : 'translate-y-0'}`} />
+                        </div>
                     </button>
+
                     <Header title={pageTitle} isScrolled={isScrolled} />
                     <main id="main-content" ref={mainContentRef} className="flex-1 overflow-y-auto py-6 sm:py-8 lg:py-10 px-3 sm:px-4 lg:px-6 relative custom-scrollbar" tabIndex={-1} aria-label="Conteúdo principal">
                         <ErrorBoundary>
