@@ -6,10 +6,22 @@ import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from './firebaseClient';
 
+interface DashboardCovers {
+    main: string | null;
+    moduleRepo: string | null;
+    questionBank: string | null;
+}
+
 const TeacherDashboard: React.FC = () => {
     const { user } = useAuth();
     const { setCurrentPage } = useNavigation();
-    const [coverUrl, setCoverUrl] = useState<string | null>(null);
+    
+    // Estado para as capas configuráveis
+    const [covers, setCovers] = useState<DashboardCovers>({
+        main: null,
+        moduleRepo: null,
+        questionBank: null
+    });
     
     // Saudação baseada no horário
     const hours = new Date().getHours();
@@ -20,122 +32,167 @@ const TeacherDashboard: React.FC = () => {
     
     const firstName = user?.name.split(' ')[0] || 'Professor';
 
-    // Busca a imagem configurada pelo Admin com Cache de Sessão para performance
+    // Busca as imagens configuradas pelo Admin
     useEffect(() => {
-        const loadCover = async () => {
-            // 1. Tenta pegar do cache da sessão para carregamento instantâneo
-            const cachedCover = sessionStorage.getItem('dashboard_admin_cover');
-            if (cachedCover) {
-                setCoverUrl(cachedCover);
-                return;
-            }
-
-            // 2. Se não tiver no cache, busca no Firestore
+        const loadCovers = async () => {
             try {
+                // Tenta cache primeiro para evitar flicker
+                const cached = sessionStorage.getItem('teacher_dash_covers');
+                if (cached) {
+                    setCovers(JSON.parse(cached));
+                }
+
                 const docRef = doc(db, 'system_settings', 'dashboard_config');
                 const snap = await getDoc(docRef);
-                if (snap.exists() && snap.data().defaultCoverUrl) {
-                    const url = snap.data().defaultCoverUrl;
-                    setCoverUrl(url);
-                    sessionStorage.setItem('dashboard_admin_cover', url); // Salva no cache
+                
+                if (snap.exists()) {
+                    const data = snap.data();
+                    const newCovers = {
+                        main: data.defaultCoverUrl || null,
+                        moduleRepo: data.moduleRepoCoverUrl || null,
+                        questionBank: data.questionBankCoverUrl || null
+                    };
+                    setCovers(newCovers);
+                    sessionStorage.setItem('teacher_dash_covers', JSON.stringify(newCovers));
                 }
             } catch (error) {
-                console.error("Erro ao carregar capa do admin:", error);
+                console.error("Erro ao carregar capas do dashboard:", error);
             }
         };
 
-        loadCover();
-    }, []); // Array vazio garante que rode apenas uma vez na montagem
+        loadCovers();
+    }, []);
 
-    // Fallback image se o admin não tiver configurado nada
-    const displayCover = coverUrl || "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=1000&auto=format&fit=crop";
+    // Fallbacks visuais de alta qualidade (Unsplash)
+    const images = {
+        main: covers.main || "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=1000&auto=format&fit=crop", // Biblioteca clássica
+        map: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop", // Globo/Tech
+        moduleRepo: covers.moduleRepo || "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=1000&auto=format&fit=crop", // Livros/Estudo
+        questionBank: covers.questionBank || "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?q=80&w=1000&auto=format&fit=crop" // Exame/Papel
+    };
 
-    return (
-        <div className="space-y-24 animate-fade-in pb-12">
-            {/* 1. Hero Section: Saudação Minimalista Alinhada à Esquerda e mais topo */}
-            <div className="flex flex-col space-y-4 pt-0 px-2 max-w-4xl">
-                <h1 className="text-5xl md:text-7xl font-thin tracking-tight text-slate-800 dark:text-white drop-shadow-sm">
-                    {greeting}, <br />
-                    <span className="font-bold text-brand">
-                        Professor {firstName}
-                    </span>.
-                </h1>
-                <p className="text-slate-600 dark:text-slate-400 text-lg md:text-xl font-light max-w-2xl leading-relaxed">
-                    Bem-vindo à sua central de ensino. Escolha uma ferramenta para começar.
+    // Componente de Card Reutilizável (Versão Compacta)
+    const DashboardCard = ({ 
+        onClick, 
+        image, 
+        title, 
+        subtitle, 
+        icon, 
+        colorClass, 
+        shadowClass 
+    }: { 
+        onClick: () => void, 
+        image: string, 
+        title: string, 
+        subtitle: string, 
+        icon: React.ReactNode, 
+        colorClass: string,
+        shadowClass: string
+    }) => (
+        <div 
+            onClick={onClick}
+            className="group relative h-40 rounded-2xl overflow-hidden cursor-pointer shadow-lg hover:shadow-xl transition-all duration-500 border border-slate-200 dark:border-white/10 hover:-translate-y-1 bg-slate-900"
+        >
+            {/* Imagem de Fundo */}
+            <div className="absolute inset-0">
+                <img 
+                    src={image} 
+                    className="w-full h-full object-cover opacity-60 group-hover:opacity-40 group-hover:scale-105 transition-all duration-700" 
+                    alt={title} 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
+            </div>
+            
+            {/* Conteúdo Compacto */}
+            <div className="absolute bottom-0 left-0 p-4 z-10 w-full">
+                <div className="mb-2">
+                    <div className={`p-2 inline-block rounded-full backdrop-blur-md border transition-all duration-300 ${colorClass} ${shadowClass}`}>
+                        {/* Força tamanho menor no ícone */}
+                        {React.cloneElement(icon as React.ReactElement, { className: "h-5 w-5" })}
+                    </div>
+                </div>
+                <h3 className="text-lg font-bold text-white mb-0.5 leading-tight tracking-tight">
+                    {title}
+                </h3>
+                <p className="text-[10px] text-slate-300 font-medium leading-snug opacity-80 uppercase tracking-wider">
+                    {subtitle}
                 </p>
             </div>
+        </div>
+    );
 
-            {/* 2. Layout Grid: Conteúdo invade a direita (2/3 da tela) */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    return (
+        <div className="min-h-screen animate-fade-in pb-12">
+            {/* Layout Mestre: Grid de 12 colunas */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pl-2 md:pl-4">
                 
-                {/* Coluna Esquerda Expandida: Cards Lado a Lado */}
-                <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+                {/* Coluna de Conteúdo (Esquerda) - Ocupa 7 colunas (Visual 7x1 solicitado) */}
+                <div className="lg:col-span-7 flex flex-col">
                     
-                    {/* Card 1: Explorar Módulos (Com imagem dinâmica) */}
-                    <div 
-                        onClick={() => setCurrentPage('modules')}
-                        className="group relative h-48 rounded-3xl overflow-hidden cursor-pointer shadow-xl hover:shadow-2xl transition-all duration-500 border border-slate-200 dark:border-white/10 hover:-translate-y-1 bg-slate-900"
-                    >
-                        {/* Imagem de Fundo Dinâmica */}
-                        <div className="absolute inset-0">
-                            <img 
-                                src={displayCover} 
-                                className="w-full h-full object-cover opacity-60 group-hover:opacity-40 group-hover:scale-105 transition-all duration-700" 
-                                alt="Biblioteca" 
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
-                        </div>
-                        
-                        <div className="absolute bottom-0 left-0 p-5 z-10 w-full">
-                            <div className="mb-2">
-                                <div className="p-2 bg-blue-500/20 inline-block rounded-full text-blue-400 backdrop-blur-md border border-blue-500/30 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all duration-300">
-                                    {ICONS.modules}
-                                </div>
-                            </div>
-                            <h3 className="text-lg font-bold text-white mb-0.5 group-hover:text-blue-400 transition-colors leading-tight">
-                                Explorar Módulos
-                            </h3>
-                            <p className="text-[11px] text-slate-300 font-light leading-snug opacity-90">
-                                Inicie sua jornada de conhecimento.
-                            </p>
-                        </div>
+                    {/* 1. Hero Section - Colado no topo, Fonte Gigante */}
+                    <div className="flex flex-col space-y-2 pt-0 mt-0 mb-20 md:mb-24">
+                        <h1 className="text-6xl md:text-8xl font-thin tracking-tighter text-slate-800 dark:text-white drop-shadow-sm leading-[0.85]">
+                            {greeting}, <br />
+                            <span className="font-bold text-brand">
+                                Professor {firstName}
+                            </span>.
+                        </h1>
+                        <p className="text-slate-600 dark:text-slate-400 text-lg font-light leading-relaxed pl-1 pt-4 opacity-80">
+                            Central de comando pedagógico.
+                        </p>
                     </div>
 
-                    {/* Card 2: Mapa do Tempo */}
-                    <div 
-                        onClick={() => setCurrentPage('interactive_map')}
-                        className="group relative h-48 rounded-3xl overflow-hidden cursor-pointer shadow-xl hover:shadow-2xl transition-all duration-500 border border-slate-200 dark:border-white/10 hover:-translate-y-1 bg-slate-900"
-                    >
-                        {/* Imagem de Fundo Abstrata (História/Mapa) */}
-                        <div className="absolute inset-0">
-                            <img 
-                                src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000" 
-                                className="w-full h-full object-cover opacity-60 group-hover:opacity-40 group-hover:scale-105 transition-all duration-700" 
-                                alt="Mapa Interativo" 
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
-                        </div>
+                    {/* 2. Grid de Navegação (Cards Compactos abaixo da zona de respiro) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:pr-12">
                         
-                        <div className="absolute bottom-0 left-0 p-5 z-10 w-full">
-                            <div className="mb-2">
-                                <div className="p-2 bg-emerald-500/20 inline-block rounded-full text-emerald-400 backdrop-blur-md border border-emerald-500/30 group-hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] transition-all duration-300">
-                                    {ICONS.map}
-                                </div>
-                            </div>
-                            <h3 className="text-lg font-bold text-white mb-0.5 group-hover:text-emerald-400 transition-colors leading-tight">
-                                Mapa do Tempo
-                            </h3>
-                            <p className="text-[11px] text-slate-300 font-light leading-snug opacity-90">
-                                Navegue pela história de forma interativa.
-                            </p>
-                        </div>
-                    </div>
+                        {/* LINHA 1 */}
+                        <DashboardCard 
+                            onClick={() => setCurrentPage('modules')}
+                            image={images.main}
+                            title="Explorar Módulos"
+                            subtitle="Biblioteca Global"
+                            icon={ICONS.modules}
+                            colorClass="bg-blue-500/20 text-blue-400 border-blue-500/30"
+                            shadowClass="group-hover:shadow-[0_0_20px_rgba(59,130,246,0.5)]"
+                        />
 
+                        <DashboardCard 
+                            onClick={() => setCurrentPage('interactive_map')}
+                            image={images.map}
+                            title="Mapa do Tempo"
+                            subtitle="Linha Interativa"
+                            icon={ICONS.map}
+                            colorClass="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                            shadowClass="group-hover:shadow-[0_0_20px_rgba(16,185,129,0.5)]"
+                        />
+
+                        {/* LINHA 2 */}
+                        <DashboardCard 
+                            onClick={() => setCurrentPage('teacher_module_repository')}
+                            image={images.moduleRepo}
+                            title="Banco de Módulos"
+                            subtitle="Meus Rascunhos"
+                            icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>}
+                            colorClass="bg-amber-500/20 text-amber-400 border-amber-500/30"
+                            shadowClass="group-hover:shadow-[0_0_20px_rgba(245,158,11,0.5)]"
+                        />
+
+                        <DashboardCard 
+                            onClick={() => setCurrentPage('teacher_repository')}
+                            image={images.questionBank}
+                            title="Banco de Questões"
+                            subtitle="Exercícios"
+                            icon={ICONS.repository}
+                            colorClass="bg-purple-500/20 text-purple-400 border-purple-500/30"
+                            shadowClass="group-hover:shadow-[0_0_20px_rgba(168,85,247,0.5)]"
+                        />
+
+                    </div>
                 </div>
 
-                {/* Coluna Direita: Zona de Respiro Reduzida (1/3) */}
-                <div className="hidden lg:block lg:col-span-1">
-                    {/* Espaço intencionalmente vazio para criar leveza visual */}
+                {/* Coluna de "Respiro" (Direita) - Vazia, ocupa o restante */}
+                <div className="hidden lg:block lg:col-span-5 pointer-events-none">
+                    {/* Espaço intencionalmente vazio para wallpaper/estética */}
                 </div>
 
             </div>

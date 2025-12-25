@@ -11,7 +11,6 @@ import { InputField, SelectField } from './common/FormHelpers';
 import type { Activity, ActivityType, HotspotItem, ConnectionPair } from '../types';
 import { storage } from './firebaseStorage';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { compressImage } from '../utils/imageCompression';
 
 // Activity Archetypes for Selection
 const ARCHETYPES = [
@@ -155,9 +154,10 @@ const CreateInteractiveActivity: React.FC = () => {
 
                 let finalImageUrl = vsImageUrl;
                 if (vsImageFile) {
-                    const compressed = await compressImage(vsImageFile);
-                    const storageRef = ref(storage, `activity_assets/${user.id}/${Date.now()}_${compressed.name}`);
-                    await uploadBytes(storageRef, compressed);
+                    // Upload sem compressão
+                    const processedFile = vsImageFile;
+                    const storageRef = ref(storage, `activity_assets/${user.id}/${Date.now()}_${processedFile.name}`);
+                    await uploadBytes(storageRef, processedFile);
                     finalImageUrl = await getDownloadURL(storageRef);
                 }
 

@@ -10,7 +10,6 @@ import { useToast } from '../contexts/ToastContext';
 import { storage } from './firebaseStorage';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from '../contexts/AuthContext';
-import { compressImage } from '../utils/imageCompression';
 import { InputField, SelectField } from './common/FormHelpers';
 
 const CreateActivity: React.FC = () => {
@@ -153,9 +152,10 @@ const CreateActivity: React.FC = () => {
             const folderId = selectedClassId || 'drafts';
 
             if (attachments.length > 0) {
-                addToast('Processando anexos (Compressão ativada)...', 'info');
+                addToast('Enviando anexos...', 'info');
                 for (const file of attachments) {
-                    const processedFile = await compressImage(file);
+                    // Upload sem compressão conforme solicitado
+                    const processedFile = file;
                     
                     const filePath = `activity_attachments/${folderId}/${user.id}/${Date.now()}-${processedFile.name}`;
                     const storageRef = ref(storage, filePath);
@@ -242,7 +242,7 @@ const CreateActivity: React.FC = () => {
                                 <input type="text" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://..." className="w-full p-2 border border-gray-300 rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-white" disabled={isSubmitting} />
                             </InputField>
 
-                            <InputField label="Anexar Arquivos (Imagens serão otimizadas)" helperText="Selecione imagens ou documentos para apoiar a atividade.">
+                            <InputField label="Anexar Arquivos" helperText="Selecione imagens ou documentos para apoiar a atividade.">
                                 <input 
                                     type="file" 
                                     multiple 

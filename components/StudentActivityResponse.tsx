@@ -11,7 +11,6 @@ import { db } from './firebaseClient';
 import { useToast } from '../contexts/ToastContext';
 import { storage } from './firebaseStorage';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { compressImage } from '../utils/imageCompression';
 
 // Lazy Load Complex Activities
 const VisualSourceAnalysis = React.lazy(() => import('./activities/VisualSourceAnalysis').then(m => ({ default: m.VisualSourceAnalysis })));
@@ -125,7 +124,8 @@ const StudentActivityResponse: React.FC = () => {
                 setIsUploading(true);
                 addToast("Enviando arquivos...", "info");
                 for (const file of uploadedFiles) {
-                    const fileToUpload = await compressImage(file);
+                    // Upload raw file without compression
+                    const fileToUpload = file;
                     const storageRef = ref(storage, `student_submissions/${activity.id}/${user.id}/${Date.now()}-${fileToUpload.name}`);
                     await uploadBytes(storageRef, fileToUpload);
                     const url = await getDownloadURL(storageRef);

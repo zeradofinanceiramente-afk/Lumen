@@ -10,7 +10,6 @@ import type { TeacherClass, ClassNotice } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { storage } from './firebaseStorage';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { compressImage } from '../utils/imageCompression';
 
 // --- Sub-components ---
 
@@ -86,7 +85,8 @@ const CreateClassModal: React.FC<{ isOpen: boolean; onClose: () => void; onCreat
         // Lógica de Upload
         if (imageMode === 'upload' && coverImageFile && user) {
             try {
-                const compressed = await compressImage(coverImageFile);
+                // Upload raw file without compression
+                const compressed = coverImageFile;
                 const filePath = `class_covers/${user.id}/${Date.now()}-${compressed.name}`;
                 const storageRef = ref(storage, filePath);
                 await uploadBytes(storageRef, compressed);

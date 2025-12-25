@@ -8,6 +8,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { usePendingActivities } from '../hooks/teacher/usePendingActivities';
 import { useAuth } from '../contexts/AuthContext';
 import { ICONS, SpinnerIcon } from '../constants/index';
+import { Modal } from './common/Modal';
 
 const IssueRow: React.FC<{ item: PendingActivity; onView: () => void }> = ({ item, onView }) => (
     <div 
@@ -35,8 +36,8 @@ const IssueRow: React.FC<{ item: PendingActivity; onView: () => void }> = ({ ite
                 <span className="font-mono bg-white/5 px-1.5 rounded text-slate-400 border border-white/5">
                     {item.className}
                 </span>
-                <span>aberto agora</span>
-                <span>por alunos</span>
+                <span>aguardando</span>
+                <span>correção</span>
             </div>
         </div>
 
@@ -52,7 +53,7 @@ const IssueRow: React.FC<{ item: PendingActivity; onView: () => void }> = ({ ite
             <button 
                 className="hidden md:flex px-3 py-1 bg-[#238636] hover:bg-[#2ea043] text-white text-xs font-bold rounded-md border border-[rgba(240,246,252,0.1)] transition-colors items-center gap-1 shadow-sm"
             >
-                Review
+                Corrigir
             </button>
         </div>
     </div>
@@ -66,13 +67,13 @@ const ZeroInboxState: React.FC = () => (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
         </div>
-        <h3 className="text-xl font-bold text-slate-200 mb-2">Zero Inbox</h3>
+        <h3 className="text-xl font-bold text-slate-200 mb-2">Sem Pendências</h3>
         <p className="text-slate-500 max-w-sm text-sm">
-            Todas as submissões foram revisadas e processadas. O sistema está atualizado.
+            Todas as atividades foram corrigidas. O diário de classe está atualizado.
         </p>
         <div className="mt-6 flex items-center gap-2 px-3 py-1 bg-[#0d1117] border border-green-500/30 rounded text-[10px] font-mono text-green-400">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            SYSTEM_OPTIMAL
+            TUDO EM DIA
         </div>
     </div>
 );
@@ -83,9 +84,15 @@ const PendingActivities: React.FC = () => {
     const { startGrading } = useNavigation();
     const [selectedClassId, setSelectedClassId] = useState('all');
     const [isActionLoading, setIsActionLoading] = useState(false);
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
     // Fetch directly from hook
     const { data: allPendingActivities = [], isLoading: isFetching } = usePendingActivities(user?.id);
+
+    // Memoize sorted classes for the modal
+    const sortedClasses = useMemo(() => {
+        return [...teacherClasses].sort((a, b) => a.name.localeCompare(b.name));
+    }, [teacherClasses]);
 
     const pendingActivities = useMemo((): PendingActivity[] => {
         if (selectedClassId === 'all') {
@@ -93,6 +100,12 @@ const PendingActivities: React.FC = () => {
         }
         return allPendingActivities.filter(activity => activity.classId === selectedClassId);
     }, [allPendingActivities, selectedClassId]);
+
+    const selectedClassName = useMemo(() => {
+        if (selectedClassId === 'all') return 'TODAS AS CLASSES';
+        const cls = teacherClasses.find(c => c.id === selectedClassId);
+        return cls ? cls.name.toUpperCase() : 'TURMA SELECIONADA';
+    }, [selectedClassId, teacherClasses]);
 
     const handleOpenGrading = async (pendingItem: PendingActivity) => {
         setIsActionLoading(true);
@@ -113,6 +126,11 @@ const PendingActivities: React.FC = () => {
         }
     };
 
+    const handleSelectClass = (id: string) => {
+        setSelectedClassId(id);
+        setIsFilterModalOpen(false);
+    };
+
     const isLoading = isFetching || isActionLoading;
 
     return (
@@ -121,24 +139,23 @@ const PendingActivities: React.FC = () => {
             <div className="flex flex-col md:flex-row justify-between items-end gap-4 border-b border-white/10 pb-4">
                 <div>
                     <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
-                        <span className="text-orange-400">●</span> Code Review
+                        <span className="text-orange-400">●</span> Pendências
                     </h2>
-                    <p className="text-xs text-slate-500 font-mono mt-1">
-                        {allPendingActivities.length} PENDING REQUESTS
-                    </p>
                 </div>
                 
-                <div className="flex items-center bg-[#0d1117] border border-white/10 rounded-lg p-1">
-                    <span className="text-xs text-slate-500 font-bold px-3">FILTER:</span>
-                    <select
-                        value={selectedClassId}
-                        onChange={e => setSelectedClassId(e.target.value)}
-                        className="bg-transparent text-sm text-slate-300 font-mono focus:outline-none py-1 pr-8 cursor-pointer hover:text-white"
-                    >
-                        <option value="all">ALL_CLASSES</option>
-                        {teacherClasses.map(c => <option key={c.id} value={c.id}>{c.name.toUpperCase()}</option>)}
-                    </select>
-                </div>
+                {/* Custom Trigger Button for Modal */}
+                <button 
+                    onClick={() => setIsFilterModalOpen(true)}
+                    className="flex items-center bg-[#0d1117] border border-white/10 rounded-lg p-1.5 hover:border-white/30 transition-colors group cursor-pointer"
+                >
+                    <span className="text-xs text-slate-500 font-bold px-2">FILTRO:</span>
+                    <span className="text-sm text-slate-300 font-mono pr-2 group-hover:text-white truncate max-w-[200px]">
+                        {selectedClassName}
+                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-500 group-hover:text-white" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                </button>
             </div>
 
             {/* List Container */}
@@ -148,11 +165,11 @@ const PendingActivities: React.FC = () => {
                     <div className="flex gap-4 text-sm font-bold text-slate-300">
                         <span className="flex items-center gap-1 text-white">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-                            {pendingActivities.length} Open
+                            {pendingActivities.length} Pendentes
                         </span>
                         <span className="flex items-center gap-1 text-slate-500">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-                            0 Closed
+                            0 Corrigidas
                         </span>
                     </div>
                 </div>
@@ -160,7 +177,7 @@ const PendingActivities: React.FC = () => {
                 {isLoading ? (
                     <div className="p-8 text-center text-slate-500 font-mono flex flex-col items-center">
                         <SpinnerIcon className="h-6 w-6 mb-2 text-brand" />
-                        <span>SYNCING_DATA...</span>
+                        <span>SINCRONIZANDO...</span>
                     </div>
                 ) : pendingActivities.length > 0 ? (
                     <div className="divide-y divide-white/5">
@@ -176,6 +193,44 @@ const PendingActivities: React.FC = () => {
                     <ZeroInboxState />
                 )}
             </div>
+
+            {/* Filter Modal */}
+            <Modal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} title="Filtrar por Turma">
+                <div className="space-y-2 max-h-[60vh] overflow-y-auto custom-scrollbar p-1">
+                    <button
+                        onClick={() => handleSelectClass('all')}
+                        className={`w-full text-left px-4 py-3 rounded-lg transition-colors border flex items-center justify-between ${
+                            selectedClassId === 'all' 
+                                ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300' 
+                                : 'bg-[#0d1117] border-white/10 text-slate-300 hover:bg-white/5 hover:border-white/20'
+                        }`}
+                    >
+                        <span className="font-bold">TODAS AS CLASSES</span>
+                        {selectedClassId === 'all' && <span className="text-indigo-400">✓</span>}
+                    </button>
+                    
+                    <div className="h-px bg-white/10 my-2 mx-2"></div>
+
+                    {sortedClasses.map(cls => (
+                        <button
+                            key={cls.id}
+                            onClick={() => handleSelectClass(cls.id)}
+                            className={`w-full text-left px-4 py-3 rounded-lg transition-colors border flex items-center justify-between ${
+                                selectedClassId === cls.id 
+                                    ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300' 
+                                    : 'bg-[#0d1117] border-white/10 text-slate-300 hover:bg-white/5 hover:border-white/20'
+                            }`}
+                        >
+                            <span>{cls.name}</span>
+                            {selectedClassId === cls.id && <span className="text-indigo-400">✓</span>}
+                        </button>
+                    ))}
+                    
+                    {sortedClasses.length === 0 && (
+                        <p className="text-center text-slate-500 py-4 text-sm">Nenhuma turma encontrada.</p>
+                    )}
+                </div>
+            </Modal>
         </div>
     );
 };

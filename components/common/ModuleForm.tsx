@@ -7,7 +7,6 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseClient';
 import { storage } from '../firebaseStorage';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { compressImage } from '../../utils/imageCompression';
 import { useModuleEditor } from '../../hooks/useModuleEditor';
 
 // Sub-Components
@@ -157,7 +156,8 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({
             const file = e.target.files[0];
             setIsUploading(true);
             try {
-                const processedFile = await compressImage(file);
+                // Upload raw file without compression
+                const processedFile = file; 
                 const filePath = `module_covers/${userId}/${Date.now()}-${processedFile.name}`;
                 const storageRef = ref(storage, filePath);
                 await uploadBytes(storageRef, processedFile);
@@ -179,7 +179,8 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({
     // Helper for Content Images
     const handleContentImageUpload = async (file: File): Promise<string> => {
         if (!userId) throw new Error("Usuário não autenticado");
-        const processedFile = await compressImage(file);
+        // Upload raw file without compression
+        const processedFile = file;
         const filePath = `module_content_images/${userId}/${Date.now()}-${processedFile.name}`;
         const storageRef = ref(storage, filePath);
         await uploadBytes(storageRef, processedFile);
@@ -281,56 +282,95 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({
 
     if (isLoadingContent) {
         return (
-            <div className="flex justify-center items-center h-64">
+            <div className="flex justify-center items-center h-full min-h-[500px]">
                 <div className="flex flex-col items-center space-y-4">
-                    <SpinnerIcon className="h-12 w-12 text-indigo-600" />
-                    <p className="text-slate-500">Carregando conteúdo do módulo...</p>
+                    <SpinnerIcon className="h-12 w-12 text-brand" />
+                    <p className="text-slate-500 font-mono animate-pulse">Carregando estúdio de criação...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                 <div>
-                     <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 hc-text-primary">{formTitle}</h2>
-                     <p className="text-slate-500 dark:text-slate-400 mt-1">{subtitle}</p>
+        <div className="animate-fade-in relative min-h-screen pb-32">
+            
+            {/* --- Sticky Header Actions --- */}
+            <div className="sticky top-0 z-30 bg-[#09090b]/80 backdrop-blur-md border-b border-white/10 px-4 py-4 mb-8 -mx-4 sm:-mx-6 lg:-mx-10 flex flex-col sm:flex-row justify-between items-center gap-4 transition-all">
+                <div>
+                    <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+                        <span className="text-brand">{ICONS.teacher_create_module}</span>
+                        {formTitle}
+                    </h1>
+                    <p className="text-xs text-slate-400 hidden sm:block">{subtitle}</p>
                 </div>
-                <button onClick={onCancel} className="px-4 py-2 bg-white border border-gray-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 hc-button-override">Voltar</button>
+                
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <button 
+                        onClick={onCancel} 
+                        className="px-4 py-2 text-sm text-slate-400 hover:text-white font-medium transition-colors"
+                    >
+                        Cancelar
+                    </button>
+                    <div className="h-6 w-px bg-white/10 hidden sm:block"></div>
+                    <button 
+                        onClick={() => handleSaveWrapper(true)} 
+                        disabled={isSubmitting}
+                        className="flex-1 sm:flex-none px-5 py-2 bg-[#161b22] text-amber-400 border border-amber-500/30 font-semibold rounded-lg hover:bg-amber-500/10 transition-colors disabled:opacity-50 text-sm"
+                    >
+                        Salvar Rascunho
+                    </button>
+                    <button 
+                        onClick={() => handleSaveWrapper(false)} 
+                        disabled={isSubmitting}
+                        className="flex-1 sm:flex-none px-6 py-2 bg-brand text-black font-bold rounded-lg hover:bg-brand/90 hover:shadow-[0_0_15px_rgba(var(--brand-rgb),0.4)] disabled:opacity-50 flex items-center justify-center gap-2 transition-all text-sm"
+                    >
+                        {isSubmitting ? <SpinnerIcon className="h-4 w-4" /> : <div className="h-4 w-4">{ICONS.plus}</div>}
+                        <span>{initialData ? 'Salvar Alterações' : 'Publicar Módulo'}</span>
+                    </button>
+                </div>
             </div>
 
-            <ModuleMetadataForm 
-                title={title} setTitle={setTitle}
-                description={description} setDescription={setDescription}
-                coverImageUrl={coverImageUrl} setCoverImageUrl={setCoverImageUrl}
-                videoUrl={videoUrl} setVideoUrl={setVideoUrl}
-                difficulty={difficulty} setDifficulty={setDifficulty}
-                duration={duration} setDuration={setDuration}
-                selectedSeries={selectedSeries} setSelectedSeries={setSelectedSeries}
-                selectedSubjects={selectedSubjects} setSelectedSubjects={setSelectedSubjects}
-                isUploading={isUploading} handleCoverUpload={handleCoverUpload}
-                disabled={isSubmitting}
-                availableClasses={availableClasses}
-                selectedClassIds={selectedClassIds}
-                setSelectedClassIds={setSelectedClassIds}
-                historicalYear={historicalYear} setHistoricalYear={setHistoricalYear}
-                historicalEra={historicalEra} setHistoricalEra={setHistoricalEra}
-                lessonPlan={lessonPlan} setLessonPlan={setLessonPlan}
-            />
+            {/* --- Main Workspace Layout --- */}
+            <div className="grid grid-cols-12 gap-8">
+                
+                {/* Left Panel: Metadata (Sticky on Desktop) */}
+                <aside className="col-span-12 lg:col-span-4 xl:col-span-3 space-y-6 h-fit lg:sticky lg:top-24">
+                    <ModuleMetadataForm 
+                        title={title} setTitle={setTitle}
+                        description={description} setDescription={setDescription}
+                        coverImageUrl={coverImageUrl} setCoverImageUrl={setCoverImageUrl}
+                        videoUrl={videoUrl} setVideoUrl={setVideoUrl}
+                        difficulty={difficulty} setDifficulty={setDifficulty}
+                        duration={duration} setDuration={setDuration}
+                        selectedSeries={selectedSeries} setSelectedSeries={setSelectedSeries}
+                        selectedSubjects={selectedSubjects} setSelectedSubjects={setSelectedSubjects}
+                        isUploading={isUploading} handleCoverUpload={handleCoverUpload}
+                        disabled={isSubmitting}
+                        availableClasses={availableClasses}
+                        selectedClassIds={selectedClassIds}
+                        setSelectedClassIds={setSelectedClassIds}
+                        historicalYear={historicalYear} setHistoricalYear={setHistoricalYear}
+                        historicalEra={historicalEra} setHistoricalEra={setHistoricalEra}
+                        lessonPlan={lessonPlan} setLessonPlan={setLessonPlan}
+                    />
+                </aside>
 
-            <ModuleContentEditor 
-                pages={pages}
-                updatePageTitle={updatePageTitle}
-                addPage={addPage}
-                removePage={removePage}
-                addBlock={addBlock}
-                removeBlock={removeBlock}
-                updateBlock={updateBlock}
-                moveBlock={moveBlock}
-                openAIModal={openAIModal}
-                onImageUpload={handleContentImageUpload}
-            />
+                {/* Right Panel: Content Editor */}
+                <main className="col-span-12 lg:col-span-8 xl:col-span-9">
+                    <ModuleContentEditor 
+                        pages={pages}
+                        updatePageTitle={updatePageTitle}
+                        addPage={addPage}
+                        removePage={removePage}
+                        addBlock={addBlock}
+                        removeBlock={removeBlock}
+                        updateBlock={updateBlock}
+                        moveBlock={moveBlock}
+                        openAIModal={openAIModal}
+                        onImageUpload={handleContentImageUpload}
+                    />
+                </main>
+            </div>
 
             <AIGeneratorModal 
                 isOpen={isAIModalOpen}
@@ -338,24 +378,6 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({
                 onGenerate={handleAIGenerate}
                 onAddContent={handleAddAIContent}
             />
-
-            <div className="flex justify-end space-x-4 pb-8">
-                <button 
-                    onClick={() => handleSaveWrapper(true)} 
-                    disabled={isSubmitting}
-                    className="px-6 py-2 bg-amber-100 text-amber-900 font-semibold rounded-lg hover:bg-amber-200 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800 disabled:opacity-50"
-                >
-                    Salvar Rascunho
-                </button>
-                <button 
-                    onClick={() => handleSaveWrapper(false)} 
-                    disabled={isSubmitting}
-                    className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 shadow-lg disabled:opacity-50 flex items-center space-x-2 hc-button-primary-override"
-                >
-                     {isSubmitting ? <SpinnerIcon className="h-5 w-5 text-white" /> : <div className="h-5 w-5">{ICONS.plus}</div>}
-                    <span>{initialData ? 'Salvar Alterações' : 'Criar Módulo'}</span>
-                </button>
-            </div>
         </div>
     );
 };

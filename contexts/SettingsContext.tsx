@@ -26,6 +26,8 @@ interface SettingsContextType {
     
     // Customization
     wallpaper: string | null;
+    enableWallpaperMask: boolean; // New control
+    setEnableWallpaperMask: (value: boolean) => void; // New setter
     updateWallpaper: (file: File) => Promise<void>;
     removeWallpaper: () => Promise<void>;
     accentColor: string;
@@ -45,6 +47,7 @@ export function SettingsProvider({ children }: { children?: React.ReactNode }) {
     const [isHighContrastText, setIsHighContrastText] = useState(false);
     
     const [wallpaper, setWallpaper] = useState<string | null>(null);
+    const [enableWallpaperMask, setEnableWallpaperMaskState] = useState(true);
     const [accentColor, setAccentColorState] = useState<string>('#4ade80');
 
     // Function to apply accent color to DOM and State
@@ -65,6 +68,11 @@ export function SettingsProvider({ children }: { children?: React.ReactNode }) {
         
         const savedHighContrastText = localStorage.getItem('app-high-contrast-text') === 'true';
         setIsHighContrastText(savedHighContrastText);
+
+        const savedMask = localStorage.getItem('app-wallpaper-mask');
+        if (savedMask !== null) {
+            setEnableWallpaperMaskState(savedMask === 'true');
+        }
 
         const savedAccent = localStorage.getItem('app-accent-color');
         if (savedAccent) {
@@ -108,6 +116,11 @@ export function SettingsProvider({ children }: { children?: React.ReactNode }) {
         localStorage.setItem('app-accent-color', color);
     };
 
+    const setEnableWallpaperMask = (value: boolean) => {
+        setEnableWallpaperMaskState(value);
+        localStorage.setItem('app-wallpaper-mask', String(value));
+    }
+
     const applyThemePreset = (presetId: Theme) => {
         setTheme(presetId);
         // Note: We no longer force the accent color when changing the background theme,
@@ -117,7 +130,8 @@ export function SettingsProvider({ children }: { children?: React.ReactNode }) {
     const value = { 
         theme, setTheme, applyThemePreset,
         isHighContrastText, setIsHighContrastText,
-        wallpaper, updateWallpaper: updateWallpaperState, removeWallpaper: removeWallpaperState,
+        wallpaper, enableWallpaperMask, setEnableWallpaperMask, 
+        updateWallpaper: updateWallpaperState, removeWallpaper: removeWallpaperState,
         accentColor, setAccentColor
     };
 

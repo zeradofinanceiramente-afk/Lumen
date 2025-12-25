@@ -151,7 +151,7 @@ const MainLayout: React.FC = () => {
     useKeyboardShortcuts();
     const { userRole } = useAuth();
     const { currentPage, activeModule, activeClass, activeActivity, gradingActivity, toggleMobileMenu } = useNavigation();
-    const { wallpaper } = useSettings();
+    const { wallpaper, enableWallpaperMask } = useSettings();
     
     const [isScrolled, setIsScrolled] = useState(false);
     const mainContentRef = useRef<HTMLElement>(null);
@@ -298,7 +298,9 @@ const MainLayout: React.FC = () => {
                 className="absolute inset-0 z-0 pointer-events-none transition-opacity duration-700" 
                 style={{ 
                     background: wallpaper 
-                        ? 'linear-gradient(to top, var(--bg-main) 0%, rgba(var(--bg-main-rgb), 0.85) 60%, rgba(var(--bg-main-rgb), 0.4) 100%)'
+                        ? (enableWallpaperMask 
+                            ? 'linear-gradient(to top, var(--bg-main) 0%, rgba(var(--bg-main-rgb), 0.85) 60%, rgba(var(--bg-main-rgb), 0.4) 100%)' 
+                            : 'transparent')
                         : 'linear-gradient(to bottom right, var(--bg-gradient-start), var(--bg-gradient-end))'
                 }}
             />
