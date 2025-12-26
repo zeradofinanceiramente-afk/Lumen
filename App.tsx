@@ -1,4 +1,3 @@
-
 import React, { lazy, Suspense, useState, useRef, useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import { NavigationProvider, useNavigation } from './contexts/NavigationContext';
@@ -27,17 +26,18 @@ const StudentActivityResponse = lazy(() => import('./components/StudentActivityR
 const Achievements = lazy(() => import('./components/Achievements'));
 const JoinClass = lazy(() => import('./components/JoinClass'));
 const Profile = lazy(() => import('./components/Profile'));
+const AdminProfileView = lazy(() => import('./components/AdminProfileView').then(m => ({ default: m.AdminProfileView })));
 const NotificationsPage = lazy(() => import('./components/NotificationsPage'));
 const ModuleViewPage = lazy(() => import('./components/ModuleViewPage'));
 const Boletim = lazy(() => import('./components/Boletim'));
 const InteractiveMap = lazy(() => import('./components/InteractiveMap'));
 
 // Teacher Components
-const TeacherDashboard = lazy(() => import('./components/TeacherDashboard')); // Home (Simple)
-const TeacherClassesList = lazy(() => import('./components/TeacherClassesList')); // Minhas Turmas (List)
+const TeacherDashboard = lazy(() => import('./components/TeacherDashboard'));
+const TeacherClassesList = lazy(() => import('./components/TeacherClassesList'));
 const ModuleCreator = lazy(() => import('./components/ModuleCreator'));
 const CreateActivity = lazy(() => import('./components/CreateActivity'));
-const CreateInteractiveActivity = lazy(() => import('./components/CreateInteractiveActivity')); // NEW
+const CreateInteractiveActivity = lazy(() => import('./components/CreateInteractiveActivity'));
 const TeacherStatistics = lazy(() => import('./components/TeacherStatistics'));
 const PendingActivities = lazy(() => import('./components/PendingActivities'));
 const TeacherGradingView = lazy(() => import('./components/TeacherGradingView'));
@@ -64,10 +64,10 @@ const AdminManageUsers = lazy(() => import('./components/AdminManageUsers'));
 const AdminManageModules = lazy(() => import('./components/AdminManageModules'));
 const AdminManageQuizzes = lazy(() => import('./components/AdminManageQuizzes'));
 const AdminManageAchievements = lazy(() => import('./components/AdminManageAchievements'));
-const AdminGamification = lazy(() => import('./components/AdminGamification')); // NEW
+const AdminGamification = lazy(() => import('./components/AdminGamification'));
 const AdminStats = lazy(() => import('./components/AdminStats'));
 const AdminTests = lazy(() => import('./components/AdminTests'));
-const AdminDiagnostics = lazy(() => import('./components/AdminDiagnostics')); // NEW
+const AdminDiagnostics = lazy(() => import('./components/AdminDiagnostics'));
 const CreateAchievement = lazy(() => import('./components/CreateAchievement'));
 const AdminCreateModule = lazy(() => import('./components/AdminCreateModule'));
 const AdminCreateQuiz = lazy(() => import('./components/AdminCreateQuiz'));
@@ -83,7 +83,7 @@ const PAGE_TITLES: Record<string, string> = {
     notifications: 'Notificações',
     boletim: 'Boletim',
     interactive_map: 'Mapa Interativo',
-    teacher_dashboard: 'Minhas Turmas', // Sidebar label matches this key
+    teacher_dashboard: 'Minhas Turmas',
     teacher_statistics: 'Estatísticas',
     teacher_school_records: 'Histórico Escolar',
     teacher_repository: 'Banco de Questões',
@@ -112,45 +112,7 @@ const LoadingSpinner: React.FC = () => (
     </div>
 );
 
-const useKeyboardShortcuts = () => {
-    const { userRole } = useAuth();
-    const { setCurrentPage } = useNavigation();
-
-    useEffect(() => {
-        const handleKeyDown = (event: KeyboardEvent) => {
-            const target = event.target as HTMLElement;
-            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
-
-            if (event.altKey) {
-                const key = event.key.toLowerCase();
-                let targetPage: Page | null = null;
-                
-                if (userRole === 'aluno') {
-                    if (key === 'h') targetPage = 'dashboard';
-                    if (key === 'm') targetPage = 'modules';
-                    else if (key === 'q') targetPage = 'quizzes';
-                    else if (key === 'a') targetPage = 'activities';
-                    else if (key === 'c') targetPage = 'achievements';
-                    else if (key === 't') targetPage = 'join_class';
-                    else if (key === 'p') targetPage = 'profile';
-                    else if (key === 'n') targetPage = 'notifications';
-                    else if (key === 'b') targetPage = 'boletim';
-                }
-                // ... other roles
-                if (targetPage) {
-                    event.preventDefault();
-                    setCurrentPage(targetPage);
-                }
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [userRole, setCurrentPage]);
-};
-
 const MainLayout: React.FC = () => {
-    useKeyboardShortcuts();
     const { userRole } = useAuth();
     const { currentPage, activeModule, activeClass, activeActivity, activeQuiz, gradingActivity, toggleMobileMenu, isMobileMenuOpen } = useNavigation();
     const { wallpaper, enableWallpaperMask, globalTheme, enableFocusMode } = useSettings();
@@ -186,7 +148,7 @@ const MainLayout: React.FC = () => {
                 case 'admin_create_module': return <AdminCreateModule />;
                 case 'admin_create_quiz': return <AdminCreateQuiz />;
                 case 'admin_create_achievement': return <CreateAchievement />;
-                case 'profile': return <Profile />;
+                case 'profile': return <AdminProfileView />;
                 default: return <AdminDashboard />;
             }
         }
@@ -207,7 +169,6 @@ const MainLayout: React.FC = () => {
         if (userRole === 'secretaria') {
             switch (currentPage) {
                 case 'secretariat_dashboard': return <SecretariatDashboard />;
-                case 'secretariat_schools': return <SecretariatDashboard />;
                 case 'profile': return <Profile />;
                 default: return <SecretariatDashboard />;
             }
@@ -231,13 +192,13 @@ const MainLayout: React.FC = () => {
 
         if (userRole === 'professor') {
             switch (currentPage) {
-                case 'dashboard': return <TeacherDashboard />; // Início = Simple Dashboard
-                case 'teacher_dashboard': return <TeacherClassesList />; // Minhas Turmas = Full List
+                case 'dashboard': return <TeacherDashboard />;
+                case 'teacher_dashboard': return <TeacherClassesList />;
                 case 'teacher_pending_activities': return <PendingActivities />;
                 case 'modules': return <Modules />;
                 case 'teacher_create_module': return <ModuleCreator />;
                 case 'teacher_create_activity': return <CreateActivity />;
-                case 'teacher_create_interactive_activity': return <CreateInteractiveActivity />; // NEW ROUTE
+                case 'teacher_create_interactive_activity': return <CreateInteractiveActivity />;
                 case 'teacher_repository': return <TeacherRepository />;
                 case 'teacher_module_repository': return <TeacherModuleRepository />;
                 case 'teacher_statistics': return <TeacherStatistics />;
@@ -245,14 +206,12 @@ const MainLayout: React.FC = () => {
                 case 'class_view': return <ClassView />;
                 case 'teacher_grading_view': return gradingActivity ? <TeacherGradingView /> : <PendingActivities />;
                 case 'profile': return <Profile />;
-                case 'notifications': return <TeacherDashboard />;
                 case 'module_view': return activeModule ? <ModuleViewPage /> : <Modules />;
                 case 'interactive_map': return <InteractiveMap />;
                 default: return <TeacherDashboard />;
             }
         }
         
-        // Student Views
         switch (currentPage) {
             case 'dashboard': return <Dashboard />;
             case 'modules': return <Modules />;
@@ -271,38 +230,33 @@ const MainLayout: React.FC = () => {
     };
     
     let pageTitle = PAGE_TITLES[currentPage] || 'Lumen';
-    // Override title for generic dashboard based on role to avoid confusion
-    if (currentPage === 'dashboard') {
-        pageTitle = 'Início';
-    }
-    
     if (currentPage === 'module_view' && activeModule) pageTitle = activeModule.title;
     if (currentPage === 'class_view' && activeClass) pageTitle = activeClass.name;
 
-    useEffect(() => { document.title = `${pageTitle} - Lumen`; }, [pageTitle]);
-
-    // Background Rendering Logic
-    // Priority: User Wallpaper > Global Theme (Desktop/Mobile) > Gradient Fallback
+    const activeWallpaper = wallpaper;
     const hasGlobalTheme = globalTheme.desktop || globalTheme.mobile;
-    const activeWallpaper = wallpaper; // Local user override
 
-    // Focus Mode: Hide wallpaper on deep work states (Module, Quiz, Activity execution)
-    // Only applied if enabled by user setting
+    // Focus Mode Logic
     const isFocusMode = enableFocusMode && (
         currentPage === 'module_view' || 
         currentPage === 'student_activity_view' || 
         (currentPage === 'quizzes' && !!activeQuiz)
     );
 
-    return (
-        <div 
-            className="relative flex h-screen overflow-hidden"
-            style={{ backgroundColor: 'var(--bg-main)' }} 
-        >
-            <OfflineIndicator />
-            <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-indigo-600 focus:rounded-md focus:shadow-lg transition-all">Pular para conteúdo</a>
+    // Dynamic Style Construction
+    // The mask now respects 'enableWallpaperMask' independently of wallpaper presence
+    // This allows it to act as a "Vignette/Filter" over the base theme color if no wallpaper is set.
+    const backgroundGradient = (!isFocusMode && enableWallpaperMask) 
+        ? 'linear-gradient(to top, var(--bg-main) 0%, rgba(var(--bg-main-rgb), 0.85) 60%, rgba(var(--bg-main-rgb), 0.4) 100%)' 
+        : (!isFocusMode && !activeWallpaper) 
+            ? 'linear-gradient(to bottom right, var(--bg-gradient-start), var(--bg-gradient-end))'
+            : 'transparent';
 
-            {/* Layer 1: Wallpaper Image (Disabled in Focus Mode) */}
+    return (
+        <div className="relative flex h-screen overflow-hidden" style={{ backgroundColor: 'var(--bg-main)' }}>
+            <OfflineIndicator />
+            
+            {/* Wallpaper Layer */}
             {!isFocusMode && activeWallpaper ? (
                 <div className="absolute inset-0 z-0">
                     <img src={activeWallpaper} alt="" className="w-full h-full object-cover opacity-90" />
@@ -310,58 +264,30 @@ const MainLayout: React.FC = () => {
             ) : !isFocusMode && hasGlobalTheme ? (
                 <div className="absolute inset-0 z-0">
                     <picture>
-                        {/* Mobile Source */}
-                        {globalTheme.mobile && (
-                            <source media="(max-width: 768px)" srcSet={globalTheme.mobile} />
-                        )}
-                        {/* Desktop/Fallback Source */}
-                        <img 
-                            src={globalTheme.desktop || globalTheme.mobile || ''} 
-                            alt="" 
-                            className="w-full h-full object-cover opacity-90" 
-                        />
+                        {globalTheme.mobile && <source media="(max-width: 768px)" srcSet={globalTheme.mobile} />}
+                        <img src={globalTheme.desktop || globalTheme.mobile || ''} alt="" className="w-full h-full object-cover opacity-90" />
                     </picture>
                 </div>
             ) : null}
 
-            {/* Layer 2: Legibility Mask or Fallback Gradient */}
+            {/* Mask/Gradient Layer (Controlled by Settings) */}
             <div 
                 className="absolute inset-0 z-0 pointer-events-none transition-opacity duration-700" 
-                style={{ 
-                    background: (!isFocusMode && (activeWallpaper || hasGlobalTheme))
-                        ? (enableWallpaperMask 
-                            ? 'linear-gradient(to top, var(--bg-main) 0%, rgba(var(--bg-main-rgb), 0.85) 60%, rgba(var(--bg-main-rgb), 0.4) 100%)' 
-                            : 'transparent')
-                        : 'linear-gradient(to bottom right, var(--bg-gradient-start), var(--bg-gradient-end))'
-                }}
+                style={{ background: backgroundGradient }} 
             />
 
-            {/* Layer 3: Main Content */}
             <div className="relative z-10 flex h-full w-full">
                 <Sidebar />
                 <div className="flex-1 flex flex-col overflow-hidden relative">
-                    {/* Animated Hamburger Trigger */}
-                    <button 
-                        onClick={toggleMobileMenu} 
-                        className={`fixed top-4 left-4 z-50 p-2.5 rounded-xl backdrop-blur-xl border transition-all duration-300 group ${
-                            isMobileMenuOpen 
-                                ? 'bg-red-500/10 border-red-500/30 text-red-400 rotate-90' 
-                                : 'bg-[#0d1117]/60 border-white/10 text-slate-200 hover:bg-[#0d1117]/90 hover:border-brand/30 hover:text-brand'
-                        }`}
-                        aria-label={isMobileMenuOpen ? "Fechar Menu" : "Abrir Menu"}
-                    >
+                    <button onClick={toggleMobileMenu} className={`fixed top-4 left-4 z-50 p-2.5 rounded-xl backdrop-blur-xl border transition-all duration-300 group ${isMobileMenuOpen ? 'bg-red-500/10 border-red-500/30 text-red-400 rotate-90' : 'bg-[#0d1117]/60 border-white/10 text-slate-200 hover:bg-[#0d1117]/90 hover:border-brand/30 hover:text-brand'}`} aria-label={isMobileMenuOpen ? "Fechar Menu" : "Abrir Menu"}>
                         <div className="relative w-5 h-4 flex flex-col justify-between overflow-hidden">
-                            {/* Line 1 */}
                             <span className={`absolute top-0 left-0 w-full h-0.5 bg-current rounded-full transition-transform duration-300 origin-center ${isMobileMenuOpen ? 'rotate-45 translate-y-[7px]' : 'translate-y-0'}`} />
-                            {/* Line 2 */}
                             <span className={`absolute top-[7px] left-0 w-full h-0.5 bg-current rounded-full transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0 translate-x-4' : 'opacity-100'}`} />
-                            {/* Line 3 */}
                             <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-current rounded-full transition-transform duration-300 origin-center ${isMobileMenuOpen ? '-rotate-45 -translate-y-[7px]' : 'translate-y-0'}`} />
                         </div>
                     </button>
-
                     <Header title={pageTitle} isScrolled={isScrolled} />
-                    <main id="main-content" ref={mainContentRef} className="flex-1 overflow-y-auto pb-6 sm:pb-8 lg:pb-10 pt-0 px-3 sm:px-4 lg:px-6 relative custom-scrollbar" tabIndex={-1} aria-label="Conteúdo principal">
+                    <main id="main-content" ref={mainContentRef} className="flex-1 overflow-y-auto pb-6 sm:pb-8 lg:pb-10 pt-0 px-3 sm:px-4 lg:px-6 relative custom-scrollbar" tabIndex={-1}>
                         <ErrorBoundary>
                             <Suspense fallback={<LoadingSpinner />}>
                                 <div className="h-full w-full max-w-[1920px] mx-auto">{renderPage()}</div>
@@ -376,34 +302,13 @@ const MainLayout: React.FC = () => {
 
 const AuthenticatedAppContent = () => {
     const { userRole } = useAuth();
-
     return (
         <NavigationProvider>
-            {userRole === 'aluno' && (
-                <StudentContextWrapper>
-                    <MainLayout />
-                </StudentContextWrapper>
-            )}
-            {(userRole === 'professor' || userRole === 'direcao') && (
-                <TeacherContextWrapper>
-                    <MainLayout />
-                </TeacherContextWrapper>
-            )}
-            {(userRole === 'admin' || userRole === 'responsavel') && (
-                <AdminContextWrapper>
-                    <MainLayout />
-                </AdminContextWrapper>
-            )}
-            {userRole === 'secretaria' && (
-                <SecretariatContextWrapper>
-                    <MainLayout />
-                </SecretariatContextWrapper>
-            )}
-            {userRole === 'secretaria_estadual' && (
-                <StateSecretariatContextWrapper>
-                    <MainLayout />
-                </StateSecretariatContextWrapper>
-            )}
+            {userRole === 'aluno' && <StudentContextWrapper><MainLayout /></StudentContextWrapper>}
+            {(userRole === 'professor' || userRole === 'direcao') && <TeacherContextWrapper><MainLayout /></TeacherContextWrapper>}
+            {(userRole === 'admin' || userRole === 'responsavel') && <AdminContextWrapper><MainLayout /></AdminContextWrapper>}
+            {userRole === 'secretaria' && <SecretariatContextWrapper><MainLayout /></SecretariatContextWrapper>}
+            {userRole === 'secretaria_estadual' && <StateSecretariatContextWrapper><MainLayout /></StateSecretariatContextWrapper>}
         </NavigationProvider>
     );
 };
@@ -415,49 +320,30 @@ const AppContent = () => {
     const [onboardingError, setOnboardingError] = useState<string | null>(null);
 
     if (authState === 'loading') return <LoadingSpinner />;
+    if (authState === 'unauthenticated') return <><OfflineIndicator /><LoginPage initialError={authError} /></>;
     
-    if (authState === 'unauthenticated') {
-        return (
-            <>
-                <OfflineIndicator />
-                <LoginPage initialError={authError} />
-            </>
-        );
-    }
-    
-    // Onboarding Logic
     if (user && !user.role) {
-        const handleError = (e: any) => setOnboardingError(e.message);
-        
         if (onboardingStep === 'role') {
             return <RoleSelectionPage error={onboardingError} onRoleSelected={async (role) => {
                 setOnboardingError(null);
-                if (role === 'aluno') {
-                    setSelectedRole('aluno');
-                    setOnboardingStep('year');
-                } else {
-                    try { await createUserProfile(role); } catch (e) { handleError(e); }
-                }
+                if (role === 'aluno') { setSelectedRole('aluno'); setOnboardingStep('year'); } 
+                else { try { await createUserProfile(role); } catch (e: any) { setOnboardingError(e.message); } }
             }} />;
         }
         return <YearSelectionPage error={onboardingError} onYearSelected={async (year) => {
             setOnboardingError(null);
-            if (selectedRole) {
-                try { await createUserProfile(selectedRole, year); } catch (e) { handleError(e); }
-            }
+            if (selectedRole) { try { await createUserProfile(selectedRole, year); } catch (e: any) { setOnboardingError(e.message); } }
         }} />;
     }
 
     return <AuthenticatedAppContent />;
 };
 
-const App = () => {
-    return (
-        <AppProviders>
-            <DebugTools />
-            <AppContent />
-        </AppProviders>
-    );
-};
+const App = () => (
+    <AppProviders>
+        <DebugTools />
+        <AppContent />
+    </AppProviders>
+);
 
 export default App;

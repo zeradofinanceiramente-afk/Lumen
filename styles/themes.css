@@ -1,14 +1,13 @@
-
 :root {
     --root-font-size: 16px;
     
-    /* Default Brand Color - Controlled by JS Accent Picker */
+    /* Default Brand Color - Space separated for Tailwind */
     --brand-color: #4ade80; 
-    --brand-rgb: 74, 222, 128;
+    --brand-rgb: 74 222 128;
     
-    /* Default Atmosphere */
+    /* Default Atmosphere (Standard) */
     --bg-main: #09090b; 
-    --bg-main-rgb: 9, 9, 11;
+    --bg-main-rgb: 9 9 11;
     --bg-gradient-start: #0f172a;
     --bg-gradient-end: #09090b;
     
@@ -16,19 +15,69 @@
     --glass-border: rgba(255, 255, 255, 0.08);
 }
 
-/* --- DMC5 ADMIN OVERRIDE --- */
+/* --- FONT PROFILES --- */
+.font-gothic, .font-gothic * { font-family: 'Cinzel Decorative', serif !important; }
+.font-confidential, .font-confidential * { font-family: 'Special Elite', monospace !important; }
+.font-cosmic, .font-cosmic * { font-family: 'Nosifer', cursive !important; }
+.font-executive, .font-executive * { font-family: 'Outfit', sans-serif !important; }
+
+/* --- ATMOSPHERES --- */
+/* Specificity increased to override defaults */
+html.oled {
+    --bg-main: #000000;
+    --bg-main-rgb: 0 0 0;
+    --bg-gradient-start: #000000;
+    --bg-gradient-end: #000000;
+}
+
+html.nebula {
+    --bg-main: #020617;
+    --bg-main-rgb: 2 6 23;
+    --bg-gradient-start: #0f172a;
+    --bg-gradient-end: #1e1b4b;
+}
+
+html.dracula {
+    --bg-main: #282a36;
+    --bg-main-rgb: 40 42 54;
+    --bg-gradient-start: #282a36;
+    --bg-gradient-end: #44475a;
+}
+
+html.paper {
+    --bg-main: #1c1917;
+    --bg-main-rgb: 28 25 23;
+    --bg-gradient-start: #1c1917;
+    --bg-gradient-end: #292524;
+}
+
+html.high-contrast {
+    --bg-main: #000000;
+    --bg-main-rgb: 0 0 0;
+    --brand-color: #ffff00;
+    --brand-rgb: 255 255 0;
+}
+
+/* --- DMC5 ADMIN CONSOLE --- */
 body.role-admin {
-    --bg-main: #050505;
-    --bg-main-rgb: 5, 5, 5;
-    --glass-bg: rgba(20, 20, 20, 0.9);
-    --glass-border: rgba(0, 210, 255, 0.3); /* Nero Blue Border */
-    --brand-color: #00d2ff; /* Nero Blue */
-    --brand-rgb: 0, 210, 255;
+    /* REMOVED HARDCODED COLORS HERE to allow Themes to cascade down */
+    /* Only apply texture and font adjustments */
     
+    --glass-bg: rgba(20, 20, 20, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.1); 
+    
+    /* Background Image sits ON TOP of the background color provided by the theme */
     background-image: 
-        linear-gradient(rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.8)),
+        linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), /* Lighter tint to let theme color show */
         url("https://grainy-gradients.vercel.app/noise.svg");
+    
     font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Fix for Admin Default Look if no theme selected (Standard) */
+html:not(.oled):not(.nebula):not(.dracula):not(.paper):not(.high-contrast) body.role-admin {
+    --bg-main: #050505;
+    --bg-main-rgb: 5 5 5;
 }
 
 body.role-admin h1, 
@@ -40,16 +89,6 @@ body.role-admin .dmc-title {
     font-weight: 900;
 }
 
-/* Glitch Animation for Admin Hover */
-@keyframes glitch-skew {
-    0% { transform: skew(0deg); }
-    20% { transform: skew(-2deg); }
-    40% { transform: skew(2deg); }
-    60% { transform: skew(-1deg); }
-    80% { transform: skew(1deg); }
-    100% { transform: skew(0deg); }
-}
-
 .dmc-btn {
     clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
     transition: all 0.2s ease-out;
@@ -57,65 +96,37 @@ body.role-admin .dmc-title {
 
 .dmc-btn:hover {
     transform: translateX(10px) scale(1.05);
-    background: rgba(255, 0, 85, 0.8) !important; /* V Pink */
+    background: rgba(var(--brand-rgb), 0.8) !important;
     color: white !important;
     text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
-    box-shadow: 0 0 20px rgba(255, 0, 85, 0.6);
+    box-shadow: 0 0 20px rgba(var(--brand-rgb), 0.6);
 }
 
-/* Rank Letters */
 .rank-sss {
-    background: -webkit-linear-gradient(#fff, #00d2ff);
+    background: -webkit-linear-gradient(#fff, var(--brand-color));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 30px rgba(0, 210, 255, 0.8);
+    text-shadow: 0 0 30px rgba(var(--brand-rgb), 0.8);
     font-style: italic;
 }
 
-/* Rest of standard themes */
-html.standard body:not(.role-admin) {
-    --bg-main: #09090b; 
-    --bg-main-rgb: 9, 9, 11;
-    --bg-gradient-start: #0f172a; 
-    --bg-gradient-end: #09090b;
-    --glass-bg: rgba(24, 24, 27, 0.6);
-    --glass-border: rgba(255, 255, 255, 0.08);
+/* --- GLOBAL TRANSITIONS --- */
+body {
+    background-color: var(--bg-main);
+    color: #f1f5f9;
+    transition: background-color 0.5s ease, color 0.3s ease;
 }
 
-/* ... (OLED, Paper, Nebula, Dracula, High-Contrast blocks remain unchanged, just ensure they have :not(.role-admin) if you want strict separation, or let JS toggle classes) */
-/* For brevity, I'm assuming the JS logic in App.tsx or Sidebar will handle the class injection */
-
-/* High Contrast (Acessibilidade) - Windows HC Inspired */
-html.high-contrast body {
-    --bg-main: #000000;
-    --bg-main-rgb: 0, 0, 0;
-    --bg-gradient-start: #000000;
-    --bg-gradient-end: #000000;
-    --glass-bg: #000000;
-    --glass-border: #ffffff;
-    color: #ffffff;
-    --brand-color: #ffff00 !important;
+.glass-panel {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
-html.high-contrast * {
-    text-shadow: none !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-    transition: none !important;
-}
-
-/* ... Rest of existing CSS ... */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-::-webkit-scrollbar-track {
-    background: transparent; 
-}
-::-webkit-scrollbar-thumb {
-    background: var(--glass-border); 
-    border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2); 
+.glass-sidebar {
+    background: rgba(var(--bg-main-rgb), 0.8);
+    border-right: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
 }
