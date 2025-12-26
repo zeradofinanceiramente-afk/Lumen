@@ -1,6 +1,6 @@
 
 // FILE: components/Sidebar.tsx
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import type { Page } from '../types';
 import { Logo, ICONS } from '../constants/index';
 import { useNavigation } from '../contexts/NavigationContext';
@@ -72,15 +72,6 @@ export const Sidebar: React.FC = () => {
     const { handleLogout: onLogout, userRole } = useAuth();
     const { t } = useLanguage();
     
-    // Inject specialized class on body for Admin
-    useEffect(() => {
-        if (userRole === 'admin') {
-            document.body.classList.add('role-admin');
-        } else {
-            document.body.classList.remove('role-admin');
-        }
-    }, [userRole]);
-
     const navItems = useMemo(() => {
         if (userRole === 'aluno') {
             return [

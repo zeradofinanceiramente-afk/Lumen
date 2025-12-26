@@ -60,7 +60,7 @@ const UrgencyTag: React.FC<{ urgency: 'low' | 'medium' | 'high' }> = ({ urgency 
     const labels = {
         low: 'INFO',
         medium: 'NORMAL',
-        high: 'URGENT',
+        high: 'URGENTE',
     };
 
     return (
@@ -215,10 +215,10 @@ const NotificationsPage: React.FC = () => {
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <span className="text-brand">●</span> Activity Feed
+                        <span className="text-brand">●</span> Feed de Atividades
                     </h1>
                     <p className="text-slate-500 font-mono text-xs mt-1">
-                        System Logs • {notifications.length} Total Events • {unreadNotificationCount} Unread
+                        Logs do Sistema • {notifications.length} Eventos • {unreadNotificationCount} Não Lidos
                     </p>
                 </div>
 
@@ -227,13 +227,13 @@ const NotificationsPage: React.FC = () => {
                         onClick={() => setFilter('all')}
                         className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${filter === 'all' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
                     >
-                        ALL
+                        TODAS
                     </button>
                     <button 
                         onClick={() => setFilter('unread')}
                         className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${filter === 'unread' ? 'bg-brand text-black shadow-sm shadow-brand/50' : 'text-slate-500 hover:text-slate-300'}`}
                     >
-                        UNREAD
+                        NÃO LIDAS
                     </button>
                 </div>
             </div>
@@ -243,14 +243,14 @@ const NotificationsPage: React.FC = () => {
                 
                 {/* Toolbar */}
                 <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-[#0F1115]">
-                    <span className="text-[10px] font-mono text-slate-500">SORT: NEWEST FIRST</span>
+                    <span className="text-[10px] font-mono text-slate-500">ORDEM: MAIS RECENTE</span>
                     <button 
                         onClick={handleMarkAll}
                         disabled={unreadNotificationCount === 0 || isUpdating}
                         className="text-[10px] font-mono font-bold text-brand hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
                     >
                         {isUpdating && <SpinnerIcon className="h-3 w-3" />}
-                        [ MARK ALL READ ]
+                        [ MARCAR TODAS COMO LIDAS ]
                     </button>
                 </div>
 
@@ -273,8 +273,8 @@ const NotificationsPage: React.FC = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
-                            <p className="font-mono text-sm">NO NEW EVENTS</p>
-                            <p className="text-xs">System is up to date.</p>
+                            <p className="font-mono text-sm">SEM NOVOS EVENTOS</p>
+                            <p className="text-xs">O sistema está atualizado.</p>
                         </div>
                     )}
                 </div>
@@ -285,7 +285,7 @@ const NotificationsPage: React.FC = () => {
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
                     <div className="bg-[#0F1115] border border-brand p-6 rounded-xl shadow-[0_0_30px_rgba(var(--brand-rgb),0.3)] flex flex-col items-center">
                         <SpinnerIcon className="h-8 w-8 text-brand animate-spin mb-4" />
-                        <span className="text-white font-mono text-sm tracking-widest">LOADING RESOURCE...</span>
+                        <span className="text-white font-mono text-sm tracking-widest">CARREGANDO RECURSO...</span>
                     </div>
                 </div>
             )}

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useSettings, PRESET_THEMES } from '../contexts/SettingsContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -16,7 +17,8 @@ export const AdminProfileView: React.FC = () => {
         fontProfile, setFontProfile, updateWallpaper, removeWallpaper, 
         wallpaper: contextWallpaper,
         enableWallpaperMask, setEnableWallpaperMask,
-        enableFocusMode, setEnableFocusMode
+        enableFocusMode, setEnableFocusMode,
+        isHighContrastText, setIsHighContrastText
     } = useSettings();
     const { addToast } = useToast();
 
@@ -94,7 +96,13 @@ export const AdminProfileView: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen animate-fade-in pb-20 font-sans select-none">
+        <div 
+            className="min-h-screen animate-fade-in pb-20 font-sans select-none"
+            style={{ 
+                backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url("https://grainy-gradients.vercel.app/noise.svg")',
+                backgroundColor: '#050505'
+            }}
+        >
             {/* Header Estilo Terminal */}
             <div className="relative mb-12 py-10 border-b border-[#00d2ff]/20 bg-gradient-to-r from-[#00d2ff]/10 to-transparent pl-6">
                 <h1 className="text-6xl font-black text-white uppercase italic tracking-tighter dmc-title shadow-cyan-500/50">
@@ -105,7 +113,7 @@ export const AdminProfileView: React.FC = () => {
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 p-6">
                 {/* Coluna 1: Identidade e Dados do Operador */}
                 <div className="lg:col-span-4 space-y-8">
                     <div className="bg-black border border-[#00d2ff]/30 p-8 relative overflow-hidden group">
@@ -177,9 +185,15 @@ export const AdminProfileView: React.FC = () => {
                                         <button 
                                             key={preset.id} 
                                             onClick={() => applyThemePreset(preset.id)}
-                                            className={`h-14 border font-bold text-[10px] uppercase transition-all ${theme === preset.id ? 'bg-[#00d2ff] border-[#00d2ff] text-black shadow-[0_0_15px_#00d2ff]' : 'bg-black border-slate-700 text-slate-500 hover:border-slate-500'}`}
+                                            className={`h-14 border font-bold text-[10px] uppercase transition-all relative overflow-hidden ${theme === preset.id ? 'border-[#00d2ff] scale-105 shadow-[0_0_15px_#00d2ff]' : 'border-slate-800 hover:border-slate-500'}`}
+                                            style={{
+                                                background: `linear-gradient(135deg, ${preset.colors[0]}, ${preset.colors[1]})`,
+                                                color: '#fff',
+                                                textShadow: '0 1px 2px rgba(0,0,0,0.8)'
+                                            }}
                                         >
-                                            {preset.label}
+                                            <div className="absolute inset-0 bg-black opacity-20 hover:opacity-0 transition-opacity" />
+                                            <span className="relative z-10">{preset.label}</span>
                                         </button>
                                     ))}
                                 </div>
@@ -187,6 +201,10 @@ export const AdminProfileView: React.FC = () => {
                                 <div className="pt-6 border-t border-white/5 space-y-4">
                                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Comportamento_do_Console</p>
                                     <div className="space-y-3">
+                                        <label className="flex items-center gap-3 cursor-pointer group">
+                                            <input type="checkbox" checked={isHighContrastText} onChange={e => setIsHighContrastText(e.target.checked)} className="w-4 h-4 rounded border-white/20 bg-black text-[#00d2ff] focus:ring-[#00d2ff]" />
+                                            <span className="text-xs font-mono text-slate-500 group-hover:text-white uppercase transition-colors">Texto_Alto_Contraste [WCAG]</span>
+                                        </label>
                                         <label className="flex items-center gap-3 cursor-pointer group">
                                             <input type="checkbox" checked={enableWallpaperMask} onChange={e => setEnableWallpaperMask(e.target.checked)} className="w-4 h-4 rounded border-white/20 bg-black text-[#00d2ff] focus:ring-[#00d2ff]" />
                                             <span className="text-xs font-mono text-slate-500 group-hover:text-white uppercase transition-colors">Máscara_de_Fundo [ACTIVE]</span>
@@ -229,7 +247,7 @@ export const AdminProfileView: React.FC = () => {
                                         type="color" 
                                         value={accentColor} 
                                         onChange={e => setAccentColor(e.target.value)} 
-                                        className="w-10 h-10 bg-transparent border-0 cursor-pointer" 
+                                        className="w-10 h-10 bg-transparent border-0 cursor-pointer p-0" 
                                     />
                                 </div>
                                 <button 

@@ -1,3 +1,4 @@
+
 :root {
     --root-font-size: 16px;
     
@@ -11,6 +12,7 @@
     --bg-gradient-start: #0f172a;
     --bg-gradient-end: #09090b;
     
+    /* Default Glass (Dark Tint) */
     --glass-bg: rgba(24, 24, 27, 0.6);
     --glass-border: rgba(255, 255, 255, 0.08);
 }
@@ -21,13 +23,44 @@
 .font-cosmic, .font-cosmic * { font-family: 'Nosifer', cursive !important; }
 .font-executive, .font-executive * { font-family: 'Outfit', sans-serif !important; }
 
+/* --- ACCESSIBILITY: HIGH CONTRAST TEXT OVERRIDE --- */
+html.high-contrast-text body {
+    font-weight: 600 !important;
+}
+
+html.high-contrast-text * {
+    text-shadow: none !important;
+}
+
+html.high-contrast-text.dark .text-slate-400,
+html.high-contrast-text.dark .text-slate-500,
+html.high-contrast-text.dark .text-slate-600,
+html.high-contrast-text.dark .text-gray-400,
+html.high-contrast-text.dark .text-gray-500 {
+    color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+html.high-contrast-text.dark .border-white\/10,
+html.high-contrast-text.dark .border-white\/5 {
+    border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+html.high-contrast-text .glass-panel,
+html.high-contrast-text .glass-sidebar {
+    background: rgba(0, 0, 0, 0.95) !important;
+    border: 1px solid #ffffff !important;
+}
+
 /* --- ATMOSPHERES --- */
-/* Specificity increased to override defaults */
+
 html.oled {
     --bg-main: #000000;
     --bg-main-rgb: 0 0 0;
     --bg-gradient-start: #000000;
     --bg-gradient-end: #000000;
+    --glass-bg: rgba(0, 0, 0, 0.85);
+    --glass-border: rgba(50, 50, 50, 0.3);
 }
 
 html.nebula {
@@ -35,6 +68,8 @@ html.nebula {
     --bg-main-rgb: 2 6 23;
     --bg-gradient-start: #0f172a;
     --bg-gradient-end: #1e1b4b;
+    --glass-bg: rgba(15, 23, 42, 0.7);
+    --glass-border: rgba(99, 102, 241, 0.15);
 }
 
 html.dracula {
@@ -42,6 +77,8 @@ html.dracula {
     --bg-main-rgb: 40 42 54;
     --bg-gradient-start: #282a36;
     --bg-gradient-end: #44475a;
+    --glass-bg: rgba(40, 42, 54, 0.8);
+    --glass-border: rgba(189, 147, 249, 0.1);
 }
 
 html.paper {
@@ -49,6 +86,8 @@ html.paper {
     --bg-main-rgb: 28 25 23;
     --bg-gradient-start: #1c1917;
     --bg-gradient-end: #292524;
+    --glass-bg: rgba(28, 25, 23, 0.85);
+    --glass-border: rgba(214, 211, 209, 0.1);
 }
 
 html.high-contrast {
@@ -56,58 +95,242 @@ html.high-contrast {
     --bg-main-rgb: 0 0 0;
     --brand-color: #ffff00;
     --brand-rgb: 255 255 0;
+    --bg-gradient-start: #000000;
+    --bg-gradient-end: #000000;
+    --glass-bg: #000000;
+    --glass-border: #ffff00;
 }
 
-/* --- DMC5 ADMIN CONSOLE --- */
-body.role-admin {
-    /* REMOVED HARDCODED COLORS HERE to allow Themes to cascade down */
-    /* Only apply texture and font adjustments */
-    
-    --glass-bg: rgba(20, 20, 20, 0.9);
-    --glass-border: rgba(255, 255, 255, 0.1); 
-    
-    /* Background Image sits ON TOP of the background color provided by the theme */
-    background-image: 
-        linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), /* Lighter tint to let theme color show */
-        url("https://grainy-gradients.vercel.app/noise.svg");
-    
-    font-family: 'Space Grotesk', sans-serif;
+html.repository {
+    --bg-main: #0d1117;
+    --bg-main-rgb: 13 17 23;
+    --bg-gradient-start: #161b22;
+    --bg-gradient-end: #0d1117;
+    --glass-bg: rgba(22, 27, 34, 0.95);
+    --glass-border: rgba(48, 54, 61, 0.8);
 }
 
-/* Fix for Admin Default Look if no theme selected (Standard) */
-html:not(.oled):not(.nebula):not(.dracula):not(.paper):not(.high-contrast) body.role-admin {
-    --bg-main: #050505;
-    --bg-main-rgb: 5 5 5;
+html.matrix {
+    --bg-main: #020202;
+    --bg-main-rgb: 2 2 2;
+    --brand-color: #22c55e;
+    --brand-rgb: 34 197 94;
+    --bg-gradient-start: #000000;
+    --bg-gradient-end: #052e16;
+    --glass-bg: rgba(0, 20, 0, 0.8);
+    --glass-border: rgba(34, 197, 94, 0.3);
 }
 
-body.role-admin h1, 
-body.role-admin h2, 
-body.role-admin .dmc-title {
-    font-family: 'Cinzel', serif !important;
+html.synthwave {
+    --bg-main: #2e022d;
+    --bg-main-rgb: 46 2 45;
+    --brand-color: #d946ef;
+    --brand-rgb: 217 70 239;
+    --bg-gradient-start: #4a044e;
+    --bg-gradient-end: #1a0b2e;
+    --glass-bg: rgba(60, 20, 60, 0.7);
+    --glass-border: rgba(217, 70, 239, 0.3);
+}
+
+html.sith {
+    --bg-main: #0a0000;
+    --bg-main-rgb: 10 0 0;
+    --brand-color: #ef4444;
+    --brand-rgb: 239 68 68;
+    --bg-gradient-start: #1a0000;
+    --bg-gradient-end: #0a0000;
+    --glass-bg: rgba(20, 5, 5, 0.9);
+    --glass-border: rgba(220, 38, 38, 0.2);
+}
+
+html.eva {
+    --bg-main: #1e1b4b;
+    --bg-main-rgb: 30 27 75;
+    --brand-color: #a3e635;
+    --brand-rgb: 163 230 53;
+    --bg-gradient-start: #2e1065;
+    --bg-gradient-end: #1e1b4b;
+    --glass-bg: rgba(40, 20, 80, 0.8);
+    --glass-border: rgba(163, 230, 53, 0.3);
+}
+
+html.limitless {
+    --bg-main: #000000;
+    --bg-main-rgb: 0 0 0;
+    --brand-color: #00d2ff;
+    --brand-rgb: 0 210 255;
+    --bg-gradient-start: #000000;
+    --bg-gradient-end: #02020a;
+    --glass-bg: rgba(5, 5, 10, 0.9); 
+    --glass-border: rgba(255, 255, 255, 0.15);
+}
+
+html.restless-dreams {
+    --bg-main: #0c0a09; 
+    --bg-main-rgb: 12 10 9;
+    --brand-color: #8a1c1c;
+    --brand-rgb: 138 28 28;
+    --bg-gradient-start: #1c1917;
+    --bg-gradient-end: #0a0a08;
+    --glass-bg: rgba(20, 20, 18, 0.9); 
+    --glass-border: rgba(120, 113, 108, 0.2);
+}
+
+html.restless-dreams body {
+    position: relative;
+    font-family: 'Special Elite', monospace !important;
+}
+
+html.restless-dreams body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+    opacity: 0.08;
+    pointer-events: none;
+    z-index: 9998;
+    mix-blend-mode: overlay;
+    animation: static-shift 2s infinite steps(4);
+}
+
+html.restless-dreams body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle, transparent 40%, rgba(0, 0, 0, 0.7) 100%);
+    pointer-events: none;
+    z-index: 9999;
+}
+
+html.restless-dreams .glass-panel,
+html.restless-dreams .glass-sidebar {
+    border: 1px solid #44403c;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+    background: rgba(15, 14, 13, 0.95);
+}
+
+html.restless-dreams input,
+html.restless-dreams textarea,
+html.restless-dreams select {
+    background-color: #000000 !important;
+    border: 1px solid #292524 !important;
+    color: #d6d3d1 !important;
+}
+
+html.restless-dreams button {
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 900;
+    letter-spacing: 0.1em;
 }
 
-.dmc-btn {
-    clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
-    transition: all 0.2s ease-out;
+/* --- THEME: SHADOW MONARCH (Solo Leveling) --- */
+html.shadow-monarch {
+    --bg-main: #050510; /* Dark Navy/Black Abyss */
+    --bg-main-rgb: 5 5 16;
+    /* Electric Blue from the System Windows */
+    --brand-color: #00a8ff; 
+    --brand-rgb: 0 168 255;
+    
+    --bg-gradient-start: #02020a;
+    --bg-gradient-end: #0a0a1a;
+    
+    /* System Window Look */
+    --glass-bg: rgba(2, 6, 23, 0.85);
+    --glass-border: rgba(0, 168, 255, 0.3); /* Blue glowing border */
 }
 
-.dmc-btn:hover {
-    transform: translateX(10px) scale(1.05);
-    background: rgba(var(--brand-rgb), 0.8) !important;
-    color: white !important;
-    text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
-    box-shadow: 0 0 20px rgba(var(--brand-rgb), 0.6);
+/* Solo Leveling: Specific UI Overrides */
+html.shadow-monarch body {
+    font-family: 'Orbitron', sans-serif !important; /* System Font */
 }
 
-.rank-sss {
-    background: -webkit-linear-gradient(#fff, var(--brand-color));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 30px rgba(var(--brand-rgb), 0.8);
-    font-style: italic;
+html.shadow-monarch .glass-panel,
+html.shadow-monarch .glass-sidebar {
+    border: 1px solid var(--brand-color);
+    box-shadow: 0 0 15px rgba(0, 168, 255, 0.15), inset 0 0 20px rgba(0, 168, 255, 0.05);
+    background: rgba(5, 5, 15, 0.9);
+}
+
+/* Purple Accents for "Shadows" (Igris/Beru vibe) */
+html.shadow-monarch h1, 
+html.shadow-monarch h2,
+html.shadow-monarch strong {
+    text-shadow: 0 0 10px rgba(0, 168, 255, 0.5);
+}
+
+html.shadow-monarch button {
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* --- THEME: WORLD ON FIRE (Daredevil) --- */
+html.world-on-fire {
+    --bg-main: #0a0000; /* Pitch Black with Red Tint */
+    --bg-main-rgb: 10 0 0;
+    /* Blood Red / Radar Red */
+    --brand-color: #dc2626; 
+    --brand-rgb: 220 38 38;
+    
+    --bg-gradient-start: #1a0505;
+    --bg-gradient-end: #000000;
+    
+    --glass-bg: rgba(10, 0, 0, 0.9);
+    --glass-border: rgba(220, 38, 38, 0.2);
+}
+
+html.world-on-fire body::before {
+    /* RADAR SENSE OVERLAY */
+    content: "";
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 200vw;
+    height: 200vw;
+    transform: translate(-50%, -50%);
+    background: repeating-radial-gradient(
+      circle,
+      transparent 0%,
+      transparent 9%,
+      rgba(220, 38, 38, 0.05) 10%
+    );
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 0;
+    animation: radar-pulse 8s linear infinite;
+}
+
+/* Gritty Texture */
+html.world-on-fire body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+    opacity: 0.05;
+    pointer-events: none;
+    z-index: 1;
+    mix-blend-mode: overlay;
+}
+
+@keyframes radar-pulse {
+    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+    50% { opacity: 0.4; }
+    100% { transform: translate(-50%, -50%) scale(1.2); opacity: 0; }
+}
+
+@keyframes static-shift {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(-2px, 2px); }
+    50% { transform: translate(2px, -2px); }
+    75% { transform: translate(-2px, -2px); }
+    100% { transform: translate(0, 0); }
 }
 
 /* --- GLOBAL TRANSITIONS --- */
@@ -122,11 +345,13 @@ body {
     border: 1px solid var(--glass-border);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+    transition: background 0.5s ease, border-color 0.5s ease;
 }
 
 .glass-sidebar {
-    background: rgba(var(--bg-main-rgb), 0.8);
+    background: var(--glass-bg); 
     border-right: 1px solid var(--glass-border);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    transition: background 0.5s ease, border-color 0.5s ease;
 }

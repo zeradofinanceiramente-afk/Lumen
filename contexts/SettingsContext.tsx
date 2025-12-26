@@ -1,16 +1,17 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { getWallpaper, saveWallpaper, deleteWallpaper } from '../utils/wallpaperManager';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../components/firebaseClient';
 
-export type Theme = 'standard' | 'oled' | 'paper' | 'nebula' | 'dracula' | 'high-contrast';
+export type Theme = 'standard' | 'oled' | 'paper' | 'nebula' | 'dracula' | 'high-contrast' | 'matrix' | 'synthwave' | 'repository' | 'sith' | 'eva' | 'limitless' | 'restless-dreams' | 'shadow-monarch' | 'world-on-fire';
 export type FontProfile = 'standard' | 'gothic' | 'confidential' | 'cosmic' | 'executive';
 
 export interface ThemePreset {
     id: Theme;
     label: string;
     accent: string; 
-    colors: [string, string]; 
+    colors: [string, string]; // Start and End gradient colors for preview
 }
 
 export interface GlobalTheme {
@@ -21,10 +22,19 @@ export interface GlobalTheme {
 
 export const PRESET_THEMES: ThemePreset[] = [
     { id: 'standard', label: 'Padrão', accent: '#4ade80', colors: ['#09090b', '#18181b'] },
-    { id: 'oled', label: 'OLED (Pure Black)', accent: '#ffffff', colors: ['#000000', '#000000'] },
-    { id: 'paper', label: 'Papel de Arroz', accent: '#d6d3d1', colors: ['#1c1917', '#292524'] },
+    { id: 'shadow-monarch', label: 'Shadow Monarch', accent: '#00a8ff', colors: ['#050510', '#020617'] }, // Solo Leveling
+    { id: 'world-on-fire', label: 'Hell\'s Kitchen', accent: '#dc2626', colors: ['#0a0000', '#1a0505'] }, // Daredevil
+    { id: 'limitless', label: 'Limitless', accent: '#00d2ff', colors: ['#000000', '#0a0a1a'] },
+    { id: 'restless-dreams', label: 'Restless Dreams', accent: '#8a1c1c', colors: ['#1a1c1a', '#0f0f0e'] },
+    { id: 'oled', label: 'OLED', accent: '#ffffff', colors: ['#000000', '#000000'] },
+    { id: 'repository', label: 'Repository', accent: '#3b82f6', colors: ['#0d1117', '#161b22'] },
+    { id: 'sith', label: 'Sith', accent: '#ef4444', colors: ['#0f0505', '#2a0505'] },
+    { id: 'eva', label: 'Unit-01', accent: '#a3e635', colors: ['#2e1065', '#4c1d95'] },
+    { id: 'matrix', label: 'Matrix', accent: '#22c55e', colors: ['#000000', '#052e16'] },
+    { id: 'synthwave', label: 'Synthwave', accent: '#d946ef', colors: ['#2e022d', '#4a044e'] },
     { id: 'nebula', label: 'Nebula', accent: '#818cf8', colors: ['#0f172a', '#312e81'] },
     { id: 'dracula', label: 'Dracula', accent: '#bd93f9', colors: ['#282a36', '#44475a'] },
+    { id: 'paper', label: 'Papiro', accent: '#d6d3d1', colors: ['#1c1917', '#292524'] },
     { id: 'high-contrast', label: 'Alto Contraste', accent: '#ffff00', colors: ['#000000', '#ffffff'] },
 ];
 
@@ -54,7 +64,6 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 const hexToRgb = (hex: string) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    // Tailwind / CSS Modern color functions expect space separated values for alpha support
     return result ? `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}` : '74 222 128';
 };
 
@@ -70,7 +79,6 @@ export function SettingsProvider({ children }: { children?: React.ReactNode }) {
     const [accentColor, setAccentColorState] = useState<string>('#4ade80');
     const [fontProfile, setFontProfileState] = useState<FontProfile>('standard');
 
-    // Helper function to set CSS variables for colors
     const applyAccentToDOM = (color: string) => {
         document.documentElement.style.setProperty('--brand-color', color);
         document.documentElement.style.setProperty('--brand-rgb', hexToRgb(color));
@@ -103,6 +111,16 @@ export function SettingsProvider({ children }: { children?: React.ReactNode }) {
         getWallpaper().then(url => { if (url) setWallpaper(url); });
     }, []);
 
+    // Apply High Contrast Text class to HTML
+    useEffect(() => {
+        const root = document.documentElement;
+        if (isHighContrastText) {
+            root.classList.add('high-contrast-text');
+        } else {
+            root.classList.remove('high-contrast-text');
+        }
+    }, [isHighContrastText]);
+
     useEffect(() => {
         const unsubscribe = onSnapshot(doc(db, 'system_settings', 'theme_config'), (doc) => {
             if (doc.exists()) {
@@ -129,7 +147,6 @@ export function SettingsProvider({ children }: { children?: React.ReactNode }) {
         root.classList.add(theme);
         root.classList.add('dark');
         
-        // Font Profile Sync
         const body = document.body;
         body.classList.remove('font-gothic', 'font-confidential', 'font-cosmic', 'font-executive');
         if (fontProfile !== 'standard') body.classList.add(`font-${fontProfile}`);
@@ -169,17 +186,25 @@ export function SettingsProvider({ children }: { children?: React.ReactNode }) {
         localStorage.setItem('app-font-profile', font);
     };
 
+    const toggleHighContrastText = (value: boolean) => {
+        setIsHighContrastText(value);
+        localStorage.setItem('app-high-contrast-text', String(value));
+    }
+
     const applyThemePreset = (presetId: Theme) => {
         setTheme(presetId);
+        const preset = PRESET_THEMES.find(p => p.id === presetId);
+        if (preset) {
+            setAccentColor(preset.accent);
+        }
         if (presetId === 'high-contrast') {
-            setIsHighContrastText(true);
-            setAccentColor('#ffff00'); 
+            toggleHighContrastText(true);
         }
     };
 
     const value = { 
         theme, setTheme, applyThemePreset,
-        isHighContrastText, setIsHighContrastText,
+        isHighContrastText, setIsHighContrastText: toggleHighContrastText,
         wallpaper, globalTheme, 
         enableWallpaperMask, setEnableWallpaperMask, 
         enableFocusMode, setEnableFocusMode,

@@ -1,3 +1,4 @@
+
 import React, { lazy, Suspense, useState, useRef, useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import { NavigationProvider, useNavigation } from './contexts/NavigationContext';
@@ -11,6 +12,7 @@ import { RoleSelectionPage } from './components/RoleSelectionPage';
 import { YearSelectionPage } from './components/YearSelectionPage';
 import type { Page, Role } from './types';
 import './styles/themes.css';
+import './styles/admin.css';
 
 // Providers
 import { AppProviders } from './components/AppProviders';
@@ -244,19 +246,20 @@ const MainLayout: React.FC = () => {
     );
 
     // Dynamic Style Construction
-    // The mask now respects 'enableWallpaperMask' independently of wallpaper presence
-    // This allows it to act as a "Vignette/Filter" over the base theme color if no wallpaper is set.
+    // Mask logic restored: Strong gradient from bottom-left (45deg)
+    // Uses CSS Variables from themes.css to ensure color matches the selected Atmosphere
+    // FIXED: Used rgb(var(...) / alpha) syntax for space-separated RGB variables
     const backgroundGradient = (!isFocusMode && enableWallpaperMask) 
-        ? 'linear-gradient(to top, var(--bg-main) 0%, rgba(var(--bg-main-rgb), 0.85) 60%, rgba(var(--bg-main-rgb), 0.4) 100%)' 
+        ? 'linear-gradient(45deg, rgb(var(--bg-main-rgb) / 0.98) 0%, rgb(var(--bg-main-rgb) / 0.85) 40%, rgb(var(--bg-main-rgb) / 0.4) 100%)' 
         : (!isFocusMode && !activeWallpaper) 
             ? 'linear-gradient(to bottom right, var(--bg-gradient-start), var(--bg-gradient-end))'
             : 'transparent';
 
     return (
-        <div className="relative flex h-screen overflow-hidden" style={{ backgroundColor: 'var(--bg-main)' }}>
+        <div className={`relative flex h-screen overflow-hidden ${userRole === 'admin' ? 'admin-container' : ''}`} style={{ backgroundColor: 'var(--bg-main)' }}>
             <OfflineIndicator />
             
-            {/* Wallpaper Layer */}
+            {/* Wallpaper Layer (Z-0) */}
             {!isFocusMode && activeWallpaper ? (
                 <div className="absolute inset-0 z-0">
                     <img src={activeWallpaper} alt="" className="w-full h-full object-cover opacity-90" />
@@ -270,12 +273,13 @@ const MainLayout: React.FC = () => {
                 </div>
             ) : null}
 
-            {/* Mask/Gradient Layer (Controlled by Settings) */}
+            {/* Mask/Gradient Layer (Z-1) - Overlays wallpaper but sits behind content */}
             <div 
-                className="absolute inset-0 z-0 pointer-events-none transition-opacity duration-700" 
+                className="absolute inset-0 z-[1] pointer-events-none transition-all duration-700 ease-in-out" 
                 style={{ background: backgroundGradient }} 
             />
 
+            {/* Content Layer (Z-10) */}
             <div className="relative z-10 flex h-full w-full">
                 <Sidebar />
                 <div className="flex-1 flex flex-col overflow-hidden relative">

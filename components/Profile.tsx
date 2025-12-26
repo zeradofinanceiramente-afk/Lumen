@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSettings, PRESET_THEMES } from '../contexts/SettingsContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -103,7 +104,8 @@ const GamifiedProfileView: React.FC<ProfileViewProps> = (props) => {
         theme, applyThemePreset, accentColor, setAccentColor,
         fontProfile, setFontProfile,
         enableWallpaperMask, setEnableWallpaperMask,
-        enableFocusMode, setEnableFocusMode
+        enableFocusMode, setEnableFocusMode,
+        isHighContrastText, setIsHighContrastText
     } = useSettings();
     
     const { userStats } = useStudentGamificationContext();
@@ -236,9 +238,20 @@ const GamifiedProfileView: React.FC<ProfileViewProps> = (props) => {
                             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Atmosfera do Ambiente</p>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 {PRESET_THEMES.map(preset => (
-                                    <button key={preset.id} onClick={() => applyThemePreset(preset.id)} className={`relative h-16 group overflow-hidden border transition-all duration-300 ${theme === preset.id ? 'border-brand bg-white/5' : 'border-slate-800 bg-black hover:border-slate-600'}`}>
-                                        <div className="absolute inset-0 flex items-center justify-center z-10"><span className={`text-xs font-bold uppercase tracking-wider ${theme === preset.id ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`}>{preset.label}</span></div>
-                                        <div className="absolute bottom-0 right-0 w-8 h-8 bg-current opacity-20 transform skew-x-12 translate-y-4 translate-x-2" style={{ color: preset.accent }} />
+                                    <button 
+                                        key={preset.id} 
+                                        onClick={() => applyThemePreset(preset.id)} 
+                                        className={`relative h-20 group overflow-hidden border transition-all duration-300 ${theme === preset.id ? 'border-brand scale-[1.02] shadow-[0_0_15px_rgba(var(--brand-rgb),0.3)]' : 'border-slate-800 hover:border-slate-600'}`}
+                                        style={{
+                                            background: `linear-gradient(135deg, ${preset.colors[0]}, ${preset.colors[1]})`
+                                        }}
+                                    >
+                                        <div className="absolute inset-0 bg-black opacity-20 group-hover:opacity-0 transition-opacity" />
+                                        <div className="absolute inset-0 flex items-center justify-center z-10">
+                                            <span className={`text-xs font-bold uppercase tracking-wider drop-shadow-md text-white`}>{preset.label}</span>
+                                        </div>
+                                        {/* Accent Preview Dot */}
+                                        <div className="absolute bottom-2 right-2 w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: preset.accent }} />
                                     </button>
                                 ))}
                             </div>
@@ -273,8 +286,17 @@ const GamifiedProfileView: React.FC<ProfileViewProps> = (props) => {
                         </div>
 
                         <div className="space-y-4 pt-4 border-t border-white/5">
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Modos de Operação</p>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Acessibilidade e Foco</p>
                             <div className="flex flex-wrap gap-6">
+                                <label className="flex items-center gap-3 cursor-pointer group">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={isHighContrastText} 
+                                        onChange={e => setIsHighContrastText(e.target.checked)}
+                                        className="w-4 h-4 rounded border-white/20 bg-black text-brand focus:ring-brand"
+                                    />
+                                    <span className="text-xs font-bold text-slate-400 group-hover:text-white uppercase tracking-wider transition-colors">Texto em Alto Contraste (WCAG)</span>
+                                </label>
                                 <label className="flex items-center gap-3 cursor-pointer group">
                                     <input 
                                         type="checkbox" 
@@ -309,7 +331,8 @@ const GamifiedProfileView: React.FC<ProfileViewProps> = (props) => {
 const EnterpriseProfileView: React.FC<ProfileViewProps> = (props) => {
     const { 
         theme, applyThemePreset, accentColor, setAccentColor, fontProfile, setFontProfile,
-        enableWallpaperMask, setEnableWallpaperMask, enableFocusMode, setEnableFocusMode
+        enableWallpaperMask, setEnableWallpaperMask, enableFocusMode, setEnableFocusMode,
+        isHighContrastText, setIsHighContrastText
     } = useSettings();
     const { user, isEditing, setIsEditing, name, setName, avatarUrl, handleSave, handleAvatarFileChange, isUploadingAvatar } = props;
 
@@ -350,7 +373,18 @@ const EnterpriseProfileView: React.FC<ProfileViewProps> = (props) => {
                                 <p className="text-sm font-bold text-slate-500 uppercase mb-3">Atmosfera</p>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                     {PRESET_THEMES.map(p => (
-                                        <button key={p.id} onClick={() => applyThemePreset(p.id)} className={`p-3 border rounded text-xs font-bold ${theme === p.id ? 'border-brand bg-brand/5' : 'border-slate-200'}`}>{p.label}</button>
+                                        <button 
+                                            key={p.id} 
+                                            onClick={() => applyThemePreset(p.id)} 
+                                            className={`p-3 border rounded text-xs font-bold transition-all relative overflow-hidden ${theme === p.id ? 'border-brand ring-2 ring-brand/20' : 'border-slate-200 dark:border-slate-600'}`}
+                                            style={{
+                                                background: `linear-gradient(135deg, ${p.colors[0]}, ${p.colors[1]})`,
+                                                color: '#fff',
+                                                textShadow: '0 1px 2px rgba(0,0,0,0.8)'
+                                            }}
+                                        >
+                                            {p.label}
+                                        </button>
                                     ))}
                                 </div>
                             </div>
@@ -382,6 +416,10 @@ const EnterpriseProfileView: React.FC<ProfileViewProps> = (props) => {
                             <div className="pt-4 border-t border-slate-100 dark:border-slate-700">
                                 <p className="text-sm font-bold text-slate-500 uppercase mb-4">Acessibilidade e Comportamento</p>
                                 <div className="space-y-3">
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <input type="checkbox" checked={isHighContrastText} onChange={e => setIsHighContrastText(e.target.checked)} className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500" />
+                                        <span className="text-sm text-slate-700 dark:text-slate-300">Modo de Texto em Alto Contraste</span>
+                                    </label>
                                     <label className="flex items-center gap-3 cursor-pointer">
                                         <input type="checkbox" checked={enableWallpaperMask} onChange={e => setEnableWallpaperMask(e.target.checked)} className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500" />
                                         <span className="text-sm text-slate-700 dark:text-slate-300">Habilitar máscara de leitura sobre papéis de parede</span>
