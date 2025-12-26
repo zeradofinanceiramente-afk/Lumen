@@ -260,9 +260,9 @@ const GamifiedProfileView: React.FC<ProfileViewProps> = (props) => {
                         <div className="mb-8">
                             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Estilo de Codificação (Fontes)</p>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                {(['standard', 'gothic', 'confidential', 'cosmic', 'executive'] as const).map(f => (
+                                {(['standard', 'gothic', 'confidential', 'code', 'cute', 'executive'] as const).map(f => (
                                     <button key={f} onClick={() => setFontProfile(f)} className={`p-3 border text-xs font-bold uppercase transition-all ${fontProfile === f ? 'border-brand bg-brand/10 text-brand' : 'border-slate-800 bg-black text-slate-500 hover:border-slate-600'}`}>
-                                        {f === 'standard' ? 'Padrão' : f === 'gothic' ? 'Legado' : f === 'confidential' ? 'Arquivo' : f === 'cosmic' ? 'Terror' : 'Executivo'}
+                                        {f === 'standard' ? 'Padrão' : f === 'gothic' ? 'Legado' : f === 'confidential' ? 'Arquivo' : f === 'code' ? 'Código' : f === 'cute' ? 'Fofura' : 'Executivo'}
                                     </button>
                                 ))}
                             </div>

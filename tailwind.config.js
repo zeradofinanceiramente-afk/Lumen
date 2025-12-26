@@ -17,7 +17,8 @@ export default {
         modern: ['Space Grotesk', 'sans-serif'],
         // Novos Perfis
         typewriter: ['Special Elite', 'monospace'],
-        horror: ['Nosifer', 'cursive'],
+        code: ['Fira Code', 'monospace'],
+        cute: ['Fredoka', 'sans-serif'],
         executive: ['Outfit', 'sans-serif'],
         inter: ['Inter', 'sans-serif'],
       },

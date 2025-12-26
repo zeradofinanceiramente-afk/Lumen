@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect, useContext, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useContext, useMemo, useCallback } from 'react';
 import { useStudentAcademic } from '../contexts/StudentAcademicContext';
 import { useNavigation } from '../contexts/NavigationContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -55,7 +55,8 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
     );
 };
 
-const ActivityCard: React.FC<{ activity: Activity; submission?: ActivitySubmission; onClick: () => void }> = ({ activity, submission, onClick }) => {
+// Memoized Card for Performance
+const ActivityCard: React.FC<{ activity: Activity; submission?: ActivitySubmission; onClick: () => void }> = React.memo(({ activity, submission, onClick }) => {
     const statusText = submission?.status || null;
     const isNew = !submission && isRecent(activity.createdAt);
     
@@ -64,12 +65,6 @@ const ActivityCard: React.FC<{ activity: Activity; submission?: ActivitySubmissi
     // Theme base on subject
     const theme = getSubjectTheme(activity.materia);
 
-    // Rarity Color Logic (Based on points) - Combined with Subject Theme
-    const points = activity.points || 0;
-    
-    // Use border-left color for subject identification (Task Style)
-    // The main border will be subtle unless hovered
-    
     return (
         <div 
             onClick={onClick}
@@ -80,9 +75,10 @@ const ActivityCard: React.FC<{ activity: Activity; submission?: ActivitySubmissi
                 rounded-r-xl overflow-hidden 
                 transition-all duration-300 cursor-pointer hover:-translate-y-1
                 hover:shadow-[0_0_30px_-5px_rgba(0,0,0,0.3)]
+                will-change-transform
             `}
         >
-            {/* Background Texture */}
+            {/* Background Texture - Optimized for reduced motion */}
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none" />
             
             {/* Gradient Flush on Hover based on Subject */}
@@ -142,9 +138,9 @@ const ActivityCard: React.FC<{ activity: Activity; submission?: ActivitySubmissi
             </div>
         </div>
     );
-};
+});
 
-const HeroStats: React.FC<{ totalAvailable: number; totalXp: number }> = ({ totalAvailable, totalXp }) => (
+const HeroStats: React.FC<{ totalAvailable: number; totalXp: number }> = React.memo(({ totalAvailable, totalXp }) => (
     <div className="relative overflow-hidden rounded-2xl bg-[#0d1117] border border-white/10 p-6 md:p-8 mb-8 group shadow-2xl">
         {/* Dynamic Glow Background based on User Brand Color */}
         <div className="absolute inset-0 bg-gradient-to-r from-brand/20 via-transparent to-transparent opacity-40 group-hover:opacity-60 transition-opacity duration-500" />
@@ -178,7 +174,7 @@ const HeroStats: React.FC<{ totalAvailable: number; totalXp: number }> = ({ tota
             </div>
         </div>
     </div>
-);
+));
 
 const Activities: React.FC = () => {
     const { studentClasses, userSubmissions, isLoading: isContextLoading } = useStudentAcademic();
@@ -346,20 +342,19 @@ const Activities: React.FC = () => {
 
     const handleSearch = () => { refetch(); };
 
-    const handleActivityClick = (activity: Activity) => {
+    // UseCallback for click handler to ensure stability for React.memo
+    const handleActivityClick = useCallback((activity: Activity) => {
         const activityWithSub = { 
             ...cleanActivity(activity), 
             submissions: safeSubmissions[activity.id] ? [safeSubmissions[activity.id]] : [] 
         };
         openActivity(activityWithSub);
-    };
+    }, [safeSubmissions, openActivity]);
     
-    // Custom Select Style for Gamer Look
     const selectClass = "bg-[#0d1117] text-slate-300 text-xs font-mono font-bold border border-white/10 rounded-lg px-3 py-2.5 focus:border-brand focus:ring-1 focus:ring-brand outline-none uppercase tracking-wide appearance-none cursor-pointer hover:bg-white/5 transition-colors";
 
     const isLoadingCombined = isContextLoading || status === 'pending';
 
-    // Stats for Hero
     const totalXpPotential = useMemo(() => displayedActivities.reduce((acc, a) => acc + (a.points || 0), 0), [displayedActivities]);
 
     return (

@@ -5,7 +5,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../components/firebaseClient';
 
 export type Theme = 'standard' | 'oled' | 'paper' | 'nebula' | 'dracula' | 'high-contrast' | 'matrix' | 'synthwave' | 'repository' | 'sith' | 'eva' | 'limitless' | 'restless-dreams' | 'shadow-monarch' | 'world-on-fire';
-export type FontProfile = 'standard' | 'gothic' | 'confidential' | 'cosmic' | 'executive';
+export type FontProfile = 'standard' | 'gothic' | 'confidential' | 'code' | 'cute' | 'executive';
 
 export interface ThemePreset {
     id: Theme;
@@ -42,7 +42,8 @@ export const PRESET_THEMES: ThemePreset[] = [
 const FONT_URLS: Record<string, string> = {
     'gothic': 'https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&display=swap',
     'confidential': 'https://fonts.googleapis.com/css2?family=Special+Elite&display=swap',
-    'cosmic': 'https://fonts.googleapis.com/css2?family=Nosifer&display=swap',
+    'code': 'https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&display=swap',
+    'cute': 'https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&display=swap',
     'executive': 'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap',
     'admin_sci_fi': 'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Cinzel:wght@400;500;600;700;800;900&display=swap', // For Admin & Shadow Monarch
     'japanese': 'https://fonts.googleapis.com/css2?family=Sawarabi+Mincho&display=swap'
@@ -177,7 +178,7 @@ export function SettingsProvider({ children }: { children?: React.ReactNode }) {
         root.classList.add('dark');
         
         const body = document.body;
-        body.classList.remove('font-gothic', 'font-confidential', 'font-cosmic', 'font-executive');
+        body.classList.remove('font-gothic', 'font-confidential', 'font-code', 'font-cute', 'font-executive');
         
         if (fontProfile !== 'standard') {
             body.classList.add(`font-${fontProfile}`);
@@ -188,6 +189,11 @@ export function SettingsProvider({ children }: { children?: React.ReactNode }) {
         // Special case: Load 'admin_sci_fi' fonts if theme is 'shadow-monarch' (Solo Leveling style)
         if (theme === 'shadow-monarch') {
             loadFontProfile('admin_sci_fi');
+        }
+
+        // Special case: Load 'confidential' (Special Elite) if theme is 'restless-dreams' (Silent Hill/Investigative)
+        if (theme === 'restless-dreams') {
+            loadFontProfile('confidential');
         }
         
         localStorage.setItem('app-theme', theme);

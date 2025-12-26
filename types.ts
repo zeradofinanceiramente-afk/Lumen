@@ -398,6 +398,23 @@ export interface Activity {
   status?: string; 
 }
 
+// --- SHARED PROPS FOR ACTIVITY LAYOUTS ---
+import React from 'react';
+export interface ActivityLayoutProps {
+    activity: Activity;
+    items: ActivityItem[];
+    answers: Record<string, string>;
+    handleAnswerChange: (id: string, val: string) => void;
+    uploadedFiles: File[];
+    handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    isSubmitting: boolean;
+    handleSubmit: () => void;
+    onBack: () => void;
+    renderComplexContent: () => React.ReactNode;
+    isSubmitted: boolean;
+    submission?: ActivitySubmission;
+}
+
 export interface PendingActivity {
     id: string;
     title: string;

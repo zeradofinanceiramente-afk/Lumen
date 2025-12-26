@@ -10,6 +10,7 @@ import { useToast } from '../contexts/ToastContext';
 import type { Module, Quiz, Activity, TeacherClass, User, ActivitySubmission } from '../types';
 import { createNotification } from '../utils/createNotification';
 import { processGamificationEvent } from '../utils/gamificationEngine';
+import { getGamificationConfig } from '../utils/gamificationConfig';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export function useStudentContent(user: User | null) {
@@ -52,7 +53,6 @@ export function useStudentContent(user: User | null) {
                         timestamp: n.timestamp?.toDate ? n.timestamp.toDate().toISOString() : n.timestamp
                     }));
 
-                    // FIX: Initialize arrays to prevent iteration errors if missing in Firestore doc
                     const modules = Array.isArray(data.modules) ? data.modules : [];
                     const activities = Array.isArray(data.activities) ? data.activities : [];
 
@@ -112,13 +112,11 @@ export function useStudentContent(user: User | null) {
         queryFn: async () => {
             if (!user) return {};
             try {
-                // IMPORTANT: This 'collectionGroup' query requires a Firestore Index (submissions + studentId).
                 const q = query(collectionGroup(db, 'submissions'), where('studentId', '==', user.id));
                 const snap = await getDocs(q);
                 
                 const subsMap: Record<string, ActivitySubmission> = {};
                 snap.forEach(d => {
-                    // Navigate up: submission -> submissions_collection -> activity_doc
                     const activityId = d.ref.parent.parent?.id; 
                     if (activityId) {
                         subsMap[activityId] = d.data() as ActivitySubmission;
@@ -126,13 +124,8 @@ export function useStudentContent(user: User | null) {
                 });
                 return subsMap;
             } catch (error: any) {
-                // Return empty object on error to prevent crash, logs specific error for debugging
                 if (error.code === 'failed-precondition') {
-                    console.error("🔥 FALTA ÍNDICE NO FIRESTORE 🔥: O link para criação está no objeto de erro abaixo:", error);
-                } else if (error.code === 'permission-denied') {
-                    console.error("🔒 ERRO DE PERMISSÃO: Verifique se rules.txt permite leitura de submissões onde studentId == auth.uid.");
-                } else {
-                    console.error("Erro ao buscar submissões:", error);
+                    console.error("🔥 FALTA ÍNDICE NO FIRESTORE 🔥: Verifique o console.");
                 }
                 return {};
             }
@@ -273,14 +266,12 @@ export function useStudentContent(user: User | null) {
                 submissionData.feedback = "Correção automática.";
             }
 
-            // Write to subcollection
             const submissionRef = doc(db, "activities", activityId, "submissions", user.id);
             const submissionSnap = await getDoc(submissionRef);
             const isUpdate = submissionSnap.exists();
 
             await setDoc(submissionRef, { ...submissionData, timestamp: serverTimestamp() }, { merge: true });
 
-            // Counters
             if (!isUpdate) {
                 await updateDoc(activityRef, {
                     submissionCount: increment(1),
@@ -288,7 +279,6 @@ export function useStudentContent(user: User | null) {
                 });
             }
 
-            // Notifications & Gamification
             if (status === 'Corrigido') {
                  await createNotification({
                     userId: user.id, actorId: 'system', actorName: 'Sistema', type: 'activity_correction',
@@ -297,23 +287,22 @@ export function useStudentContent(user: User | null) {
                 });
             }
 
-            await processGamificationEvent(user.id, 'activity_sent', 0);
+            // GAMIFICAÇÃO DINÂMICA
+            const config = await getGamificationConfig();
+            const xpAmount = config['activity_sent'] || 20;
+            await processGamificationEvent(user.id, 'activity_sent', xpAmount);
+            
             return { success: true };
         },
         onSuccess: () => {
             addToast("Atividade enviada com sucesso!", "success");
-            // Robust invalidation to force UI update immediately
             queryClient.invalidateQueries({ queryKey: ['studentSubmissions'] });
             queryClient.invalidateQueries({ queryKey: ['activities'] });
             queryClient.invalidateQueries({ queryKey: ['studentModulesProgress'] });
         },
         onError: (error: any) => {
             console.error("Submission error:", error);
-            if (error.code === 'permission-denied') {
-                addToast("Erro de permissão. Tente recarregar.", "error");
-            } else {
-                addToast("Erro ao enviar. Tente novamente.", "error");
-            }
+            addToast("Erro ao enviar. Tente novamente.", "error");
         }
     });
 
@@ -329,9 +318,7 @@ export function useStudentContent(user: User | null) {
     const handleActivitySubmit = async (activityId: string, content: string) => {
         try {
             await submitActivityMutation.mutateAsync({ activityId, content });
-        } catch (e) {
-            // Error handled in onError
-        }
+        } catch (e) {}
     };
 
     const searchQuizzes = useCallback(async (filters: { 
@@ -404,7 +391,7 @@ export function useStudentContent(user: User | null) {
         ]);
     };
     
-    // Legacy Placeholders (handled by components)
+    // Legacy Placeholders
     const searchModules = async () => {};
     const searchActivities = async () => ({ activities: [], lastDoc: null });
     
@@ -419,8 +406,13 @@ export function useStudentContent(user: User | null) {
         if (!user) return;
         const ref = doc(db, "users", user.id, "modulesProgress", moduleId);
         await setDoc(ref, { progress: 100, completedAt: serverTimestamp(), status: 'Concluído' }, { merge: true });
-        await processGamificationEvent(user.id, 'module_complete', 50);
-        addToast("Módulo concluído! +50 XP", "success");
+        
+        // GAMIFICAÇÃO DINÂMICA
+        const config = await getGamificationConfig();
+        const xpAmount = config['module_complete'] || 50;
+        await processGamificationEvent(user.id, 'module_complete', xpAmount);
+        
+        addToast(`Módulo concluído! +${xpAmount} XP`, "success");
         queryClient.invalidateQueries({ queryKey: ['studentModulesProgress'] });
     };
 

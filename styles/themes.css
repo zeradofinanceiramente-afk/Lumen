@@ -17,10 +17,44 @@
     --glass-border: rgba(255, 255, 255, 0.08);
 }
 
+/* --- PERFORMANCE UTILITIES --- */
+
+/* Otimiza a renderização de texto */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* Reduz carga de GPU em dispositivos que preferem performance */
+@media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    
+    .glass-panel, .glass-sidebar, .glass-modal {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: var(--bg-main) !important; /* Fallback sólido */
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+}
+
+/* Classe utilitária para forçar aceleração de hardware apenas onde necessário */
+.gpu-accelerated {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: transform, opacity;
+}
+
 /* --- FONT PROFILES --- */
 .font-gothic, .font-gothic * { font-family: 'Cinzel Decorative', serif !important; }
 .font-confidential, .font-confidential * { font-family: 'Special Elite', monospace !important; }
-.font-cosmic, .font-cosmic * { font-family: 'Nosifer', cursive !important; }
+.font-code, .font-code * { font-family: 'Fira Code', monospace !important; }
+.font-cute, .font-cute * { font-family: 'Fredoka', sans-serif !important; }
 .font-executive, .font-executive * { font-family: 'Outfit', sans-serif !important; }
 
 /* --- ACCESSIBILITY: HIGH CONTRAST TEXT OVERRIDE --- */
@@ -346,6 +380,8 @@ body {
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     transition: background 0.5s ease, border-color 0.5s ease;
+    /* Performance hint */
+    will-change: transform, opacity;
 }
 
 .glass-sidebar {

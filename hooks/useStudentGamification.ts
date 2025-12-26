@@ -6,6 +6,7 @@ import { doc, getDoc, serverTimestamp, increment, setDoc } from 'firebase/firest
 import { db } from '../components/firebaseClient';
 import { useToast } from '../contexts/ToastContext';
 import { processGamificationEvent } from '../utils/gamificationEngine';
+import { getGamificationConfig } from '../utils/gamificationConfig';
 
 export function useStudentGamification(user: any) {
     const [achievements, setAchievements] = useState<Achievement[]>([]);
@@ -56,9 +57,14 @@ export function useStudentGamification(user: any) {
             let xpEarned = 0;
             const previousAttempts = resultSnap.exists() ? resultSnap.data().attempts || 0 : 0;
 
-            // Lógica de XP: 10 XP por questão acertada APENAS na PRIMEIRA tentativa.
+            // Busca configuração do Admin
+            const config = await getGamificationConfig();
+            // Pega o valor configurado ou usa 10 como fallback
+            const xpMultiplier = config['quiz_complete'] || 10;
+
+            // Lógica de XP: Valor configurado * score, APENAS na PRIMEIRA tentativa.
             if (previousAttempts === 0) {
-               xpEarned = score * 10;
+               xpEarned = score * xpMultiplier;
             }
 
             const resultData = {
@@ -75,10 +81,9 @@ export function useStudentGamification(user: any) {
             await setDoc(resultRef, resultData, { merge: true });
 
             // PROCESSA A GAMIFICAÇÃO (XP + Stats + Conquistas)
-            // Mesmo se xpEarned for 0, ainda conta como 'quiz_complete' para estatísticas de conquistas
             const unlockedAchievements = await processGamificationEvent(user.id, 'quiz_complete', xpEarned);
 
-            // Atualiza estado local (opcional, pois o processGamificationEvent já salvou no banco)
+            // Atualiza estado local
             setUserStats(prev => ({ 
                 ...prev, 
                 xp: prev.xp + xpEarned,
@@ -99,7 +104,6 @@ export function useStudentGamification(user: any) {
                 unlockedAchievements.forEach(ach => {
                     addToast(`🏆 Conquista Desbloqueada: ${ach.title}`, 'success');
                 });
-                // Recarrega lista para mostrar o badge desbloqueado
                 loadGamificationData(); 
             }
 
@@ -117,6 +121,6 @@ export function useStudentGamification(user: any) {
         userStats,
         loadGamificationData,
         handleQuizCompleteLogic,
-        setUserStats // Exposto caso precise de update manual em outros fluxos
+        setUserStats
     };
 }
