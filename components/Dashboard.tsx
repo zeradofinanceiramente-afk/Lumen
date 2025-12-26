@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigation } from '../contexts/NavigationContext';
@@ -67,7 +68,7 @@ const Dashboard: React.FC = () => {
                 {/* 1. Resume Learning Card */}
                 <div 
                     onClick={() => setCurrentPage(activeModule ? 'modules' : 'modules')}
-                    className="group relative h-64 md:h-80 rounded-3xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-500 border border-white/10 hover:border-brand/50"
+                    className="group relative h-64 md:h-80 rounded-3xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-500 border-2 !border-brand/30 hover:!border-brand"
                 >
                     <div className="absolute inset-0 bg-slate-900">
                         {bgImage ? (
@@ -98,7 +99,7 @@ const Dashboard: React.FC = () => {
 
                 {/* 2. Notifications Widget */}
                 <div className="flex flex-col gap-6">
-                    <Card className="flex-1 bg-black/40 backdrop-blur-xl border-white/10 hover:border-white/20 transition-colors cursor-pointer group" onClick={() => setCurrentPage('notifications')}>
+                    <Card className="flex-1 bg-black/40 backdrop-blur-xl border-2 !border-brand/30 hover:!border-brand transition-colors cursor-pointer group" onClick={() => setCurrentPage('notifications')}>
                         <div className="flex items-center justify-between mb-4">
                             <div className="p-3 bg-red-500/10 rounded-full text-red-400 group-hover:text-red-300 group-hover:shadow-[0_0_15px_rgba(248,113,113,0.3)] transition-all">
                                 {ICONS.notifications}
@@ -109,7 +110,7 @@ const Dashboard: React.FC = () => {
                         <p className="text-sm text-slate-500">Pendências e avisos.</p>
                     </Card>
 
-                    <Card className="flex-1 bg-black/40 backdrop-blur-xl border-white/10 hover:border-white/20 transition-colors cursor-pointer group" onClick={() => setCurrentPage('activities')}>
+                    <Card className="flex-1 bg-black/40 backdrop-blur-xl border-2 !border-brand/30 hover:!border-brand transition-colors cursor-pointer group" onClick={() => setCurrentPage('activities')}>
                         <div className="flex items-center justify-between mb-4">
                             <div className="p-3 bg-brand/10 rounded-full text-brand group-hover:shadow-[0_0_15px_var(--brand-color)] transition-all">
                                 {ICONS.activities}
@@ -124,7 +125,7 @@ const Dashboard: React.FC = () => {
                 {/* 3. Achievements / Map */}
                 <div 
                     onClick={() => setCurrentPage('interactive_map')}
-                    className="group relative h-64 md:h-80 rounded-3xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-500 border border-white/10 hover:border-emerald-500/50"
+                    className="group relative h-64 md:h-80 rounded-3xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-500 border-2 !border-brand/30 hover:!border-brand"
                 >
                     <div className="absolute inset-0 bg-slate-900">
                          <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000" className="w-full h-full object-cover opacity-50 group-hover:scale-110 transition-transform duration-1000" alt="" />
@@ -133,11 +134,11 @@ const Dashboard: React.FC = () => {
                     
                     <div className="absolute bottom-0 left-0 p-8">
                         <div className="mb-3">
-                            <div className="p-3 bg-emerald-500/20 inline-block rounded-full text-emerald-400 backdrop-blur-md border border-emerald-500/30 group-hover:shadow-[0_0_15px_rgba(52,211,153,0.4)] transition-all">
+                            <div className="p-3 bg-brand/10 inline-block rounded-full text-brand backdrop-blur-md border border-brand/30 group-hover:shadow-[0_0_15px_rgba(var(--brand-rgb),0.4)] transition-all">
                                 {ICONS.map}
                             </div>
                         </div>
-                        <h3 className="text-2xl font-bold text-white mb-1 group-hover:text-emerald-400 transition-colors">Mapa do Tempo</h3>
+                        <h3 className="text-2xl font-bold text-white mb-1 group-hover:text-brand transition-colors">Mapa do Tempo</h3>
                         <p className="text-sm text-slate-300">Navegue pela história de forma interativa.</p>
                     </div>
                 </div>

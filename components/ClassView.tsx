@@ -140,30 +140,30 @@ const AttendanceStudentItem: React.FC<{
                 </div>
             </div>
             
-            <div className="flex space-x-1 opacity-50 group-hover:opacity-100 transition-opacity">
+            <div className="flex space-x-2 opacity-80 group-hover:opacity-100 transition-opacity">
                 <button
                     onClick={() => onUpdateStatus('presente')}
                     disabled={!canEdit || isUpdating}
-                    className={`p-2 rounded-md transition-colors ${
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all border ${
                         record.status === 'presente' 
-                            ? 'bg-green-500/20 text-green-400' 
-                            : 'bg-white/5 text-slate-500 hover:bg-green-500/10 hover:text-green-400'
+                            ? 'bg-green-500/20 text-green-400 border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.2)]' 
+                            : 'bg-white/5 text-slate-500 border-transparent hover:bg-green-500/10 hover:text-green-400 hover:border-green-500/30'
                     }`}
-                    title="Presente"
+                    title="Marcar como Presente"
                 >
-                    P
+                    Presente
                 </button>
                 <button
                     onClick={() => onUpdateStatus('ausente')}
                     disabled={!canEdit || isUpdating}
-                    className={`p-2 rounded-md transition-colors ${
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all border ${
                         record.status === 'ausente' 
-                            ? 'bg-red-500/20 text-red-400' 
-                            : 'bg-white/5 text-slate-500 hover:bg-red-500/10 hover:text-red-400'
+                            ? 'bg-red-500/20 text-red-400 border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.2)]' 
+                            : 'bg-white/5 text-slate-500 border-transparent hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30'
                     }`}
-                    title="Ausente"
+                    title="Marcar como Ausente"
                 >
-                    F
+                    Ausente
                 </button>
             </div>
         </div>

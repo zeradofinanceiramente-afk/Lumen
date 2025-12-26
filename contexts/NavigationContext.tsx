@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useCallback, useContext, ReactNode, useEffect } from 'react';
 import type { Module, Quiz, Page, Achievement, TeacherClass, Activity } from '../types';
 import { useAuth } from './AuthContext';
@@ -8,6 +9,7 @@ interface NavigationState {
     activeModule: Module | null;
     activeClass: TeacherClass | null;
     activeActivity: Activity | null; // NEW: For Student View
+    activeQuiz: Quiz | null; // NEW: For Student Quiz Execution
     gradingActivity: Activity | null; // NEW: For Teacher Grading View
     editingModule: Module | null;
     editingActivity: Activity | null; 
@@ -23,6 +25,8 @@ interface NavigationActions {
     openClass: (classData: TeacherClass) => void;
     exitClass: () => void;
     openActivity: (activity: Activity) => void; // NEW: For Student View
+    startQuiz: (quiz: Quiz) => void; // NEW: Start quiz execution
+    exitQuiz: () => void; // NEW: Exit quiz execution
     startGrading: (activity: Activity) => void; // NEW: For Teacher Grading
     exitGrading: () => void; // NEW: Exit grading
     startEditingModule: (module: Module) => void;
@@ -50,6 +54,7 @@ export function NavigationProvider({ children }: { children?: React.ReactNode })
     const [activeModule, setActiveModule] = useState<Module | null>(null);
     const [activeClass, setActiveClass] = useState<TeacherClass | null>(null);
     const [activeActivity, setActiveActivity] = useState<Activity | null>(null); // NEW
+    const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null); // NEW
     const [gradingActivity, setGradingActivity] = useState<Activity | null>(null); // NEW
     const [editingModule, setEditingModule] = useState<Module | null>(null);
     const [editingActivity, setEditingActivity] = useState<Activity | null>(null); 
@@ -79,6 +84,7 @@ export function NavigationProvider({ children }: { children?: React.ReactNode })
             setActiveModule(null);
             setActiveClass(null);
             setActiveActivity(null);
+            setActiveQuiz(null);
             setGradingActivity(null);
             setEditingModule(null);
             setEditingActivity(null);
@@ -115,6 +121,17 @@ export function NavigationProvider({ children }: { children?: React.ReactNode })
     const openActivity = useCallback((activity: Activity) => {
         setActiveActivity(activity);
         setCurrentPage('student_activity_view');
+    }, []);
+
+    // Quiz Execution Actions
+    const startQuiz = useCallback((quiz: Quiz) => {
+        setActiveQuiz(quiz);
+        // We stay on 'quizzes' page but the view changes internally, 
+        // passing state allows App.tsx to know we are focused.
+    }, []);
+
+    const exitQuiz = useCallback(() => {
+        setActiveQuiz(null);
     }, []);
 
     const startGrading = useCallback((activity: Activity) => {
@@ -180,7 +197,7 @@ export function NavigationProvider({ children }: { children?: React.ReactNode })
         setCurrentPage('admin_achievements');
     }, []);
 
-    const stateValue: NavigationState = { currentPage, activeModule, activeClass, activeActivity, gradingActivity, editingModule, editingActivity, editingQuiz, editingAchievement, isMobileMenuOpen };
+    const stateValue: NavigationState = { currentPage, activeModule, activeClass, activeActivity, activeQuiz, gradingActivity, editingModule, editingActivity, editingQuiz, editingAchievement, isMobileMenuOpen };
     const actionsValue: NavigationActions = { 
         setCurrentPage,
         startModule, 
@@ -188,6 +205,8 @@ export function NavigationProvider({ children }: { children?: React.ReactNode })
         openClass,
         exitClass,
         openActivity,
+        startQuiz,
+        exitQuiz,
         startGrading,
         exitGrading,
         startEditingModule, 

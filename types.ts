@@ -12,6 +12,19 @@ export interface ClassSummary {
   isArchived?: boolean; 
 }
 
+export interface GamificationActionConfig {
+    id: string;
+    label: string;
+    description: string;
+    defaultXp: number;
+    currentXp: number;
+    isImplemented: boolean; // Se false, é uma sugestão/roadmap
+}
+
+export interface GamificationConfig {
+    actions: Record<string, number>; // map actionId -> xpValue
+}
+
 export interface User {
   id: string;
   name: string;
@@ -138,6 +151,7 @@ export type Page =
   | 'admin_modules'
   | 'admin_quizzes'
   | 'admin_achievements'
+  | 'admin_gamification' // NEW
   | 'admin_stats'
   | 'admin_tests'
   | 'admin_diagnostics'

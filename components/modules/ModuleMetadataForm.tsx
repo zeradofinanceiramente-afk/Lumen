@@ -70,7 +70,6 @@ interface ModuleMetadataFormProps {
     description: string; setDescription: (v: string) => void;
     coverImageUrl: string; setCoverImageUrl: (v: string) => void;
     videoUrl: string; setVideoUrl: (v: string) => void;
-    difficulty: string; setDifficulty: (v: any) => void;
     duration: string; setDuration: (v: string) => void;
     selectedSeries: string[]; setSelectedSeries: (v: string[]) => void;
     selectedSubjects: string[]; setSelectedSubjects: (v: string[]) => void;
@@ -85,7 +84,7 @@ interface ModuleMetadataFormProps {
 
 export const ModuleMetadataForm: React.FC<ModuleMetadataFormProps> = ({
     title, setTitle, description, setDescription, coverImageUrl, setCoverImageUrl,
-    difficulty, setDifficulty, duration, setDuration,
+    duration, setDuration,
     selectedSeries, setSelectedSeries, selectedSubjects, setSelectedSubjects,
     isUploading, handleCoverUpload, disabled, availableClasses, selectedClassIds, setSelectedClassIds,
     historicalYear, setHistoricalYear, historicalEra, setHistoricalEra, lessonPlan, setLessonPlan
@@ -94,6 +93,31 @@ export const ModuleMetadataForm: React.FC<ModuleMetadataFormProps> = ({
     const [activeTab, setActiveTab] = useState<'info' | 'plan'>('info');
 
     // --- LOGIC HELPERS ---
+    
+    // Heuristic function to determine era based on year
+    const determineEra = (year: number): HistoricalEra => {
+        if (year < -4000) return 'Pré-História';
+        if (year < 476) return 'Antiga';
+        if (year < 1453) return 'Média';
+        if (year < 1789) return 'Moderna';
+        return 'Contemporânea';
+    };
+
+    const handleYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        if (val === '') {
+            setHistoricalYear(undefined);
+            return;
+        }
+        
+        const year = Number(val);
+        setHistoricalYear(year);
+        
+        // Auto-select Era
+        const autoEra = determineEra(year);
+        setHistoricalEra(autoEra);
+    };
+
     const handleToggleClass = (classId: string) => {
         if (selectedClassIds.includes(classId)) setSelectedClassIds(selectedClassIds.filter(id => id !== classId));
         else setSelectedClassIds([...selectedClassIds, classId]);
@@ -126,12 +150,6 @@ export const ModuleMetadataForm: React.FC<ModuleMetadataFormProps> = ({
         const currentUnits = lessonPlan.thematicUnit ? lessonPlan.thematicUnit.split('; ').filter(Boolean) : [];
         const newUnits = currentUnits.includes(unit) ? currentUnits.filter(u => u !== unit) : [...currentUnits, unit];
         setLessonPlan({ ...lessonPlan, thematicUnit: newUnits.join('; ') });
-    };
-
-    const difficultyColors: Record<string, string> = {
-        'Fácil': 'text-green-400 border-green-400/30 bg-green-400/10',
-        'Médio': 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10',
-        'Difícil': 'text-red-400 border-red-400/30 bg-red-400/10',
     };
 
     return (
@@ -184,9 +202,6 @@ export const ModuleMetadataForm: React.FC<ModuleMetadataFormProps> = ({
                                     <h3 className="text-xl font-bold text-white leading-tight line-clamp-1">{title || 'Título do Módulo'}</h3>
                                     <p className="text-xs text-slate-300 line-clamp-1 mt-1">{description || 'Descrição breve...'}</p>
                                 </div>
-                                <span className={`text-[10px] font-mono uppercase px-1.5 py-0.5 rounded border ${difficultyColors[difficulty] || 'text-slate-400'}`}>
-                                    {difficulty}
-                                </span>
                             </div>
                             <div className="mt-3 w-full bg-white/20 rounded-full h-1">
                                 <div className="bg-brand h-1 rounded-full w-1/3" />
@@ -197,12 +212,7 @@ export const ModuleMetadataForm: React.FC<ModuleMetadataFormProps> = ({
                     <ModernInput label="Título" value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Revolução Industrial" disabled={disabled} />
                     <ModernTextArea label="Descrição" value={description} onChange={e => setDescription(e.target.value)} placeholder="Resumo do conteúdo..." rows={3} disabled={disabled} />
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <ModernSelect label="Dificuldade" value={difficulty} onChange={e => setDifficulty(e.target.value)}>
-                            <option>Fácil</option>
-                            <option>Médio</option>
-                            <option>Difícil</option>
-                        </ModernSelect>
+                    <div className="grid grid-cols-1">
                         <ModernInput label="Duração Estimada" value={duration} onChange={e => setDuration(e.target.value)} placeholder="Ex: 2 horas" disabled={disabled} />
                     </div>
 
@@ -216,7 +226,7 @@ export const ModuleMetadataForm: React.FC<ModuleMetadataFormProps> = ({
                                 label="Ano Histórico" 
                                 type="number" 
                                 value={historicalYear !== undefined ? historicalYear : ''} 
-                                onChange={e => setHistoricalYear(e.target.value ? Number(e.target.value) : undefined)} 
+                                onChange={handleYearChange} 
                                 placeholder="Ex: 1789" 
                             />
                             <ModernSelect label="Era Histórica" value={historicalEra || ''} onChange={e => setHistoricalEra(e.target.value as HistoricalEra || undefined)}>

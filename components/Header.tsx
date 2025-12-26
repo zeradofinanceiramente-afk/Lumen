@@ -20,14 +20,12 @@ const StudentNotificationButton: React.FC = () => {
     return (
         <button 
             onClick={() => setCurrentPage('notifications')} 
-            className="relative text-slate-400 hover:text-white p-3 rounded-full hover:bg-white/10 transition-colors"
+            className="relative flex items-center justify-center w-10 h-10 bg-transparent hover:bg-slate-800 border border-slate-700 hover:border-slate-500 rounded-lg text-slate-400 hover:text-white transition-all shadow-sm group"
             aria-label={`Notificações (${unreadNotificationCount} não lidas)`}
         >
-            <span aria-hidden="true">{ICONS.notifications}</span>
+            <span aria-hidden="true" className="group-hover:text-white transition-colors">{ICONS.notifications}</span>
             {unreadNotificationCount > 0 && (
-                <span className="absolute top-0 right-0 h-5 w-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-[#09090b]" aria-hidden="true">
-                    {unreadNotificationCount}
-                </span>
+                <span className="absolute -top-1 -right-1 h-3 w-3 bg-blue-600 rounded-full border-2 border-[#09090b]" aria-hidden="true" />
             )}
         </button>
     );
@@ -47,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({ title, isScrolled }) => {
             </div>
 
             {/* Right-aligned Actions - Keep Visible and Interactive */}
-            <div className={`flex items-center space-x-2 md:space-x-4 pointer-events-auto transition-all duration-300 ease-in-out ${isScrolled ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100'}`}>
+            <div className={`flex items-center space-x-3 pointer-events-auto transition-all duration-300 ease-in-out ${isScrolled ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100'}`}>
                 <div className="hidden sm:block">
                     <ZoomControls />
                 </div>

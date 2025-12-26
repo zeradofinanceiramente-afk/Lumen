@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { ICONS } from '../../constants/index';
 
 export const ZoomControls: React.FC = () => {
     // State to track the current zoom scale factor
@@ -32,11 +33,11 @@ export const ZoomControls: React.FC = () => {
         return (
             <button
                 onClick={() => setIsOpen(true)}
-                className="flex items-center justify-center w-10 h-10 bg-slate-100/10 hover:bg-slate-100/20 backdrop-blur-md border border-white/10 rounded-full text-slate-200 transition-all shadow-sm"
-                aria-label="Abrir controles de zoom"
-                title="Ajustar tamanho do texto"
+                className="flex items-center justify-center w-10 h-10 bg-transparent hover:bg-slate-800 border border-slate-700 hover:border-slate-500 rounded-lg text-slate-400 hover:text-white transition-all shadow-sm"
+                aria-label="Abrir controles de visualização"
+                title="Ajustar visualização"
             >
-                <span className="text-lg font-bold">Aa</span>
+                {ICONS.controls_sliders}
             </button>
         );
     }

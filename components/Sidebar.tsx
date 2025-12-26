@@ -1,6 +1,6 @@
 
 // FILE: components/Sidebar.tsx
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import type { Page } from '../types';
 import { Logo, ICONS } from '../constants/index';
 import { useNavigation } from '../contexts/NavigationContext';
@@ -38,6 +38,7 @@ const getIcon = (id: Page) => {
         case 'admin_modules': return ICONS.modules;
         case 'admin_quizzes': return ICONS.quizzes;
         case 'admin_achievements': return ICONS.achievements;
+        case 'admin_gamification': return ICONS.gamification;
         case 'admin_stats': return ICONS.teacher_statistics;
         case 'admin_tests': return ICONS.admin_tests;
         case 'admin_diagnostics': return ICONS.diagnostics;
@@ -71,6 +72,15 @@ export const Sidebar: React.FC = () => {
     const { handleLogout: onLogout, userRole } = useAuth();
     const { t } = useLanguage();
     
+    // Inject specialized class on body for Admin
+    useEffect(() => {
+        if (userRole === 'admin') {
+            document.body.classList.add('role-admin');
+        } else {
+            document.body.classList.remove('role-admin');
+        }
+    }, [userRole]);
+
     const navItems = useMemo(() => {
         if (userRole === 'aluno') {
             return [
@@ -117,14 +127,15 @@ export const Sidebar: React.FC = () => {
             ];
         } else if (userRole === 'admin') {
             return [
-                { id: 'dashboard' as Page, label: 'Início' },
-                { id: 'admin_dashboard' as Page, label: t('sidebar.admin_dash') },
-                { id: 'admin_modules' as Page, label: t('sidebar.admin_mods') },
-                { id: 'admin_quizzes' as Page, label: t('sidebar.admin_quiz') },
-                { id: 'admin_achievements' as Page, label: t('sidebar.admin_achv') },
-                { id: 'admin_stats' as Page, label: t('sidebar.stats') },
-                { id: 'admin_tests' as Page, label: t('sidebar.admin_tests') },
-                { id: 'admin_diagnostics' as Page, label: 'Diagnóstico do Sistema' }, // Adicionado aqui
+                { id: 'admin_dashboard' as Page, label: 'COMANDO_CENTRAL' }, 
+                { id: 'admin_users' as Page, label: 'BASE_DE_USUÁRIOS' },
+                { id: 'admin_modules' as Page, label: 'NÚCLEO_MÓDULOS' },
+                { id: 'admin_quizzes' as Page, label: 'MATRIZ_QUIZZES' },
+                { id: 'admin_achievements' as Page, label: 'DADOS_TROFÉUS' },
+                { id: 'admin_gamification' as Page, label: 'ECONOMIA_XP' }, 
+                { id: 'admin_stats' as Page, label: 'TELEMETRIA' },
+                { id: 'admin_tests' as Page, label: 'SUITE_DEBUG' },
+                { id: 'admin_diagnostics' as Page, label: 'DIAGNÓSTICO_SYS' }, 
             ];
         } else if (userRole === 'responsavel') {
             return [
@@ -137,82 +148,106 @@ export const Sidebar: React.FC = () => {
 
     const showProfileLink = true;
     const showNotificationsLink = userRole === 'aluno';
+    const isAdmin = userRole === 'admin';
     
+    // Style Variants based on role
+    const sidebarClass = isAdmin 
+        ? "bg-black border-r border-[#00d2ff]/30 shadow-[5px_0_30px_rgba(0,0,0,0.8)]"
+        : "glass-sidebar";
+        
+    const btnActiveClass = isAdmin
+        ? "bg-[#ff0055] text-white skew-x-[-12deg] border-l-4 border-white shadow-[0_0_15px_#ff0055]"
+        : "bg-brand/10 text-brand border-brand font-bold shadow-[0_0_15px_rgba(var(--brand-rgb),0.15)] border";
+
+    const btnIdleClass = isAdmin
+        ? "hover:bg-white/10 text-slate-400 hover:text-[#00d2ff] hover:pl-6 skew-x-[-12deg] border-l-4 border-transparent hover:border-[#00d2ff]"
+        : "hover:bg-white/5 text-slate-400 hover:text-white border-transparent hover:border-white/5 border";
+
     return (
         <>
-            {/* Overlay for all screens (Drawer behavior) - High Contrast & Smoothness */}
             <div
                 className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-40 transition-all duration-500 ease-in-out ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 onClick={toggleMobileMenu}
                 aria-hidden="true"
             ></div>
 
-            {/* Sidebar with Glassmorphism - Always Fixed/Floating now */}
             <aside 
-                className={`w-72 glass-sidebar text-slate-200 flex flex-col h-full fixed inset-y-0 left-0 z-50 transform transition-transform duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${isMobileMenuOpen ? 'translate-x-0 shadow-[0_0_50px_rgba(0,0,0,0.5)]' : '-translate-x-full'}`}
+                className={`w-72 ${sidebarClass} text-slate-200 flex flex-col h-full fixed inset-y-0 left-0 z-50 transform transition-transform duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
                 id="main-sidebar"
             >
-                {/* Header padding ajustado para não conflitar com o botão de toggle */}
-                <div className="p-6 pl-20 md:pl-6 border-b border-white/10 flex items-center justify-center md:justify-start min-h-[5rem]">
+                <div className={`p-6 ${isAdmin ? 'border-b border-[#00d2ff]/20 bg-gradient-to-r from-[#00d2ff]/10 to-transparent' : 'border-b border-white/10'} flex items-center justify-end min-h-[5rem]`}>
                     <Logo />
                 </div>
                 
                 <nav className="flex-1 px-4 py-6 space-y-2 custom-scrollbar overflow-y-auto" aria-label="Navegação Principal">
+                    {isAdmin && <div className="text-[10px] font-bold text-[#00d2ff] uppercase tracking-[0.2em] mb-4 pl-4 opacity-70">/// ACESSO_ADMIN_V2</div>}
+                    
                     {navItems.map(item => (
                         <button
                             key={item.id}
                             onClick={() => { setCurrentPage(item.id); toggleMobileMenu(); }}
                             aria-current={currentPage === item.id ? 'page' : undefined}
-                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 text-left group border ${
-                                currentPage === item.id 
-                                ? 'bg-brand text-white shadow-brand-glow border-white/20 font-bold' 
-                                : 'hover:bg-white/5 text-slate-400 hover:text-white border-transparent hover:border-white/5'
+                            className={`w-full flex items-center justify-between px-4 py-3 transition-all duration-200 text-left group ${isAdmin ? 'rounded-none' : 'rounded-xl'} ${
+                                currentPage === item.id ? btnActiveClass : btnIdleClass
                             }`}
                         >
-                            <div className="flex items-center space-x-4">
-                                <span aria-hidden="true" className={currentPage === item.id ? 'text-white scale-110' : 'text-slate-400 group-hover:text-white transition-all'}>{getIcon(item.id)}</span>
-                                <span className="tracking-wide text-sm">{item.label}</span>
+                            <div className={`flex items-center space-x-4 ${isAdmin ? 'transform skew-x-[12deg]' : ''}`}>
+                                <span aria-hidden="true" className={currentPage === item.id ? (isAdmin ? 'text-white' : 'text-brand scale-110') : 'text-slate-400 group-hover:text-white transition-all'}>{getIcon(item.id)}</span>
+                                <span className={`tracking-wide text-sm ${isAdmin ? 'font-mono uppercase font-bold' : ''}`}>{item.label}</span>
                             </div>
                             {item.id === 'teacher_pending_activities' && (userRole === 'professor') && (
                                 <TeacherPendingBadge />
                             )}
                         </button>
                     ))}
-                </nav>
-                
-                <div className="px-4 py-6 border-t border-white/10 space-y-2 bg-gradient-to-t from-black/40 to-transparent">
-                     {showNotificationsLink && (
+
+                    <div className={`my-4 border-t ${isAdmin ? 'border-[#00d2ff]/20' : 'border-white/10'} mx-2`} role="separator" />
+
+                    {showNotificationsLink && (
                         <button
                             onClick={() => { setCurrentPage('notifications'); toggleMobileMenu(); }}
                             aria-current={currentPage === 'notifications' ? 'page' : undefined}
-                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 text-left border ${
-                                currentPage === 'notifications' ? 'bg-brand text-white shadow-brand-glow border-white/20' : 'hover:bg-white/5 text-slate-400 hover:text-white border-transparent'
+                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 text-left group border ${
+                                currentPage === 'notifications' 
+                                ? 'bg-brand/10 text-brand border-brand font-bold shadow-[0_0_15px_rgba(var(--brand-rgb),0.15)]' 
+                                : 'hover:bg-white/5 text-slate-400 hover:text-white border-transparent hover:border-white/5'
                             }`}
                         >
                             <div className="flex items-center space-x-4">
-                                <span aria-hidden="true" className={currentPage === 'notifications' ? 'text-white' : 'text-slate-400'}>{ICONS['notifications']}</span>
+                                <span aria-hidden="true" className={currentPage === 'notifications' ? 'text-brand' : 'text-slate-400 group-hover:text-white transition-all'}>{ICONS['notifications']}</span>
                                 <span className="text-sm font-medium">{t('sidebar.notifications')}</span>
                             </div>
                             <StudentNotificationBadge />
                         </button>
-                     )}
-                     {showProfileLink && (
-                         <button
+                    )}
+
+                    {showProfileLink && (
+                        <button
                             onClick={() => { setCurrentPage('profile'); toggleMobileMenu(); }}
                             aria-current={currentPage === 'profile' ? 'page' : undefined}
-                            className={`w-full flex items-center space-x-4 px-4 py-3 rounded-xl transition-all duration-200 text-left border ${
-                                currentPage === 'profile' ? 'bg-brand text-white shadow-brand-glow border-white/20' : 'hover:bg-white/5 text-slate-400 hover:text-white border-transparent'
+                            className={`w-full flex items-center space-x-4 px-4 py-3 transition-all duration-200 text-left group ${isAdmin ? 'rounded-none' : 'rounded-xl border'} ${
+                                currentPage === 'profile' 
+                                ? (isAdmin ? btnActiveClass : 'bg-brand/10 text-brand border-brand font-bold shadow-[0_0_15px_rgba(var(--brand-rgb),0.15)]') 
+                                : (isAdmin ? btnIdleClass : 'hover:bg-white/5 text-slate-400 hover:text-white border-transparent hover:border-white/5')
                             }`}
                         >
-                            <span aria-hidden="true" className={currentPage === 'profile' ? 'text-white' : 'text-slate-400'}>{ICONS.profile}</span>
-                            <span className="text-sm font-medium">{t('sidebar.profile')}</span>
+                            <span aria-hidden="true" className={`${currentPage === 'profile' ? (isAdmin ? 'text-white' : 'text-brand') : 'text-slate-400 group-hover:text-white transition-all'} ${isAdmin ? 'transform skew-x-[12deg]' : ''}`}>{ICONS.profile}</span>
+                            <span className={`text-sm font-medium ${isAdmin ? 'transform skew-x-[12deg] font-mono uppercase' : ''}`}>{isAdmin ? 'ID_OPERADOR' : t('sidebar.profile')}</span>
                         </button>
-                     )}
-                    <button onClick={onLogout} className="flex items-center space-x-4 px-4 py-3 rounded-xl transition-all duration-200 w-full text-left hover:bg-red-900/20 text-slate-400 hover:text-red-400 border border-transparent hover:border-red-900/30 group">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                        <span className="text-sm font-medium">{t('sidebar.logout')}</span>
+                    )}
+
+                    <button 
+                        onClick={onLogout} 
+                        className={`w-full flex items-center space-x-4 px-4 py-3 transition-all duration-200 text-left hover:bg-red-900/20 text-slate-400 hover:text-red-400 border border-transparent hover:border-red-900/30 group ${isAdmin ? 'rounded-none skew-x-[-12deg]' : 'rounded-xl'}`}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 group-hover:-translate-x-1 transition-transform ${isAdmin ? 'transform skew-x-[12deg]' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                        <span className={`text-sm font-medium ${isAdmin ? 'transform skew-x-[12deg] font-mono uppercase' : ''}`}>{isAdmin ? 'DESCONECTAR' : t('sidebar.logout')}</span>
                     </button>
-                </div>
+                </nav>
+                
+                {isAdmin && (
+                    <div className="absolute bottom-0 w-full h-24 bg-gradient-to-t from-black to-transparent pointer-events-none" />
+                )}
             </aside>
         </>
     );

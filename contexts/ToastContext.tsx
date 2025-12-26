@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useCallback, useContext, ReactNode } from 'react';
 import { Toast } from '../components/common/Toast';
 
@@ -31,12 +32,14 @@ export function ToastProvider({ children }: { children?: React.ReactNode }) {
     return (
         <ToastContext.Provider value={{ addToast }}>
             {children}
+            {/* Container posicionado no Topo Centro */}
             <div
                 aria-live="polite"
                 aria-atomic="true"
-                className="fixed inset-0 pointer-events-none p-4 sm:p-6 flex flex-col items-end z-[100]"
+                className="fixed top-6 left-1/2 -translate-x-1/2 w-full max-w-sm flex flex-col items-center gap-3 z-[9999] pointer-events-none"
             >
-                <div className="w-full max-w-sm space-y-4">
+                {/* Pointer events auto nas toasts para permitir clique no fechar */}
+                <div className="contents pointer-events-auto">
                     {toasts.map(toast => (
                         <Toast
                             key={toast.id}

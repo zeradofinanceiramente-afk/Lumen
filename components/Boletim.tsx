@@ -3,10 +3,11 @@ import React, { useState, useMemo } from 'react';
 import { useStudentAcademic } from '../contexts/StudentAcademicContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Card } from './common/Card';
-import type { Unidade, ClassGradeReport, GradeReportActivityDetail } from '../types';
+import type { Unidade, ClassGradeReport, GradeReportActivityDetail, GradeReportSubject } from '../types';
 import { SpinnerIcon } from '../constants/index';
 
-// Helper para ordenar unidades
+// --- Helpers ---
+
 const getUnitOrder = (unit: string): number => {
     const map: Record<string, number> = {
         '1ª Unidade': 1,
@@ -17,115 +18,194 @@ const getUnitOrder = (unit: string): number => {
     return map[unit] || 99;
 };
 
-// Helper para cores das notas
-const getScoreColor = (score: number | undefined | null): string => {
-    if (score === undefined || score === null) return 'text-slate-500 border-slate-200 bg-slate-50';
+// Cores estilo Gamer/Xbox com alto contraste
+const getScoreStyle = (score: number | undefined | null) => {
+    if (score === undefined || score === null) return { color: 'text-slate-500', bar: 'bg-slate-700', border: 'border-slate-700' };
     
     const val = Number(score.toFixed(1));
     
-    if (val >= 10) return 'text-yellow-600 dark:text-yellow-400 border-yellow-200 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20'; // Dourado
-    if (val >= 7.1) return 'text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20'; // Verde Esmeralda
-    if (val >= 5.0) return 'text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20'; // Azul Royal
-    return 'text-red-700 dark:text-red-400 border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20'; // Vermelho Carmesim Intenso
+    if (val >= 10) return { color: 'text-yellow-400', bar: 'bg-yellow-400', border: 'border-yellow-400', glow: 'shadow-[0_0_15px_rgba(250,204,21,0.4)]' }; // Lendário
+    if (val >= 7.0) return { color: 'text-green-400', bar: 'bg-green-500', border: 'border-green-500', glow: 'shadow-[0_0_15px_rgba(34,197,94,0.4)]' }; // Aprovado (Xbox Green)
+    if (val >= 5.0) return { color: 'text-orange-400', bar: 'bg-orange-500', border: 'border-orange-500', glow: 'shadow-[0_0_10px_rgba(249,115,22,0.3)]' }; // Recuperação
+    return { color: 'text-red-500', bar: 'bg-red-600', border: 'border-red-600', glow: 'shadow-[0_0_10px_rgba(239,68,68,0.3)]' }; // Crítico
 };
 
-const ClassReportCard: React.FC<{ classId: string; classReport: ClassGradeReport; }> = ({ classId, classReport }) => {
-    const [expandedUnidade, setExpandedUnidade] = useState<string | null>(null);
+// Componente: Subject Tile (O "Bloco" do Xbox)
+const SubjectTile: React.FC<{ 
+    subjectName: string; 
+    data: GradeReportSubject; 
+    onClick: () => void;
+    isExpanded: boolean;
+}> = ({ subjectName, data, onClick, isExpanded }) => {
+    const score = data.totalPoints || 0;
+    const style = getScoreStyle(score);
+    
+    // Calcula progresso (Assumindo base 10 para visualização, mas adaptável)
+    const progressPercent = Math.min(Math.max((score / 10) * 100, 0), 100);
 
-    // DEFENSIVE CODING: Handle undefined props
-    if (!classReport) return null;
+    const activityList = Object.values(data.activities || {}) as GradeReportActivityDetail[];
 
+    return (
+        <div 
+            onClick={onClick}
+            className={`
+                relative overflow-hidden rounded-xl bg-[#1a1b1e] border border-white/5 
+                transition-all duration-300 cursor-pointer group hover:bg-[#222327]
+                ${isExpanded ? `ring-2 ring-offset-2 ring-offset-[#09090b] ${style.border.replace('border-', 'ring-')}` : 'hover:-translate-y-1 hover:shadow-xl'}
+            `}
+        >
+            {/* Barra lateral colorida (Indicador de Status) */}
+            <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${style.bar}`} />
+
+            <div className="p-5 pl-7">
+                <div className="flex justify-between items-start mb-4">
+                    <h4 className="font-bold text-slate-200 text-sm uppercase tracking-wider truncate pr-2">
+                        {subjectName}
+                    </h4>
+                    <span className="text-[10px] font-mono text-slate-500 bg-black/40 px-1.5 py-0.5 rounded border border-white/5">
+                        {activityList.length} ATIV
+                    </span>
+                </div>
+
+                {/* Big Score Number */}
+                <div className="flex items-end gap-1 mb-2">
+                    <span className={`text-4xl font-black tracking-tighter ${style.color} drop-shadow-md`}>
+                        {score.toFixed(1)}
+                    </span>
+                    <span className="text-xs font-bold text-slate-500 mb-1.5">/ 10.0</span>
+                </div>
+
+                {/* Progress Bar (HP Bar Style) */}
+                <div className="w-full h-1.5 bg-black/50 rounded-full overflow-hidden border border-white/5">
+                    <div 
+                        className={`h-full ${style.bar} ${style.glow || ''} transition-all duration-1000 ease-out`} 
+                        style={{ width: `${progressPercent}%` }}
+                    />
+                </div>
+            </div>
+
+            {/* Expanded Details Panel */}
+            {isExpanded && (
+                <div className="bg-[#111] border-t border-white/10 p-4 pl-7 animate-fade-in">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase mb-3 tracking-widest">Detalhamento das Avaliações</p>
+                    <ul className="space-y-2">
+                        {activityList.length > 0 ? activityList.map(act => (
+                            <li key={act.id} className="flex justify-between items-center text-xs border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                                <span className="text-slate-300 truncate pr-4">{act.title}</span>
+                                <span className="font-mono font-bold text-slate-400">
+                                    {act.grade} <span className="text-[9px] opacity-50">/ {act.maxPoints}</span>
+                                </span>
+                            </li>
+                        )) : (
+                            <li className="text-xs text-slate-600 italic">Sem atividades registradas.</li>
+                        )}
+                    </ul>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const ClassReportDashboard: React.FC<{ classId: string; classReport: ClassGradeReport; }> = ({ classReport }) => {
     const safeUnidades = classReport.unidades || {};
-
     const sortedUnidades = useMemo(() => {
         return Object.keys(safeUnidades).sort((a, b) => getUnitOrder(a) - getUnitOrder(b));
     }, [safeUnidades]);
 
-    const hasAnyPoints = sortedUnidades.length > 0;
+    // Estado da Unidade Selecionada (Default: Última unidade disponível ou 1ª)
+    const [selectedUnit, setSelectedUnit] = useState<string>(sortedUnidades[0] || '1ª Unidade');
+    const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
 
-    if (!hasAnyPoints) {
+    const currentUnitData = safeUnidades[selectedUnit as Unidade];
+    const subjects = currentUnitData?.subjects ? Object.keys(currentUnitData.subjects).sort() : [];
+
+    // Cálculo da Média Geral da Unidade (Simples)
+    const unitAverage = useMemo(() => {
+        if (!currentUnitData || !currentUnitData.subjects || subjects.length === 0) return 0;
+        const total = subjects.reduce((acc, sub) => acc + (currentUnitData.subjects[sub].totalPoints || 0), 0);
+        return total / subjects.length;
+    }, [currentUnitData, subjects]);
+
+    const averageStyle = getScoreStyle(unitAverage);
+
+    if (sortedUnidades.length === 0) {
         return (
-            <Card>
-                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{classReport.className || 'Turma'}</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Nenhuma nota registrada para esta turma ainda.</p>
+            <Card className="bg-[#0d1117] border border-white/10">
+                <div className="flex flex-col items-center justify-center py-10 text-slate-500">
+                    <span className="text-4xl mb-3 opacity-50">📊</span>
+                    <h3 className="font-bold text-lg text-slate-300">{classReport.className}</h3>
+                    <p className="text-sm">Aguardando lançamento de notas.</p>
+                </div>
             </Card>
         );
     }
 
-    const toggleUnidade = (unidade: string) => {
-        setExpandedUnidade(prev => prev === unidade ? null : unidade);
-    };
-
     return (
-        <Card className="!p-0 overflow-hidden">
-            <div className="p-4 border-b dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
-                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{classReport.className || 'Turma'}</h3>
-            </div>
-            <div className="divide-y dark:divide-slate-700">
-                {sortedUnidades.map(unidadeName => {
-                    const unitData = safeUnidades[unidadeName as Unidade];
-                    if (!unitData || !unitData.subjects) return null;
-
-                    const isExpanded = expandedUnidade === unidadeName;
-                    const subjects = Object.keys(unitData.subjects).sort();
-
-                    return (
-                        <div key={unidadeName}>
-                            <button 
-                                className="w-full flex justify-between items-center p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500" 
-                                onClick={() => toggleUnidade(unidadeName)} 
-                                aria-expanded={isExpanded}
-                            >
-                                <div>
-                                    <p className="font-semibold text-slate-700 dark:text-slate-200">{unidadeName}</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">{subjects.length} matéria(s) avaliada(s)</p>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Ver Detalhes</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-slate-500 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                                </div>
-                            </button>
-                            
-                            {isExpanded && (
-                                <div className="bg-slate-50/50 dark:bg-slate-900/20 border-t dark:border-slate-700">
-                                    {subjects.map((subjectName, idx) => {
-                                        const subjectData = unitData.subjects[subjectName];
-                                        if (!subjectData) return null;
-                                        
-                                        // UPDATED: Convert Map to Array for rendering with type assertion
-                                        const activityList = Object.values(subjectData.activities || {}) as GradeReportActivityDetail[];
-                                        const sortedActivities = activityList.sort((a, b) => a.title.localeCompare(b.title));
-                                        const colorClass = getScoreColor(subjectData.totalPoints);
-                                        
-                                        return (
-                                            <div key={subjectName} className={`p-4 ${idx > 0 ? 'border-t border-dashed border-slate-200 dark:border-slate-700' : ''}`}>
-                                                <div className="flex justify-between items-center mb-3">
-                                                    <h4 className="font-bold text-indigo-600 dark:text-indigo-400 uppercase text-sm tracking-wide">{subjectName}</h4>
-                                                    <span className={`font-bold px-3 py-1 rounded border text-sm shadow-sm ${colorClass}`}>
-                                                        Total: {Number(subjectData.totalPoints || 0).toFixed(1).replace(/\.0$/, '')} pts
-                                                    </span>
-                                                </div>
-                                                
-                                                <ul className="space-y-2 pl-2 border-l-2 border-slate-200 dark:border-slate-700">
-                                                    {sortedActivities.map(act => (
-                                                        <li key={act.id} className="flex justify-between items-center text-sm p-2 hover:bg-white/50 dark:hover:bg-slate-800/50 rounded transition-colors">
-                                                            <span className="text-slate-700 dark:text-slate-300">{act.title}</span>
-                                                            <span className="font-semibold text-slate-600 dark:text-slate-400">
-                                                                {act.grade} <span className="text-[10px] text-slate-400">/ {act.maxPoints}</span>
-                                                            </span>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
+        <div className="bg-[#0d1117] rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+            {/* Header: Class Info & Unit Average */}
+            <div className="relative p-6 md:p-8 bg-gradient-to-r from-[#161b22] to-[#0d1117] border-b border-white/5">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div>
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Boletim Escolar</span>
+                        <h2 className="text-2xl md:text-3xl font-black text-white mt-1 tracking-tight">{classReport.className}</h2>
+                    </div>
+                    
+                    {/* Unit Average Badge */}
+                    <div className="flex items-center gap-4 bg-black/40 p-3 pr-6 rounded-2xl border border-white/5 backdrop-blur-sm">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold border-2 ${averageStyle.border} ${averageStyle.color} ${averageStyle.glow} bg-[#0d1117]`}>
+                            {unitAverage.toFixed(1)}
                         </div>
-                    );
-                })}
+                        <div className="flex flex-col">
+                            <span className="text-xs font-bold text-slate-400 uppercase">Média Geral</span>
+                            <span className="text-[10px] text-slate-600 font-mono uppercase">{selectedUnit}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </Card>
+
+            {/* Unit Navigation (Xbox Bumpers Style) */}
+            <div className="flex overflow-x-auto custom-scrollbar border-b border-white/5 bg-[#09090b]">
+                {sortedUnidades.map((unit) => (
+                    <button
+                        key={unit}
+                        onClick={() => { setSelectedUnit(unit); setExpandedSubject(null); }}
+                        className={`
+                            px-6 py-4 text-sm font-bold uppercase tracking-wide transition-all border-b-2 flex-shrink-0
+                            ${selectedUnit === unit 
+                                ? 'text-white border-brand bg-white/5' 
+                                : 'text-slate-500 border-transparent hover:text-slate-300 hover:bg-white/5'
+                            }
+                        `}
+                    >
+                        {unit}
+                    </button>
+                ))}
+            </div>
+
+            {/* Subjects Grid */}
+            <div className="p-6 min-h-[300px] bg-[#09090b]">
+                {subjects.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {subjects.map((subjectName) => (
+                            <SubjectTile 
+                                key={subjectName}
+                                subjectName={subjectName}
+                                data={currentUnitData!.subjects[subjectName]}
+                                isExpanded={expandedSubject === subjectName}
+                                onClick={() => setExpandedSubject(expandedSubject === subjectName ? null : subjectName)}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center h-48 text-slate-600">
+                        <div className="w-16 h-16 rounded-full border-2 border-dashed border-slate-700 flex items-center justify-center mb-4">
+                            <span className="text-2xl">⚡</span>
+                        </div>
+                        <p className="font-mono text-sm">NENHUM DADO REGISTRADO NESTA UNIDADE</p>
+                    </div>
+                )}
+            </div>
+        </div>
     );
 };
 
@@ -135,44 +215,50 @@ const Boletim: React.FC = () => {
 
     if (isLoading) {
         return (
-             <div className="flex justify-center items-center h-full pt-16">
-                <SpinnerIcon className="h-12 w-12 text-indigo-500" />
+             <div className="flex flex-col justify-center items-center h-[60vh] space-y-4">
+                <SpinnerIcon className="h-12 w-12 text-brand" />
+                <p className="text-slate-500 font-mono text-sm uppercase tracking-widest animate-pulse">Carregando Dados Acadêmicos...</p>
             </div>
         )
     }
 
     if (!user) return null;
 
-    // Defensive: Ensure gradeReport is an object
     const safeReport = gradeReport || {};
     const hasData = Object.keys(safeReport).length > 0;
 
     if (!hasData) {
          return (
-            <Card className="text-center py-20">
-                <div className="inline-block bg-slate-100 dark:bg-slate-700/50 rounded-full p-5">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+            <Card className="text-center py-20 bg-[#0d1117] border border-white/10">
+                <div className="inline-block bg-slate-800 rounded-full p-6 mb-4">
+                    <span className="text-4xl">📴</span>
                 </div>
-                <h2 className="mt-4 text-xl font-bold text-slate-800 dark:text-slate-100">Boletim Indisponível</h2>
-                <p className="text-slate-500 dark:text-slate-400 mt-2">Você ainda não está matriculado em nenhuma turma ou não possui notas lançadas.</p>
+                <h2 className="text-xl font-bold text-white">Boletim Offline</h2>
+                <p className="text-slate-500 mt-2 max-w-md mx-auto">
+                    Você ainda não está matriculado em nenhuma turma ou as notas ainda não foram sincronizadas pelo servidor central.
+                </p>
             </Card>
         );
     }
 
     return (
-        <div className="space-y-6">
-             <div>
-                <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">Meu Boletim</h2>
-                <p className="text-slate-500 dark:text-slate-400 mt-1">Acompanhe seu desempenho escolar por unidade e matéria.</p>
+        <div className="space-y-8 animate-fade-in pb-12">
+             <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-brand/10 rounded-lg text-brand border border-brand/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                </div>
+                <h1 className="text-3xl font-thin text-white tracking-tight">
+                    Desempenho <span className="font-bold text-brand">Acadêmico</span>
+                </h1>
             </div>
 
-            <ul className="space-y-6">
+            <div className="grid gap-8">
                 {Object.entries(safeReport).map(([classId, classReport]) => (
-                    <li key={classId}>
-                        <ClassReportCard classId={classId} classReport={classReport} />
-                    </li>
+                    <ClassReportDashboard key={classId} classId={classId} classReport={classReport} />
                 ))}
-            </ul>
+            </div>
         </div>
     );
 };

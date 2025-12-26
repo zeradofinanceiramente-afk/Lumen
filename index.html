@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -25,11 +26,17 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sawarabi+Mincho&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+    
+    <!-- New Fonts for Custom Profiles -->
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nosifer&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <!-- Tailwind CDN restored for immediate preview stability -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -39,16 +46,23 @@
         theme: {
           extend: {
             fontFamily: {
-              sans: ['Outfit', 'sans-serif'],
+              sans: ['Open Sans', 'sans-serif'],
               scifi: ['Orbitron', 'sans-serif'],
               epic: ['Cinzel', 'serif'],
+              gothic: ['Cinzel Decorative', 'serif'],
               japanese: ['Sawarabi Mincho', 'serif'],
               modern: ['Space Grotesk', 'sans-serif'],
+              // New Families
+              typewriter: ['Special Elite', 'monospace'],
+              horror: ['Nosifer', 'cursive'],
+              executive: ['Outfit', 'sans-serif'],
+              inter: ['Inter', 'sans-serif'],
             },
             colors: {
               slate: {
                 850: '#151e32',
-              }
+              },
+              brand: 'rgb(var(--brand-rgb) / <alpha-value>)',
             },
             animation: {
               'fade-in': 'fadeIn 0.5s ease-out forwards',

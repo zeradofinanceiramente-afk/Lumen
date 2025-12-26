@@ -1,26 +1,27 @@
 
 import React, { createContext, useState, useCallback, useMemo, useEffect, useContext, ReactNode } from 'react';
-import type { Module, Quiz, Achievement } from '../types';
+import type { Module, Quiz, Achievement, GamificationConfig } from '../types';
 import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
 import { db } from '../components/firebaseClient';
 import { 
     collection, getDocs, deleteDoc, doc, addDoc, updateDoc, 
     writeBatch, serverTimestamp, query, orderBy, setDoc, 
-    limit, startAfter, getCountFromServer, QueryDocumentSnapshot 
+    limit, startAfter, getCountFromServer, QueryDocumentSnapshot, getDoc
 } from 'firebase/firestore';
 import { useCachedQuery } from '../hooks/useCachedQuery';
-import { useQueryClient } from '@tanstack/react-query'; // Import React Query
+import { useQueryClient } from '@tanstack/react-query';
 
 export interface AdminDataContextType {
     modules: Module[];
-    totalModulesCount: number; // Nova propriedade para estatísticas reais
+    totalModulesCount: number;
     quizzes: Quiz[];
     achievements: Achievement[];
+    gamificationConfig: GamificationConfig | null;
     
     isLoading: boolean;
-    isLoadingModules: boolean; // Loading específico da paginação
-    hasMoreModules: boolean; // Se tem mais páginas
+    isLoadingModules: boolean;
+    hasMoreModules: boolean;
     
     isSubmitting: boolean;
     isOffline: boolean;
@@ -39,9 +40,12 @@ export interface AdminDataContextType {
     
     handleSaveModule: (newModule: Omit<Module, 'id'>) => Promise<boolean>;
     handleUpdateModule: (updatedModule: Module) => Promise<void>;
+
+    fetchGamificationConfig: () => Promise<void>;
+    updateGamificationAction: (actionKey: string, newValue: number) => Promise<void>;
     
     fetchData: () => Promise<void>;
-    fetchNextModulesPage: () => Promise<void>; // Função para carregar próxima página
+    fetchNextModulesPage: () => Promise<void>;
 }
 
 export const AdminDataContext = createContext<AdminDataContextType | undefined>(undefined);
@@ -51,7 +55,7 @@ const MODULES_PER_PAGE = 20;
 export function AdminDataProvider({ children }: { children?: ReactNode }) {
     const { user } = useAuth();
     const { addToast } = useToast();
-    const queryClient = useQueryClient(); // React Query Client
+    const queryClient = useQueryClient();
 
     // Async states
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,11 +69,14 @@ export function AdminDataProvider({ children }: { children?: ReactNode }) {
     const [isLoadingModules, setIsLoadingModules] = useState(false);
     const [modulesLoaded, setModulesLoaded] = useState(false);
 
+    // --- GAMIFICATION CONFIG STATE ---
+    const [gamificationConfig, setGamificationConfig] = useState<GamificationConfig | null>(null);
+
     // --- Cached Collections (Small datasets) ---
     const { data: quizzesData, loading: quizzesLoading, invalidate: invalidateQuizzes, error: quizzesError } = useCachedQuery('admin_quizzes', () => query(collection(db, 'quizzes'), orderBy('date', 'desc')), [user]);
     const { data: achievementsData, loading: achievementsLoading, invalidate: invalidateAchievements, error: achievementsError } = useCachedQuery('admin_achievements', () => query(collection(db, 'achievements')), [user]);
 
-    const isLoading = quizzesLoading || achievementsLoading; // Modules loading is handled separately now
+    const isLoading = quizzesLoading || achievementsLoading;
     const hasError = quizzesError || achievementsError;
     
     useEffect(() => {
@@ -93,13 +100,11 @@ export function AdminDataProvider({ children }: { children?: ReactNode }) {
         setIsLoadingModules(true);
 
         try {
-            // 1. Get Total Count (Only on initial load to save reads, or implement a refresh counter)
             if (isInitial) {
                 const countSnap = await getCountFromServer(collection(db, 'modules'));
                 setTotalModulesCount(countSnap.data().count);
             }
 
-            // 2. Build Query
             let q = query(
                 collection(db, 'modules'), 
                 orderBy('date', 'desc'), 
@@ -110,7 +115,6 @@ export function AdminDataProvider({ children }: { children?: ReactNode }) {
                 q = query(q, startAfter(lastModuleDoc));
             }
 
-            // 3. Execute Query
             const snapshot = await getDocs(q);
             
             const newModules = snapshot.docs.map(d => ({ 
@@ -119,7 +123,6 @@ export function AdminDataProvider({ children }: { children?: ReactNode }) {
                 date: d.data().date?.toDate ? d.data().date.toDate().toLocaleDateString('pt-BR') : (typeof d.data().date === 'string' ? d.data().date : undefined)
             }) as Module);
 
-            // 4. Update State
             if (isInitial) {
                 setModules(newModules);
             } else {
@@ -138,7 +141,6 @@ export function AdminDataProvider({ children }: { children?: ReactNode }) {
         }
     }, [lastModuleDoc, isLoadingModules, addToast]);
 
-    // Initial Load
     useEffect(() => {
         if (user && !modulesLoaded) {
             fetchModulesPage(true);
@@ -154,41 +156,95 @@ export function AdminDataProvider({ children }: { children?: ReactNode }) {
     const refreshModules = async () => {
         setLastModuleDoc(null);
         setHasMoreModules(true);
-        setModules([]); // Clear list
+        setModules([]);
         await fetchModulesPage(true);
     };
+
+    // --- GAMIFICATION LOGIC ---
+
+    const fetchGamificationConfig = useCallback(async () => {
+        if (!user) return;
+        try {
+            const docRef = doc(db, 'system_settings', 'gamification_config');
+            const snap = await getDoc(docRef);
+            if (snap.exists()) {
+                setGamificationConfig(snap.data() as GamificationConfig);
+            } else {
+                // Initialize defaults if missing
+                const defaults: GamificationConfig = {
+                    actions: {
+                        'quiz_complete': 10,
+                        'module_complete': 50,
+                        'activity_sent': 20
+                    }
+                };
+                await setDoc(docRef, defaults);
+                setGamificationConfig(defaults);
+            }
+        } catch (error) {
+            console.error("Error fetching gamification config:", error);
+        }
+    }, [user]);
+
+    // Initial load for config
+    useEffect(() => {
+        if (user) {
+            fetchGamificationConfig();
+        }
+    }, [user, fetchGamificationConfig]);
+
+    const updateGamificationAction = useCallback(async (actionKey: string, newValue: number) => {
+        setIsSubmitting(true);
+        try {
+            const docRef = doc(db, 'system_settings', 'gamification_config');
+            await setDoc(docRef, {
+                actions: {
+                    [actionKey]: newValue
+                }
+            }, { merge: true });
+            
+            // Optimistic update
+            setGamificationConfig(prev => prev ? {
+                ...prev,
+                actions: {
+                    ...prev.actions,
+                    [actionKey]: newValue
+                }
+            } : null);
+            
+            addToast("Valor de XP atualizado!", "success");
+        } catch (error: any) {
+            console.error(error);
+            addToast(`Erro ao atualizar XP: ${error.message}`, "error");
+        } finally {
+            setIsSubmitting(false);
+        }
+    }, [addToast]);
 
     // --- General Fetch ---
     const fetchData = useCallback(async () => {
         invalidateQuizzes();
         invalidateAchievements();
         refreshModules();
-    }, [invalidateQuizzes, invalidateAchievements]);
+        fetchGamificationConfig();
+    }, [invalidateQuizzes, invalidateAchievements, fetchGamificationConfig]);
     
     // --- Module Operations ---
 
-    // SPLIT PATTERN IMPLEMENTATION
     const handleSaveModule = useCallback(async (newModule: Omit<Module, 'id'>): Promise<boolean> => {
         setIsSubmitting(true);
          try {
             const { pages, ...metadata } = newModule;
-            
-            // 1. Save Metadata
             const docRef = await addDoc(collection(db, "modules"), { 
                 ...metadata, 
                 date: serverTimestamp(),
-                pages: [] // Empty for metadata doc
+                pages: [] 
             });
-
-            // 2. Save Content
             await setDoc(doc(db, "module_contents", docRef.id), { pages });
 
             addToast('Módulo salvo com sucesso!', 'success');
-            refreshModules(); // Reload local list
-            
-            // Invalidate React Query Cache for students
+            refreshModules(); 
             queryClient.invalidateQueries({ queryKey: ['modules'] });
-            
             return true;
         } catch (error: any) {
             addToast(`Erro ao salvar módulo: ${error.message}`, 'error');
@@ -203,22 +259,13 @@ export function AdminDataProvider({ children }: { children?: ReactNode }) {
         try {
             const { id, pages, ...metadata } = updatedModule;
             const moduleRef = doc(db, "modules", id);
-            
-            // 1. Update Metadata
             await updateDoc(moduleRef, { ...metadata, pages: [] });
-            
-            // 2. Update Content
             if (pages) {
                 await setDoc(doc(db, "module_contents", id), { pages }, { merge: true });
             }
-
             addToast('Módulo atualizado com sucesso!', 'success');
-            // Optimistic Update Local
             setModules(prev => prev.map(m => m.id === id ? updatedModule : m));
-            
-            // Invalidate React Query Cache for students
             queryClient.invalidateQueries({ queryKey: ['modules'] });
-            
         } catch (error: any) {
             addToast(`Erro ao atualizar módulo: ${error.message}`, 'error');
         } finally {
@@ -229,19 +276,12 @@ export function AdminDataProvider({ children }: { children?: ReactNode }) {
     const handleDeleteModule = useCallback(async (moduleId: string) => {
         setIsSubmitting(true);
         try {
-            // Delete metadata
             await deleteDoc(doc(db, "modules", moduleId));
-            // Delete content
             await deleteDoc(doc(db, "module_contents", moduleId));
-
             addToast('Módulo excluído com sucesso!', 'success');
-            // Local removal
             setModules(prev => prev.filter(m => m.id !== moduleId));
             setTotalModulesCount(prev => Math.max(0, prev - 1));
-            
-            // Invalidate React Query Cache for students
             queryClient.invalidateQueries({ queryKey: ['modules'] });
-            
         } catch (e: any) { addToast(`Erro: ${e.message}`, 'error'); } 
         finally { setIsSubmitting(false); }
     }, [addToast, queryClient]);
@@ -256,13 +296,9 @@ export function AdminDataProvider({ children }: { children?: ReactNode }) {
             });
             await batch.commit();
             addToast(`${moduleIds.size} módulos excluídos com sucesso!`, 'success');
-            // Local removal
             setModules(prev => prev.filter(m => !moduleIds.has(m.id)));
             setTotalModulesCount(prev => Math.max(0, prev - moduleIds.size));
-            
-            // Invalidate React Query Cache for students
             queryClient.invalidateQueries({ queryKey: ['modules'] });
-            
         } catch (e: any) { addToast(`Erro na exclusão em massa: ${e.message}`, 'error'); }
         finally { setIsSubmitting(false); }
     }, [addToast, queryClient]);
@@ -270,8 +306,6 @@ export function AdminDataProvider({ children }: { children?: ReactNode }) {
     const handleDeleteAllModules = useCallback(async () => {
         setIsSubmitting(true);
         try {
-            // Note: In a real large app, deleting via client query is bad practice (use cloud functions), 
-            // but for this scope it fits the test requirement.
             const modulesQuery = query(collection(db, "modules"));
             const snapshot = await getDocs(modulesQuery);
             const batch = writeBatch(db);
@@ -283,10 +317,7 @@ export function AdminDataProvider({ children }: { children?: ReactNode }) {
             addToast("Todos os módulos foram excluídos!", "success");
             setModules([]);
             setTotalModulesCount(0);
-            
-            // Invalidate React Query Cache for students
             queryClient.invalidateQueries({ queryKey: ['modules'] });
-            
         } catch (e: any) { addToast(`Erro na exclusão total: ${e.message}`, 'error'); }
         finally { setIsSubmitting(false); }
     }, [addToast, queryClient]);
@@ -300,8 +331,6 @@ export function AdminDataProvider({ children }: { children?: ReactNode }) {
             await addDoc(collection(db, "quizzes"), { ...newQuizData, createdBy: user.email, date: serverTimestamp() });
             addToast('Quiz salvo com sucesso!', 'success');
             invalidateQuizzes();
-            // Invalidate React Query Cache for students (Quizzes list uses old non-RQ hook, but good practice)
-            // If Student Quizzes page migrates to RQ, this is ready.
         } catch (e: any) { addToast(`Erro ao salvar quiz: ${e.message}`, 'error'); }
         finally { setIsSubmitting(false); }
     }, [addToast, user, invalidateQuizzes]);
@@ -367,11 +396,13 @@ export function AdminDataProvider({ children }: { children?: ReactNode }) {
 
 
     const value = {
-        modules, totalModulesCount, quizzes, achievements, isLoading, isLoadingModules, hasMoreModules, isSubmitting, isOffline,
+        modules, totalModulesCount, quizzes, achievements, gamificationConfig,
+        isLoading, isLoadingModules, hasMoreModules, isSubmitting, isOffline,
         handleDeleteAllModules, handleDeleteModule, handleBulkDeleteModules, 
         handleSaveQuiz, handleUpdateQuiz, handleDeleteQuiz, 
         handleSaveAchievement, handleUpdateAchievement, handleDeleteAchievement, 
         handleSaveModule, handleUpdateModule,
+        fetchGamificationConfig, updateGamificationAction,
         fetchData, fetchNextModulesPage
     };
 

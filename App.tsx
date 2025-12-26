@@ -64,6 +64,7 @@ const AdminManageUsers = lazy(() => import('./components/AdminManageUsers'));
 const AdminManageModules = lazy(() => import('./components/AdminManageModules'));
 const AdminManageQuizzes = lazy(() => import('./components/AdminManageQuizzes'));
 const AdminManageAchievements = lazy(() => import('./components/AdminManageAchievements'));
+const AdminGamification = lazy(() => import('./components/AdminGamification')); // NEW
 const AdminStats = lazy(() => import('./components/AdminStats'));
 const AdminTests = lazy(() => import('./components/AdminTests'));
 const AdminDiagnostics = lazy(() => import('./components/AdminDiagnostics')); // NEW
@@ -98,6 +99,7 @@ const PAGE_TITLES: Record<string, string> = {
     admin_modules: 'Gerenciar Módulos',
     admin_quizzes: 'Gerenciar Quizzes',
     admin_achievements: 'Gerenciar Conquistas',
+    admin_gamification: 'Gamificação & XP',
     admin_stats: 'Estatísticas da Plataforma',
     admin_tests: 'Painel de Testes',
     admin_diagnostics: 'Diagnóstico do Sistema',
@@ -150,8 +152,8 @@ const useKeyboardShortcuts = () => {
 const MainLayout: React.FC = () => {
     useKeyboardShortcuts();
     const { userRole } = useAuth();
-    const { currentPage, activeModule, activeClass, activeActivity, gradingActivity, toggleMobileMenu, isMobileMenuOpen } = useNavigation();
-    const { wallpaper, enableWallpaperMask } = useSettings();
+    const { currentPage, activeModule, activeClass, activeActivity, activeQuiz, gradingActivity, toggleMobileMenu, isMobileMenuOpen } = useNavigation();
+    const { wallpaper, enableWallpaperMask, globalTheme, enableFocusMode } = useSettings();
     
     const [isScrolled, setIsScrolled] = useState(false);
     const mainContentRef = useRef<HTMLElement>(null);
@@ -177,6 +179,7 @@ const MainLayout: React.FC = () => {
                 case 'admin_modules': return <AdminManageModules />;
                 case 'admin_quizzes': return <AdminManageQuizzes />;
                 case 'admin_achievements': return <AdminManageAchievements />;
+                case 'admin_gamification': return <AdminGamification />;
                 case 'admin_stats': return <AdminStats />;
                 case 'admin_tests': return <AdminTests />;
                 case 'admin_diagnostics': return <AdminDiagnostics />;
@@ -278,6 +281,19 @@ const MainLayout: React.FC = () => {
 
     useEffect(() => { document.title = `${pageTitle} - Lumen`; }, [pageTitle]);
 
+    // Background Rendering Logic
+    // Priority: User Wallpaper > Global Theme (Desktop/Mobile) > Gradient Fallback
+    const hasGlobalTheme = globalTheme.desktop || globalTheme.mobile;
+    const activeWallpaper = wallpaper; // Local user override
+
+    // Focus Mode: Hide wallpaper on deep work states (Module, Quiz, Activity execution)
+    // Only applied if enabled by user setting
+    const isFocusMode = enableFocusMode && (
+        currentPage === 'module_view' || 
+        currentPage === 'student_activity_view' || 
+        (currentPage === 'quizzes' && !!activeQuiz)
+    );
+
     return (
         <div 
             className="relative flex h-screen overflow-hidden"
@@ -286,18 +302,33 @@ const MainLayout: React.FC = () => {
             <OfflineIndicator />
             <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-indigo-600 focus:rounded-md focus:shadow-lg transition-all">Pular para conteúdo</a>
 
-            {/* Layer 1: Wallpaper Image */}
-            {wallpaper && (
+            {/* Layer 1: Wallpaper Image (Disabled in Focus Mode) */}
+            {!isFocusMode && activeWallpaper ? (
                 <div className="absolute inset-0 z-0">
-                    <img src={wallpaper} alt="" className="w-full h-full object-cover opacity-90" />
+                    <img src={activeWallpaper} alt="" className="w-full h-full object-cover opacity-90" />
                 </div>
-            )}
+            ) : !isFocusMode && hasGlobalTheme ? (
+                <div className="absolute inset-0 z-0">
+                    <picture>
+                        {/* Mobile Source */}
+                        {globalTheme.mobile && (
+                            <source media="(max-width: 768px)" srcSet={globalTheme.mobile} />
+                        )}
+                        {/* Desktop/Fallback Source */}
+                        <img 
+                            src={globalTheme.desktop || globalTheme.mobile || ''} 
+                            alt="" 
+                            className="w-full h-full object-cover opacity-90" 
+                        />
+                    </picture>
+                </div>
+            ) : null}
 
-            {/* Layer 2: Legibility Mask */}
+            {/* Layer 2: Legibility Mask or Fallback Gradient */}
             <div 
                 className="absolute inset-0 z-0 pointer-events-none transition-opacity duration-700" 
                 style={{ 
-                    background: wallpaper 
+                    background: (!isFocusMode && (activeWallpaper || hasGlobalTheme))
                         ? (enableWallpaperMask 
                             ? 'linear-gradient(to top, var(--bg-main) 0%, rgba(var(--bg-main-rgb), 0.85) 60%, rgba(var(--bg-main-rgb), 0.4) 100%)' 
                             : 'transparent')
@@ -330,7 +361,7 @@ const MainLayout: React.FC = () => {
                     </button>
 
                     <Header title={pageTitle} isScrolled={isScrolled} />
-                    <main id="main-content" ref={mainContentRef} className="flex-1 overflow-y-auto py-6 sm:py-8 lg:py-10 px-3 sm:px-4 lg:px-6 relative custom-scrollbar" tabIndex={-1} aria-label="Conteúdo principal">
+                    <main id="main-content" ref={mainContentRef} className="flex-1 overflow-y-auto pb-6 sm:pb-8 lg:pb-10 pt-0 px-3 sm:px-4 lg:px-6 relative custom-scrollbar" tabIndex={-1} aria-label="Conteúdo principal">
                         <ErrorBoundary>
                             <Suspense fallback={<LoadingSpinner />}>
                                 <div className="h-full w-full max-w-[1920px] mx-auto">{renderPage()}</div>

@@ -1,3 +1,4 @@
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -8,12 +9,21 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Outfit', 'sans-serif'],
+        sans: ['Open Sans', 'sans-serif'],
         scifi: ['Orbitron', 'sans-serif'],
         epic: ['Cinzel', 'serif'],
+        gothic: ['Cinzel Decorative', 'serif'],
         japanese: ['Sawarabi Mincho', 'serif'],
         modern: ['Space Grotesk', 'sans-serif'],
+        // Novos Perfis
+        typewriter: ['Special Elite', 'monospace'],
+        horror: ['Nosifer', 'cursive'],
+        executive: ['Outfit', 'sans-serif'],
+        inter: ['Inter', 'sans-serif'],
       },
+      colors: {
+        brand: 'rgb(var(--brand-rgb) / <alpha-value>)',
+      }
     },
   },
   plugins: [],

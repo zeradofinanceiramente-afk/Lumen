@@ -54,7 +54,6 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({
     const [description, setDescription] = useState('');
     const [coverImageUrl, setCoverImageUrl] = useState('');
     const [videoUrl, setVideoUrl] = useState('');
-    const [difficulty, setDifficulty] = useState<'Fácil' | 'Médio' | 'Difícil'>('Fácil');
     const [duration, setDuration] = useState('');
     const [selectedSeries, setSelectedSeries] = useState<string[]>([]);
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
@@ -87,7 +86,6 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({
             setDescription(initialData.description || '');
             setCoverImageUrl(initialData.coverImageUrl || '');
             setVideoUrl(initialData.videoUrl || '');
-            setDifficulty(initialData.difficulty || 'Fácil');
             setDuration(initialData.duration || '');
             setHistoricalYear(initialData.historicalYear);
             setHistoricalEra(initialData.historicalEra);
@@ -266,7 +264,7 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({
         }
 
         const moduleData = {
-            title, description, coverImageUrl, videoUrl, difficulty, duration,
+            title, description, coverImageUrl, videoUrl, duration,
             pages,
             series: selectedSeries,
             materia: selectedSubjects,
@@ -340,7 +338,6 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({
                         description={description} setDescription={setDescription}
                         coverImageUrl={coverImageUrl} setCoverImageUrl={setCoverImageUrl}
                         videoUrl={videoUrl} setVideoUrl={setVideoUrl}
-                        difficulty={difficulty} setDifficulty={setDifficulty}
                         duration={duration} setDuration={setDuration}
                         selectedSeries={selectedSeries} setSelectedSeries={setSelectedSeries}
                         selectedSubjects={selectedSubjects} setSelectedSubjects={setSelectedSubjects}
