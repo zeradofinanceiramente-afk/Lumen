@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { SpinnerIcon } from '../constants/index';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useSettings } from '../contexts/SettingsContext';
 
 const Logo: React.FC = () => (
     <div className="flex flex-col items-center justify-center mb-6">
@@ -24,6 +25,7 @@ type ViewMode = 'login' | 'signup' | 'reset';
 export const LoginPage: React.FC<{ initialError?: string | null }> = ({ initialError }) => {
     const { signInWithEmail, signUpWithEmail, resetPassword } = useAuth();
     const { t, language, setLanguage } = useLanguage();
+    const { loadFontProfile } = useSettings();
     const [email, setEmail] = useState('');
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
@@ -33,6 +35,11 @@ export const LoginPage: React.FC<{ initialError?: string | null }> = ({ initialE
     const [viewMode, setViewMode] = useState<ViewMode>('login');
     const [error, setError] = useState<string | null>(initialError || null);
     const [message, setMessage] = useState<string | null>(null);
+
+    // Preload Sci-Fi fonts for Logo (Orbitron)
+    useEffect(() => {
+        loadFontProfile('admin_sci_fi');
+    }, [loadFontProfile]);
 
     const clearState = () => {
         setError(null);

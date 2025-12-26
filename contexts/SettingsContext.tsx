@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { getWallpaper, saveWallpaper, deleteWallpaper } from '../utils/wallpaperManager';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../components/firebaseClient';
@@ -38,6 +38,16 @@ export const PRESET_THEMES: ThemePreset[] = [
     { id: 'high-contrast', label: 'Alto Contraste', accent: '#ffff00', colors: ['#000000', '#ffffff'] },
 ];
 
+// Lazy Font Mapping
+const FONT_URLS: Record<string, string> = {
+    'gothic': 'https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&display=swap',
+    'confidential': 'https://fonts.googleapis.com/css2?family=Special+Elite&display=swap',
+    'cosmic': 'https://fonts.googleapis.com/css2?family=Nosifer&display=swap',
+    'executive': 'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap',
+    'admin_sci_fi': 'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Cinzel:wght@400;500;600;700;800;900&display=swap', // For Admin & Shadow Monarch
+    'japanese': 'https://fonts.googleapis.com/css2?family=Sawarabi+Mincho&display=swap'
+};
+
 interface SettingsContextType {
     theme: Theme;
     setTheme: (theme: Theme) => void;
@@ -58,6 +68,8 @@ interface SettingsContextType {
     
     fontProfile: FontProfile;
     setFontProfile: (font: FontProfile) => void;
+    
+    loadFontProfile: (profileKey: string) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -83,6 +95,22 @@ export function SettingsProvider({ children }: { children?: React.ReactNode }) {
         document.documentElement.style.setProperty('--brand-color', color);
         document.documentElement.style.setProperty('--brand-rgb', hexToRgb(color));
     };
+
+    // Helper to Lazy Load Fonts
+    const loadFont = useCallback((url: string) => {
+        if (!document.querySelector(`link[href="${url}"]`)) {
+            const link = document.createElement('link');
+            link.href = url;
+            link.rel = 'stylesheet';
+            document.head.appendChild(link);
+        }
+    }, []);
+
+    const loadFontProfile = useCallback((profileKey: string) => {
+        if (FONT_URLS[profileKey]) {
+            loadFont(FONT_URLS[profileKey]);
+        }
+    }, [loadFont]);
 
     useEffect(() => {
         const savedTheme = localStorage.getItem('app-theme') as Theme | null;
@@ -141,6 +169,7 @@ export function SettingsProvider({ children }: { children?: React.ReactNode }) {
         return () => unsubscribe();
     }, []);
 
+    // Theme & Font Application Logic
     useEffect(() => {
         const root = window.document.documentElement;
         PRESET_THEMES.forEach(p => root.classList.remove(p.id));
@@ -149,10 +178,20 @@ export function SettingsProvider({ children }: { children?: React.ReactNode }) {
         
         const body = document.body;
         body.classList.remove('font-gothic', 'font-confidential', 'font-cosmic', 'font-executive');
-        if (fontProfile !== 'standard') body.classList.add(`font-${fontProfile}`);
+        
+        if (fontProfile !== 'standard') {
+            body.classList.add(`font-${fontProfile}`);
+            // Lazy load the requested font
+            loadFontProfile(fontProfile);
+        }
+
+        // Special case: Load 'admin_sci_fi' fonts if theme is 'shadow-monarch' (Solo Leveling style)
+        if (theme === 'shadow-monarch') {
+            loadFontProfile('admin_sci_fi');
+        }
         
         localStorage.setItem('app-theme', theme);
-    }, [theme, fontProfile]);
+    }, [theme, fontProfile, loadFontProfile]);
 
     const updateWallpaperState = async (file: File) => {
         await saveWallpaper(file);
@@ -210,7 +249,8 @@ export function SettingsProvider({ children }: { children?: React.ReactNode }) {
         enableFocusMode, setEnableFocusMode,
         updateWallpaper: updateWallpaperState, removeWallpaper: removeWallpaperState,
         accentColor, setAccentColor,
-        fontProfile, setFontProfile
+        fontProfile, setFontProfile,
+        loadFontProfile
     };
 
     return (

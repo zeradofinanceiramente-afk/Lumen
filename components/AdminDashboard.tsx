@@ -9,6 +9,7 @@ import { doc, getDoc, setDoc, collection, query, where, orderBy, getDocs, collec
 import { db } from './firebaseClient';
 import { useToast } from '../contexts/ToastContext';
 import { SpinnerIcon } from '../constants/index';
+import { useSettings } from '../contexts/SettingsContext';
 
 // --- DMC STYLE COMPONENTS ---
 
@@ -220,9 +221,15 @@ const AdminDashboard: React.FC = () => {
     const { totalModulesCount, quizzes, achievements, isLoading } = useAdminData();
     const { setCurrentPage } = useNavigation();
     const { user } = useAuth();
+    const { loadFontProfile } = useSettings();
     
     const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
     const [isIndexModalOpen, setIsIndexModalOpen] = useState(false);
+
+    // Preload Admin Fonts
+    useEffect(() => {
+        loadFontProfile('admin_sci_fi');
+    }, [loadFontProfile]);
 
     // Calculate dynamic ranks
     const contentVolume = totalModulesCount + quizzes.length;

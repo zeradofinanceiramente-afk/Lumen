@@ -18,7 +18,8 @@ export const AdminProfileView: React.FC = () => {
         wallpaper: contextWallpaper,
         enableWallpaperMask, setEnableWallpaperMask,
         enableFocusMode, setEnableFocusMode,
-        isHighContrastText, setIsHighContrastText
+        isHighContrastText, setIsHighContrastText,
+        loadFontProfile
     } = useSettings();
     const { addToast } = useToast();
 
@@ -36,6 +37,11 @@ export const AdminProfileView: React.FC = () => {
             setAvatarUrl(user.avatarUrl || '');
         }
     }, [user]);
+
+    // Preload Admin Fonts
+    useEffect(() => {
+        loadFontProfile('admin_sci_fi');
+    }, [loadFontProfile]);
 
     const handleSaveProfile = async () => {
         if (!user) return;
